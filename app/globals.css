@@ -1,0 +1,115 @@
+@import "tailwindcss";
+
+/* ============================================================
+   FLEUN design tokens — monochrome base, one accent.
+   Light by default; dark theme via <html class="dark">.
+   ============================================================ */
+
+:root {
+  --background: #fafafa;
+  --surface: #ffffff;
+  --surface-raised: #ffffff;
+  --border: #e7e7e4;
+  --border-strong: #d8d8d4;
+  --foreground: #141415;
+  --muted: #6f6f76;
+  --accent: #5e6ad2;
+  --accent-soft: rgba(94, 106, 210, 0.08);
+  --positive: #3d8a5f;
+  --negative: #b45454;
+}
+
+:root.dark {
+  --background: #0a0a0a;
+  --surface: #101011;
+  --surface-raised: #161618;
+  --border: #1f1f1f;
+  --border-strong: #2a2a2c;
+  --foreground: #fafafa;
+  --muted: #7e7e85;
+  --accent: #5e6ad2;
+  --accent-soft: rgba(94, 106, 210, 0.12);
+  --positive: #4f9e70;
+  --negative: #b45454;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-surface: var(--surface);
+  --color-surface-raised: var(--surface-raised);
+  --color-border: var(--border);
+  --color-border-strong: var(--border-strong);
+  --color-foreground: var(--foreground);
+  --color-muted: var(--muted);
+  --color-accent: var(--accent);
+  --color-accent-soft: var(--accent-soft);
+  --color-positive: var(--positive);
+  --color-negative: var(--negative);
+
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui, -apple-system,
+    "Segoe UI", sans-serif;
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-feature-settings: "cv11", "ss01";
+  -webkit-font-smoothing: antialiased;
+}
+
+::selection {
+  background: var(--accent-soft);
+}
+
+/* Thin, quiet scrollbars */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--border-strong) transparent;
+}
+
+/* ============================================================
+   Voice orb — the one place motion is allowed, and only as
+   functional state feedback.
+   ============================================================ */
+
+.orb {
+  box-shadow:
+    0 0 0 1px var(--border-strong),
+    0 0 90px -24px var(--accent);
+  transition: box-shadow 200ms ease, transform 200ms ease;
+}
+
+.orb:hover {
+  box-shadow:
+    0 0 0 1px var(--border-strong),
+    0 0 110px -20px var(--accent);
+}
+
+.orb[data-state="listening"] {
+  box-shadow:
+    0 0 0 1px var(--accent),
+    0 0 140px -16px var(--accent);
+  animation: orb-breathe 2.4s ease-in-out infinite;
+}
+
+.orb[data-state="speaking"] {
+  box-shadow:
+    0 0 0 1px var(--accent),
+    0 0 120px -20px var(--accent);
+}
+
+@keyframes orb-breathe {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.03);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .orb[data-state="listening"] {
+    animation: none;
+  }
+}
