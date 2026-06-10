@@ -2,12 +2,12 @@
 
 import { useEffect, useState } from "react";
 import { Plus, Check, RefreshCw } from "lucide-react";
-import {
-  DECK_STORAGE_KEY,
-  type ImmerseKind,
-  type ImmerseLevel,
-  type Story,
-  type WordDefinition,
+import { supabase, ensureSession } from "@/lib/supabase";
+import type {
+  ImmerseKind,
+  ImmerseLevel,
+  Story,
+  WordDefinition,
 } from "@/lib/types";
 
 interface PopoverState {
@@ -97,25 +97,48 @@ export function ImmerseDemo() {
     }
   };
 
-  const addToDeck = () => {
+  const addToDeck = async () => {
     if (!popover?.definition) return;
     const d = popover.definition;
+    const sentence = popover.sentence;
     try {
-      const deck = JSON.parse(localStorage.getItem(DECK_STORAGE_KEY) ?? "[]");
-      if (!deck.some((w: { lemma: string }) => w.lemma === d.lemma)) {
-        deck.push({
-          lemma: d.lemma,
-          gender: d.gender,
-          pos: d.pos,
-          meaning_en: d.meaning_en,
-          example_de: popover.sentence,
-          example_en: "",
-        });
-        localStorage.setItem(DECK_STORAGE_KEY, JSON.stringify(deck));
-      }
+      const session = await ensureSession();
+      const pos = d.pos || "phrase";
+      const gender =
+        d.gender === "der" || d.gender === "die" || d.gender === "das"
+          ? d.gender
+          : null;
+
+      // Insert into the shared dictionary if missing, then read the id back.
+      await supabase
+        .from("words")
+        .upsert(
+          { language: "de", lemma: d.lemma, pos, gender, meaning_en: d.meaning_en },
+          { onConflict: "language,lemma,pos", ignoreDuplicates: true },
+        );
+      const { data: word, error } = await supabase
+        .from("words")
+        .select("id")
+        .eq("language", "de")
+        .eq("lemma", d.lemma)
+        .eq("pos", pos)
+        .single();
+      if (error || !word) throw error ?? new Error("word not found");
+
+      // The Bridge: new SRS card with the subtitle sentence as context.
+      await supabase.from("user_words").upsert(
+        {
+          user_id: session.user.id,
+          word_id: word.id,
+          context_sentence: sentence,
+          source: "immerse",
+        },
+        { onConflict: "user_id,word_id", ignoreDuplicates: true },
+      );
+
       setPopover((p) => (p ? { ...p, added: true } : p));
-    } catch {
-      // localStorage unavailable — ignore
+    } catch (err) {
+      console.error("[add to srs]", err);
     }
   };
 

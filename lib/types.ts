@@ -46,6 +46,3 @@ export interface WordDefinition {
   pos: string;
   meaning_en: string;
 }
-
-/** localStorage key for words saved from Immerse → reviewed in Foundations. */
-export const DECK_STORAGE_KEY = "fleun:deck";

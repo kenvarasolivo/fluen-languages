@@ -1,14 +1,25 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Volume2 } from "lucide-react";
-import { DECK_STORAGE_KEY, type DemoWord } from "@/lib/types";
+import { supabase, ensureSession } from "@/lib/supabase";
+import { gradeCard, isDueSoon, type SrsFields } from "@/lib/srs";
+import type { DemoWord } from "@/lib/types";
 
 type Phase = "loading" | "review" | "done" | "error";
 
-interface QueueCard extends DemoWord {
-  isReview: boolean; // requeued via "Again"
+interface QueueCard extends SrsFields {
+  id: string; // user_words.id
+  lemma: string;
+  gender: string | null;
+  pos: string;
+  meaning_en: string;
+  context_sentence: string | null;
+  context_translation: string | null;
 }
+
+const SRS_COLUMNS =
+  "id, state, due, stability, difficulty, elapsed_days, scheduled_days, reps, lapses, last_review, context_sentence, context_translation";
 
 function speakGerman(text: string) {
   if (typeof speechSynthesis === "undefined") return;
@@ -19,40 +30,110 @@ function speakGerman(text: string) {
   speechSynthesis.speak(u);
 }
 
+function sanitizeGender(g: string | null | undefined) {
+  return g === "der" || g === "die" || g === "das" ? g : null;
+}
+
 export function ReviewDemo() {
   const [phase, setPhase] = useState<Phase>("loading");
   const [queue, setQueue] = useState<QueueCard[]>([]);
   const [flipped, setFlipped] = useState(false);
+  const [errorMsg, setErrorMsg] = useState("");
+  const userIdRef = useRef<string | null>(null);
 
-  const load = useCallback(async () => {
-    setPhase("loading");
-    setFlipped(false);
-
-    // Words saved from Immerse ("Add to SRS") come first — the Bridge.
-    let saved: DemoWord[] = [];
-    try {
-      saved = JSON.parse(localStorage.getItem(DECK_STORAGE_KEY) ?? "[]");
-    } catch {
-      saved = [];
-    }
-
-    try {
-      const res = await fetch("/api/foundations", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ level: "B1", count: 10 }),
-      });
-      if (!res.ok) throw new Error(String(res.status));
-      const { words } = (await res.json()) as { words: DemoWord[] };
-
-      const seen = new Set(saved.map((w) => w.lemma.toLowerCase()));
-      const fresh = words.filter((w) => !seen.has(w.lemma.toLowerCase()));
-      setQueue([...saved, ...fresh].map((w) => ({ ...w, isReview: false })));
-      setPhase("review");
-    } catch {
-      setPhase("error");
-    }
+  const fetchQueue = useCallback(async (): Promise<QueueCard[]> => {
+    const { data, error } = await supabase
+      .from("user_words")
+      .select(`${SRS_COLUMNS}, words(lemma, gender, pos, meaning_en)`)
+      .lte("due", new Date().toISOString())
+      .order("due")
+      .limit(30);
+    if (error) throw error;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    return (data as any[]).map(({ words, ...srs }) => ({ ...srs, ...words }));
   }, []);
+
+  /** Generate fresh AI vocabulary and persist it as new cards. */
+  const generateCards = useCallback(async (userId: string) => {
+    const res = await fetch("/api/foundations", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ level: "B1", count: 10 }),
+    });
+    if (!res.ok) throw new Error("generation failed");
+    const { words } = (await res.json()) as { words: DemoWord[] };
+
+    // Dictionary rows are shared — insert only the missing ones, then
+    // read ids back (upsert+DO NOTHING keeps RLS to insert-only).
+    const dictRows = words.map((w) => ({
+      language: "de",
+      lemma: w.lemma,
+      pos: w.pos || "phrase",
+      gender: sanitizeGender(w.gender),
+      meaning_en: w.meaning_en,
+    }));
+    const { error: insertErr } = await supabase
+      .from("words")
+      .upsert(dictRows, { onConflict: "language,lemma,pos", ignoreDuplicates: true });
+    if (insertErr) throw insertErr;
+
+    const { data: dict, error: dictErr } = await supabase
+      .from("words")
+      .select("id, lemma, pos")
+      .eq("language", "de")
+      .in("lemma", words.map((w) => w.lemma));
+    if (dictErr) throw dictErr;
+
+    const idFor = (w: DemoWord) =>
+      dict?.find((d) => d.lemma === w.lemma && d.pos === (w.pos || "phrase"))?.id ??
+      dict?.find((d) => d.lemma === w.lemma)?.id;
+
+    const cardRows = words.flatMap((w) => {
+      const wordId = idFor(w);
+      if (!wordId) return [];
+      return [
+        {
+          user_id: userId,
+          word_id: wordId,
+          context_sentence: w.example_de,
+          context_translation: w.example_en,
+          source: "generated",
+        },
+      ];
+    });
+    const { error: cardErr } = await supabase
+      .from("user_words")
+      .upsert(cardRows, { onConflict: "user_id,word_id", ignoreDuplicates: true });
+    if (cardErr) throw cardErr;
+  }, []);
+
+  const load = useCallback(
+    async (forceGenerate = false) => {
+      setPhase("loading");
+      setFlipped(false);
+      try {
+        const session = await ensureSession();
+        userIdRef.current = session.user.id;
+
+        let cards = forceGenerate ? [] : await fetchQueue();
+        if (cards.length === 0) {
+          await generateCards(session.user.id);
+          cards = await fetchQueue();
+        }
+        setQueue(cards);
+        setPhase(cards.length > 0 ? "review" : "done");
+      } catch (err) {
+        console.error("[foundations]", err);
+        setErrorMsg(
+          err instanceof Error && /anonymous/i.test(err.message)
+            ? 'Aktiviere "Allow anonymous sign-ins" in Supabase → Authentication.'
+            : "Laden fehlgeschlagen — stimmen die Supabase-Keys in .env.local?",
+        );
+        setPhase("error");
+      }
+    },
+    [fetchQueue, generateCards],
+  );
 
   useEffect(() => {
     load();
@@ -69,11 +150,30 @@ export function ReviewDemo() {
   const grade = useCallback(
     (rating: 1 | 2 | 3 | 4) => {
       if (!card || !flipped) return;
+      const updated = gradeCard(card, rating);
+
+      // Persist in the background — reviewing stays instant.
+      supabase
+        .from("user_words")
+        .update(updated)
+        .eq("id", card.id)
+        .then(({ error }) => error && console.error("[srs update]", error));
+      supabase
+        .from("review_logs")
+        .insert({
+          user_word_id: card.id,
+          user_id: userIdRef.current,
+          rating,
+          state_before: card.state,
+        })
+        .then(({ error }) => error && console.error("[review log]", error));
+
       setFlipped(false);
       setQueue((prev) => {
-        const [current, ...rest] = prev;
-        // "Again" requeues the card at the end; everything else retires it.
-        const next = rating === 1 ? [...rest, { ...current, isReview: true }] : rest;
+        const rest = prev.slice(1);
+        // FSRS may schedule the card again within minutes (learning steps) —
+        // keep those in this session's queue.
+        const next = isDueSoon(updated.due) ? [...rest, { ...card, ...updated }] : rest;
         if (next.length === 0) setPhase("done");
         return next;
       });
@@ -95,8 +195,8 @@ export function ReviewDemo() {
     return () => window.removeEventListener("keydown", onKey);
   }, [flip, grade, flipped]);
 
-  const newCount = queue.filter((c) => !c.isReview).length;
-  const reviewCount = queue.filter((c) => c.isReview).length;
+  const newCount = queue.filter((c) => c.state === 0).length;
+  const reviewCount = queue.length - newCount;
 
   return (
     <div className="flex h-full flex-col">
@@ -111,14 +211,14 @@ export function ReviewDemo() {
 
       <div className="flex flex-1 flex-col items-center justify-center gap-8 px-6">
         {phase === "loading" && (
-          <p className="text-sm text-muted">Wörter werden generiert …</p>
+          <p className="text-sm text-muted">Karten werden geladen …</p>
         )}
 
         {phase === "error" && (
-          <div className="flex flex-col items-center gap-4">
-            <p className="text-sm text-muted">Generierung fehlgeschlagen.</p>
+          <div className="flex max-w-sm flex-col items-center gap-4 text-center">
+            <p className="text-sm text-muted">{errorMsg}</p>
             <button
-              onClick={load}
+              onClick={() => load()}
               className="rounded-lg border border-border px-4 py-2 text-sm transition-colors hover:border-border-strong"
             >
               Nochmal versuchen
@@ -128,12 +228,12 @@ export function ReviewDemo() {
 
         {phase === "done" && (
           <div className="flex flex-col items-center gap-4">
-            <p className="text-sm">Fertig.</p>
+            <p className="text-sm">Fertig. Alles ist gelernt.</p>
             <button
-              onClick={load}
+              onClick={() => load(true)}
               className="rounded-lg border border-border px-4 py-2 text-sm text-muted transition-colors hover:border-border-strong hover:text-foreground"
             >
-              Neue Wörter
+              Neue Wörter generieren
             </button>
           </div>
         )}
@@ -175,12 +275,16 @@ export function ReviewDemo() {
                     </span>
                   </div>
                   <p className="text-base text-foreground">{card.meaning_en}</p>
-                  <div className="mt-2 border-t border-border pt-4">
-                    <p className="text-sm leading-relaxed">{card.example_de}</p>
-                    <p className="mt-1 text-xs leading-relaxed text-muted">
-                      {card.example_en}
-                    </p>
-                  </div>
+                  {card.context_sentence && (
+                    <div className="mt-2 border-t border-border pt-4">
+                      <p className="text-sm leading-relaxed">{card.context_sentence}</p>
+                      {card.context_translation && (
+                        <p className="mt-1 text-xs leading-relaxed text-muted">
+                          {card.context_translation}
+                        </p>
+                      )}
+                    </div>
+                  )}
                 </>
               )}
             </button>
