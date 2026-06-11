@@ -8,7 +8,7 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "FLEUN",
+  title: "FLUEN",
   description: "Deutsch lernen. Nichts sonst.",
 };
 
@@ -23,7 +23,7 @@ export default function RootLayout({
         {/* Apply saved theme before first paint to avoid a flash */}
         <script
           dangerouslySetInnerHTML={{
-            __html: `try{if(localStorage.getItem("fleun:theme")==="dark")document.documentElement.classList.add("dark")}catch(e){}`,
+            __html: `try{if(localStorage.getItem("fluen:theme")==="dark")document.documentElement.classList.add("dark")}catch(e){}`,
           }}
         />
         {children}

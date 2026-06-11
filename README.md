@@ -1,4 +1,4 @@
-# FLEUN
+# FLUEN
 
 Minimalist German learning. Three methodologies, one dashboard:
 

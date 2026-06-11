@@ -1,7 +1,8 @@
 import { ai, CHAT_MODEL } from "@/lib/ai";
+import { aiErrorResponse } from "@/lib/ai-errors";
 import { gateAiRequest } from "@/lib/guest-limits";
 
-const COACH_SYSTEM = `You are FLEUN's German conversation partner.
+const COACH_SYSTEM = `You are FLUEN's German conversation partner.
 
 Rules:
 - Reply ONLY in German, calibrated slightly above the learner's level (i+1).
@@ -26,20 +27,31 @@ export async function POST(req: Request) {
   const { messages } = (await req.json()) as { messages: ChatTurn[] };
 
   if (!process.env.GEMINI_API_KEY) {
-    return new Response(
-      "GEMINI_API_KEY fehlt auf dem Server — Umgebungsvariable setzen und neu deployen.",
+    return Response.json(
+      { error: "GEMINI_API_KEY fehlt auf dem Server — Umgebungsvariable setzen und neu deployen." },
       { status: 502 },
     );
   }
 
-  const stream = await ai.models.generateContentStream({
-    model: CHAT_MODEL,
-    config: { systemInstruction: COACH_SYSTEM, maxOutputTokens: 256 },
-    contents: messages.map((m) => ({
-      role: m.role === "assistant" ? "model" : "user",
-      parts: [{ text: m.content }],
-    })),
-  });
+  let stream;
+  try {
+    stream = await ai.models.generateContentStream({
+      model: CHAT_MODEL,
+      config: {
+        systemInstruction: COACH_SYSTEM,
+        // Thinking would eat the small output budget before any text.
+        thinkingConfig: { thinkingBudget: 0 },
+        maxOutputTokens: 256,
+      },
+      contents: messages.map((m) => ({
+        role: m.role === "assistant" ? "model" : "user",
+        parts: [{ text: m.content }],
+      })),
+    });
+  } catch (err) {
+    console.error("[/api/chat]", err);
+    return aiErrorResponse(err, "Antwort fehlgeschlagen — versuch es nochmal.");
+  }
 
   // The model accepted the request — count it against the guest quota.
   await gate.commit();

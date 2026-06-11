@@ -14,7 +14,7 @@ export function ThemeToggle() {
   const toggle = () => {
     const next = !dark;
     document.documentElement.classList.toggle("dark", next);
-    localStorage.setItem("fleun:theme", next ? "dark" : "light");
+    localStorage.setItem("fluen:theme", next ? "dark" : "light");
     setDark(next);
   };
 

@@ -51,7 +51,7 @@ export function Sidebar() {
     <aside className="flex h-full w-56 shrink-0 flex-col border-r border-border bg-surface">
       <div className="flex h-14 items-center px-5">
         <Link href="/dashboard" className="text-sm font-semibold tracking-[0.18em]">
-          FLEUN
+          FLUEN
         </Link>
       </div>
 

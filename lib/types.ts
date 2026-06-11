@@ -39,8 +39,18 @@ export interface Story {
   lines: StoryLine[];
 }
 
-export type ImmerseLevel = "beginner" | "intermediate" | "advanced";
+export type ImmerseLevel = "A1" | "A2" | "B1" | "B2" | "C1";
 export type ImmerseKind = "story" | "dialog";
+
+/** A generated story/dialog persisted in `immerse_texts`. */
+export interface SavedText {
+  id: string;
+  kind: ImmerseKind;
+  level: ImmerseLevel;
+  title: string;
+  lines: StoryLine[];
+  created_at: string;
+}
 
 /** Result of clicking a word in Immerse (the Bridge). */
 export interface WordDefinition {

@@ -1,4 +1,4 @@
-# FLEUN — Architecture & Product Design
+# FLUEN — Architecture & Product Design
 
 > German-only language learning. Three methodologies, one dashboard, zero gamified bloat.
 > SRS for foundations · Comprehensible Input for immersion · AI Coach for output.

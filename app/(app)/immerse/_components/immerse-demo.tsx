@@ -1,13 +1,15 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
-import { Plus, Check, Sparkles } from "lucide-react";
+import { Plus, Check, Sparkles, History, Trash2 } from "lucide-react";
 import { supabase, ensureSession } from "@/lib/supabase";
 import type {
   ImmerseKind,
   ImmerseLevel,
+  SavedText,
   Story,
+  StoryLine,
   WordDefinition,
 } from "@/lib/types";
 
@@ -22,9 +24,11 @@ interface PopoverState {
 }
 
 const LEVELS: { id: ImmerseLevel; label: string }[] = [
-  { id: "beginner", label: "Beginner" },
-  { id: "intermediate", label: "Intermediate" },
-  { id: "advanced", label: "Advanced" },
+  { id: "A1", label: "A1" },
+  { id: "A2", label: "A2" },
+  { id: "B1", label: "B1" },
+  { id: "B2", label: "B2" },
+  { id: "C1", label: "C1" },
 ];
 
 const KINDS: { id: ImmerseKind; label: string }[] = [
@@ -33,14 +37,58 @@ const KINDS: { id: ImmerseKind; label: string }[] = [
 ];
 
 export function ImmerseDemo() {
-  const [level, setLevel] = useState<ImmerseLevel>("beginner");
+  const [level, setLevel] = useState<ImmerseLevel>("A1");
   const [kind, setKind] = useState<ImmerseKind>("story");
   const [showEnglish, setShowEnglish] = useState(false);
   const [story, setStory] = useState<Story | null>(null);
+  const [currentId, setCurrentId] = useState<string | null>(null);
+  const [saved, setSaved] = useState<SavedText[]>([]);
+  const [showHistory, setShowHistory] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [limitMsg, setLimitMsg] = useState<string | null>(null);
   const [popover, setPopover] = useState<PopoverState | null>(null);
+
+  // Resume: load saved texts and show the most recent one.
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      const { data } = await supabase
+        .from("immerse_texts")
+        .select("id, kind, level, title, lines, created_at")
+        .order("created_at", { ascending: false })
+        .limit(20);
+      if (cancelled || !data?.length) return;
+      const texts = data as SavedText[];
+      setSaved(texts);
+      setStory({ title: texts[0].title, lines: texts[0].lines });
+      setCurrentId(texts[0].id);
+      setLevel(texts[0].level);
+      setKind(texts[0].kind);
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const openSaved = (t: SavedText) => {
+    setStory({ title: t.title, lines: t.lines });
+    setCurrentId(t.id);
+    setLevel(t.level);
+    setKind(t.kind);
+    setShowHistory(false);
+    setError(null);
+  };
+
+  const deleteSaved = async (id: string) => {
+    setSaved((prev) => prev.filter((t) => t.id !== id));
+    if (id === currentId) {
+      setStory(null);
+      setCurrentId(null);
+    }
+    const { error } = await supabase.from("immerse_texts").delete().eq("id", id);
+    if (error) console.error("[immerse delete]", error);
+  };
 
   // Generation costs tokens, so it only ever runs on an explicit click —
   // never on mount, never when switching level or kind.
@@ -65,6 +113,8 @@ export function ImmerseDemo() {
       }
       const data = await res.json();
       setStory(data.story);
+      setCurrentId(null);
+      await persist(data.story);
     } catch (err) {
       setError(
         err instanceof Error && err.message.length > 4
@@ -73,6 +123,29 @@ export function ImmerseDemo() {
       );
     } finally {
       setLoading(false);
+    }
+  };
+
+  // Persisting is best-effort: a failed save never hides the fresh text.
+  const persist = async (s: Story) => {
+    try {
+      const session = await ensureSession();
+      const { data, error } = await supabase
+        .from("immerse_texts")
+        .insert({
+          user_id: session.user.id,
+          kind,
+          level,
+          title: s.title,
+          lines: s.lines,
+        })
+        .select("id, kind, level, title, lines, created_at")
+        .single();
+      if (error || !data) throw error ?? new Error("insert failed");
+      setCurrentId(data.id);
+      setSaved((prev) => [data as SavedText, ...prev]);
+    } catch (err) {
+      console.error("[immerse save]", err);
     }
   };
 
@@ -164,20 +237,55 @@ export function ImmerseDemo() {
     }
   };
 
+  const renderTokens = (line: StoryLine) =>
+    line.text_de.split(/(\s+)/).map((token, j) =>
+      token.trim() ? (
+        <button
+          key={j}
+          onClick={(e) => onWordClick(e, token, line.text_de)}
+          className="rounded-sm transition-colors hover:bg-accent-soft hover:text-accent"
+        >
+          {token}
+        </button>
+      ) : (
+        token
+      ),
+    );
+
+  // Dialogs render as a two-sided conversation: the first speaker sits
+  // on the left, the second on the right.
+  const isDialog = story?.lines.some((l) => l.speaker) ?? false;
+  const rightSpeaker = isDialog
+    ? ([...new Set(story!.lines.map((l) => l.speaker).filter(Boolean))][1] ?? null)
+    : null;
+
   return (
     <div className="flex h-full flex-col" onClick={() => setPopover(null)}>
       <header className="flex h-14 shrink-0 items-center justify-between border-b border-border px-6">
         <h1 className="text-sm font-medium">Immerse</h1>
-        <button
-          onClick={() => setShowEnglish((v) => !v)}
-          className={`rounded-full border px-2.5 py-1 text-xs transition-colors ${
-            showEnglish
-              ? "border-accent/40 text-accent"
-              : "border-border text-muted hover:border-border-strong"
-          }`}
-        >
-          Übersetzung
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => setShowHistory((v) => !v)}
+            className={`flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs transition-colors ${
+              showHistory
+                ? "border-accent/40 text-accent"
+                : "border-border text-muted hover:border-border-strong"
+            }`}
+          >
+            <History size={12} strokeWidth={2} />
+            Verlauf
+          </button>
+          <button
+            onClick={() => setShowEnglish((v) => !v)}
+            className={`rounded-full border px-2.5 py-1 text-xs transition-colors ${
+              showEnglish
+                ? "border-accent/40 text-accent"
+                : "border-border text-muted hover:border-border-strong"
+            }`}
+          >
+            Übersetzung
+          </button>
+        </div>
       </header>
 
       {/* Controls — switching only sets options; generation is the button. */}
@@ -197,6 +305,48 @@ export function ImmerseDemo() {
       {/* Content */}
       <div className="flex-1 overflow-y-auto">
         <div className="mx-auto max-w-2xl px-6 py-10">
+          {showHistory && (
+            <div className="mb-8 rounded-xl border border-border">
+              <p className="border-b border-border px-4 py-2.5 text-xs font-medium text-muted">
+                Gespeicherte Texte
+              </p>
+              {saved.length === 0 ? (
+                <p className="px-4 py-3 text-xs text-muted">
+                  Noch nichts gespeichert.
+                </p>
+              ) : (
+                <ul>
+                  {saved.map((t) => (
+                    <li
+                      key={t.id}
+                      className="group flex items-center gap-2 border-b border-border px-2 py-1 last:border-b-0"
+                    >
+                      <button
+                        onClick={() => openSaved(t)}
+                        className={`min-w-0 flex-1 rounded-md px-2 py-1.5 text-left transition-colors hover:bg-surface-raised ${
+                          t.id === currentId ? "text-accent" : ""
+                        }`}
+                      >
+                        <span className="block truncate text-sm">{t.title}</span>
+                        <span className="text-xs text-muted">
+                          {t.kind === "dialog" ? "Dialog" : "Geschichte"} · {t.level} ·{" "}
+                          {new Date(t.created_at).toLocaleDateString("de-DE")}
+                        </span>
+                      </button>
+                      <button
+                        onClick={() => deleteSaved(t.id)}
+                        aria-label="Löschen"
+                        className="rounded-md p-2 text-muted opacity-0 transition-opacity hover:text-foreground group-hover:opacity-100"
+                      >
+                        <Trash2 size={14} strokeWidth={2} />
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+          )}
+
           {loading && <p className="text-sm text-muted">Wird generiert …</p>}
 
           {error && !loading && <p className="text-sm text-muted">{error}</p>}
@@ -213,7 +363,7 @@ export function ImmerseDemo() {
             </div>
           )}
 
-          {!story && !loading && !error && !limitMsg && (
+          {!story && !loading && !error && !limitMsg && !showHistory && (
             <div className="flex flex-col items-center gap-3 pt-16 text-center">
               <p className="text-sm">Noch kein Text.</p>
               <p className="max-w-xs text-xs leading-relaxed text-muted">
@@ -229,37 +379,58 @@ export function ImmerseDemo() {
               <p className="mt-1 text-xs text-muted">
                 Tipp auf ein Wort, um es zu lernen.
               </p>
-              <div className="mt-8 flex flex-col gap-5">
-                {story.lines.map((line, i) => (
-                  <div key={i}>
-                    <p className="text-[15px] leading-relaxed">
-                      {line.speaker && (
-                        <span className="mr-2 text-xs font-medium text-accent">
-                          {line.speaker}
-                        </span>
-                      )}
-                      {line.text_de.split(/(\s+)/).map((token, j) =>
-                        token.trim() ? (
-                          <button
-                            key={j}
-                            onClick={(e) => onWordClick(e, token, line.text_de)}
-                            className="rounded-sm transition-colors hover:bg-accent-soft hover:text-accent"
-                          >
-                            {token}
-                          </button>
-                        ) : (
-                          token
-                        )
-                      )}
-                    </p>
-                    {showEnglish && (
-                      <p lang="en" className="mt-1 text-xs leading-relaxed text-muted">
-                        {line.text_en}
+
+              {isDialog ? (
+                <div className="mt-8 flex flex-col gap-3">
+                  {story.lines.map((line, i) => {
+                    const right = line.speaker === rightSpeaker;
+                    const newSpeaker = line.speaker !== story.lines[i - 1]?.speaker;
+                    return (
+                      <div
+                        key={i}
+                        className={`flex flex-col ${right ? "items-end" : "items-start"}`}
+                      >
+                        {line.speaker && newSpeaker && (
+                          <span className="mb-1 px-1 text-xs font-medium text-accent">
+                            {line.speaker}
+                          </span>
+                        )}
+                        <div
+                          className={`max-w-[80%] rounded-2xl px-4 py-2.5 ${
+                            right
+                              ? "rounded-br-md bg-accent-soft"
+                              : "rounded-bl-md border border-border bg-surface-raised"
+                          }`}
+                        >
+                          <p className="text-[15px] leading-relaxed">
+                            {renderTokens(line)}
+                          </p>
+                          {showEnglish && (
+                            <p lang="en" className="mt-1 text-xs leading-relaxed text-muted">
+                              {line.text_en}
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              ) : (
+                <div className="mt-8 flex flex-col gap-5">
+                  {story.lines.map((line, i) => (
+                    <div key={i}>
+                      <p className="text-[15px] leading-relaxed">
+                        {renderTokens(line)}
                       </p>
-                    )}
-                  </div>
-                ))}
-              </div>
+                      {showEnglish && (
+                        <p lang="en" className="mt-1 text-xs leading-relaxed text-muted">
+                          {line.text_en}
+                        </p>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
             </article>
           )}
         </div>

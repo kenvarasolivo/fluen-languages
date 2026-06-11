@@ -1,5 +1,6 @@
 import { Type } from "@google/genai";
 import { ai, CHAT_MODEL } from "@/lib/ai";
+import { aiErrorResponse } from "@/lib/ai-errors";
 import { gateAiRequest } from "@/lib/guest-limits";
 
 const WORDS_SCHEMA = {
@@ -55,6 +56,10 @@ export async function POST(req: Request) {
       config: {
         responseMimeType: "application/json",
         responseSchema: WORDS_SCHEMA,
+        // Vocabulary lists need no hidden reasoning — thinking tokens
+        // would only burn free-tier quota and output budget.
+        thinkingConfig: { thinkingBudget: 0 },
+        maxOutputTokens: 8192,
       },
       contents: `Create ${count} useful German vocabulary words for a ${level}-level
 learner. Mix parts of speech (mostly nouns and verbs, a few adjectives or
@@ -69,13 +74,9 @@ may itself be A2).`,
     return Response.json({ words });
   } catch (err) {
     console.error("[/api/foundations]", err);
-    const msg = err instanceof Error ? err.message : String(err);
-    const quotaHit = /RESOURCE_EXHAUSTED|"code"\s*:\s*429/.test(msg);
-    const error = !process.env.GEMINI_API_KEY
-      ? "GEMINI_API_KEY fehlt auf dem Server — in Vercel unter Settings → Environment Variables setzen und neu deployen."
-      : quotaHit
-        ? "Gemini-Tageslimit erreicht (Free Tier: 20 Anfragen/Tag pro Modell). Morgen wieder verfügbar — oder Billing in Google AI Studio aktivieren."
-        : "Wörter konnten nicht generiert werden (siehe Vercel Function Logs).";
-    return Response.json({ error }, { status: quotaHit ? 429 : 502 });
+    return aiErrorResponse(
+      err,
+      "Wörter konnten nicht generiert werden (siehe Vercel Function Logs).",
+    );
   }
 }

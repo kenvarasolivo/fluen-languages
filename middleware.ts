@@ -35,8 +35,11 @@ export async function middleware(request: NextRequest) {
   } = await supabase.auth.getUser();
 
   const isLoginPage = request.nextUrl.pathname.startsWith("/login");
+  // Public pages reachable without a session (legal pages, etc.).
+  const isPublicPage =
+    isLoginPage || request.nextUrl.pathname.startsWith("/impressum");
 
-  if (!user && !isLoginPage) {
+  if (!user && !isPublicPage) {
     const url = request.nextUrl.clone();
     url.pathname = "/login";
     return NextResponse.redirect(url);

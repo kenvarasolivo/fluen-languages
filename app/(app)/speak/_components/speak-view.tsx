@@ -1,26 +1,100 @@
 "use client";
 
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
+import { Trash2 } from "lucide-react";
+import { supabase, ensureSession } from "@/lib/supabase";
 import type { CoachMessage, VoiceState } from "@/lib/types";
 import { ChatLog } from "./chat-log";
 import { Composer } from "./composer";
 import { VoicePanel } from "./voice-panel";
 
+const WELCOME: CoachMessage = {
+  id: "welcome",
+  role: "assistant",
+  content: "Hallo! Worüber möchtest du heute sprechen?",
+};
+
 export function SpeakView() {
-  const [messages, setMessages] = useState<CoachMessage[]>([
-    {
-      id: "welcome",
-      role: "assistant",
-      content: "Hallo! Worüber möchtest du heute sprechen?",
-    },
-  ]);
+  const [messages, setMessages] = useState<CoachMessage[]>([WELCOME]);
   const [isStreaming, setIsStreaming] = useState(false);
   const [voiceState, setVoiceState] = useState<VoiceState>("idle");
   const [limitMsg, setLimitMsg] = useState<string | null>(null);
-  const idRef = useRef(0);
+  // The chat session row is created lazily on the first message and
+  // reused afterwards, so empty visits never write to the database.
+  const sessionIdRef = useRef<string | null>(null);
+  const [hasSession, setHasSession] = useState(false);
 
-  const nextId = () => `m${++idRef.current}`;
+  // Resume the most recent conversation instead of starting empty.
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      const { data: session } = await supabase
+        .from("chat_sessions")
+        .select("id")
+        .order("started_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      if (cancelled || !session) return;
+
+      const { data: rows } = await supabase
+        .from("chat_messages")
+        .select("id, role, content, correction")
+        .eq("session_id", session.id)
+        .order("created_at", { ascending: true });
+      if (cancelled || !rows?.length) return;
+
+      sessionIdRef.current = session.id;
+      setHasSession(true);
+      setMessages([WELCOME, ...(rows as CoachMessage[])]);
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const ensureChatSession = useCallback(async () => {
+    if (sessionIdRef.current) return sessionIdRef.current;
+    const auth = await ensureSession();
+    const { data, error } = await supabase
+      .from("chat_sessions")
+      .insert({ user_id: auth.user.id, mode: "text" })
+      .select("id")
+      .single();
+    if (error || !data) throw error ?? new Error("session insert failed");
+    sessionIdRef.current = data.id;
+    setHasSession(true);
+    return data.id;
+  }, []);
+
+  const persistMessage = useCallback(
+    async (msg: CoachMessage) => {
+      try {
+        const sessionId = await ensureChatSession();
+        const auth = await ensureSession();
+        await supabase.from("chat_messages").insert({
+          id: msg.id,
+          session_id: sessionId,
+          user_id: auth.user.id,
+          role: msg.role,
+          content: msg.content,
+        });
+      } catch (err) {
+        console.error("[chat save]", err); // saving is best-effort
+      }
+    },
+    [ensureChatSession],
+  );
+
+  const deleteConversation = useCallback(async () => {
+    const id = sessionIdRef.current;
+    sessionIdRef.current = null;
+    setHasSession(false);
+    setMessages([WELCOME]);
+    if (!id) return;
+    const { error } = await supabase.from("chat_sessions").delete().eq("id", id);
+    if (error) console.error("[chat delete]", error);
+  }, []);
 
   const speakReply = useCallback((text: string) => {
     if (typeof speechSynthesis === "undefined" || !text) return;
@@ -36,8 +110,12 @@ export function SpeakView() {
 
   const sendMessage = useCallback(
     async (text: string, fromVoice = false) => {
-      const userMsg: CoachMessage = { id: nextId(), role: "user", content: text };
-      const assistantId = nextId();
+      const userMsg: CoachMessage = {
+        id: crypto.randomUUID(),
+        role: "user",
+        content: text,
+      };
+      const assistantId = crypto.randomUUID();
 
       setMessages((prev) => [
         ...prev,
@@ -46,6 +124,8 @@ export function SpeakView() {
       ]);
       setIsStreaming(true);
 
+      const savedUser = persistMessage(userMsg);
+
       // Correction check runs in parallel — it never delays the reply.
       fetch("/api/correct", {
         method: "POST",
@@ -53,27 +133,32 @@ export function SpeakView() {
         body: JSON.stringify({ text }),
       })
         .then((res) => res.json())
-        .then(({ correction }) => {
+        .then(async ({ correction }) => {
           if (!correction) return;
           setMessages((prev) =>
             prev.map((m) => (m.id === userMsg.id ? { ...m, correction } : m)),
           );
+          // Wait for the row to exist before attaching the correction.
+          await savedUser;
+          await supabase
+            .from("chat_messages")
+            .update({ correction })
+            .eq("id", userMsg.id);
         })
         .catch(() => {}); // corrections are ambient; failure is silent
 
       try {
-        const history = [...messages, userMsg].map(({ role, content }) => ({
-          role,
-          content,
-        }));
+        const history = [...messages, userMsg]
+          .filter((m) => m.id !== "welcome")
+          .map(({ role, content }) => ({ role, content }));
         const res = await fetch("/api/chat", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ messages: history }),
         });
-        if (res.status === 403) {
+        if (!res.ok) {
           const body = await res.json().catch(() => null);
-          if (body?.code === "guest_limit") {
+          if (res.status === 403 && body?.code === "guest_limit") {
             setLimitMsg(body.error);
             setMessages((prev) =>
               prev.map((m) =>
@@ -84,8 +169,19 @@ export function SpeakView() {
             );
             return;
           }
+          // Show the server's message (e.g. "KI überlastet") instead of
+          // a generic connection error.
+          if (body?.error) {
+            setMessages((prev) =>
+              prev.map((m) =>
+                m.id === assistantId ? { ...m, content: body.error } : m,
+              ),
+            );
+            return;
+          }
+          throw new Error(`chat failed: ${res.status}`);
         }
-        if (!res.ok || !res.body) throw new Error(`chat failed: ${res.status}`);
+        if (!res.body) throw new Error("chat failed: empty body");
 
         const reader = res.body.getReader();
         const decoder = new TextDecoder();
@@ -102,6 +198,10 @@ export function SpeakView() {
           );
         }
 
+        if (full) {
+          await persistMessage({ id: assistantId, role: "assistant", content: full });
+        }
+
         // Voice mode: read the coach's reply aloud.
         if (fromVoice) speakReply(full);
       } catch {
@@ -116,7 +216,7 @@ export function SpeakView() {
         setIsStreaming(false);
       }
     },
-    [messages, speakReply],
+    [messages, persistMessage, speakReply],
   );
 
   return (
@@ -125,7 +225,19 @@ export function SpeakView() {
       <section className="flex min-w-0 flex-1 flex-col">
         <header className="flex h-14 shrink-0 items-center justify-between border-b border-border px-6">
           <h1 className="text-sm font-medium">Speak</h1>
-          <span className="text-xs text-muted">Gespräch · Deutsch B1</span>
+          <div className="flex items-center gap-3">
+            <span className="text-xs text-muted">Gespräch · Deutsch B1</span>
+            {hasSession && (
+              <button
+                onClick={deleteConversation}
+                aria-label="Gespräch löschen"
+                title="Gespräch löschen"
+                className="rounded-md p-1.5 text-muted transition-colors hover:text-foreground"
+              >
+                <Trash2 size={14} strokeWidth={2} />
+              </button>
+            )}
+          </div>
         </header>
 
         <ChatLog messages={messages} isStreaming={isStreaming} />

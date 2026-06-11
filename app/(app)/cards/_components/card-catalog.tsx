@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
+import { Trash2 } from "lucide-react";
 import { supabase, ensureSession } from "@/lib/supabase";
 
 interface CatalogCard {
@@ -40,6 +41,23 @@ export function CardCatalog() {
   const [phase, setPhase] = useState<Phase>("loading");
   const [cards, setCards] = useState<CatalogCard[]>([]);
   const [tab, setTab] = useState<string>("all");
+  // Two-step delete: first click arms the row, second click deletes.
+  const [confirmId, setConfirmId] = useState<string | null>(null);
+
+  const deleteCard = async (id: string) => {
+    if (confirmId !== id) {
+      setConfirmId(id);
+      return;
+    }
+    setConfirmId(null);
+    const prev = cards;
+    setCards((cs) => cs.filter((c) => c.id !== id)); // optimistic
+    const { error } = await supabase.from("user_words").delete().eq("id", id);
+    if (error) {
+      console.error("[cards delete]", error);
+      setCards(prev);
+    }
+  };
 
   useEffect(() => {
     (async () => {
@@ -175,7 +193,13 @@ export function CardCatalog() {
               ) : (
                 <ul className="flex flex-col divide-y divide-border">
                   {visible.map((c) => (
-                    <li key={c.id} className="flex items-baseline gap-4 py-3.5">
+                    <li
+                      key={c.id}
+                      className="group flex items-baseline gap-4 py-3.5"
+                      onMouseLeave={() =>
+                        setConfirmId((id) => (id === c.id ? null : id))
+                      }
+                    >
                       <div className="min-w-0 flex-1">
                         <p lang="de" className="text-sm font-medium">
                           {c.gender ? `${c.gender} ${c.lemma}` : c.lemma}
@@ -196,6 +220,23 @@ export function CardCatalog() {
                       <span className="w-20 shrink-0 text-right text-xs tabular-nums text-muted">
                         {formatDue(c.due)}
                       </span>
+                      <button
+                        onClick={() => deleteCard(c.id)}
+                        aria-label={
+                          confirmId === c.id ? "Löschen bestätigen" : "Karte löschen"
+                        }
+                        className={`shrink-0 self-center transition-colors ${
+                          confirmId === c.id
+                            ? "text-negative"
+                            : "text-muted opacity-0 hover:text-negative group-hover:opacity-100"
+                        }`}
+                      >
+                        {confirmId === c.id ? (
+                          <span className="text-xs font-medium">Löschen?</span>
+                        ) : (
+                          <Trash2 size={14} strokeWidth={1.75} />
+                        )}
+                      </button>
                     </li>
                   ))}
                 </ul>

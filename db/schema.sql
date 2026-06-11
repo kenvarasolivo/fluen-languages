@@ -1,5 +1,5 @@
 -- ============================================================
--- FLEUN — Database Schema (Supabase / Postgres)
+-- FLUEN — Database Schema (Supabase / Postgres)
 -- Paste this whole file into Supabase → SQL Editor → Run.
 -- Safe to re-run: drops and recreates everything.
 --
@@ -9,6 +9,7 @@
 
 drop trigger if exists on_auth_user_created on auth.users;
 drop function if exists public.handle_new_user();
+drop table if exists immerse_texts cascade;
 drop table if exists chat_messages cascade;
 drop table if exists chat_sessions cascade;
 drop table if exists user_media_progress cascade;
@@ -178,6 +179,21 @@ create table chat_messages (
 create index chat_messages_session_idx on chat_messages (session_id, created_at);
 
 -- ------------------------------------------------------------
+-- Saved Immerse texts (generated stories/dialogs, deletable)
+-- ------------------------------------------------------------
+create table immerse_texts (
+  id         uuid primary key default gen_random_uuid(),
+  user_id    uuid not null references profiles(id) on delete cascade,
+  kind       text not null check (kind in ('story','dialog')),
+  level      text not null check (level in ('A1','A2','B1','B2','C1')),
+  title      text not null,
+  lines      jsonb not null,          -- [{speaker, text_de, text_en}, ...]
+  created_at timestamptz not null default now()
+);
+
+create index immerse_texts_user_idx on immerse_texts (user_id, created_at desc);
+
+-- ------------------------------------------------------------
 -- Row Level Security
 -- ------------------------------------------------------------
 alter table profiles            enable row level security;
@@ -189,6 +205,7 @@ alter table media_cues          enable row level security;
 alter table user_media_progress enable row level security;
 alter table chat_sessions       enable row level security;
 alter table chat_messages       enable row level security;
+alter table immerse_texts       enable row level security;
 
 -- Own-row access for user data
 create policy "own profile"  on profiles            for all using (id = auth.uid());
@@ -197,6 +214,7 @@ create policy "own logs"     on review_logs         for all using (user_id = aut
 create policy "own progress" on user_media_progress for all using (user_id = auth.uid());
 create policy "own sessions" on chat_sessions       for all using (user_id = auth.uid());
 create policy "own messages" on chat_messages       for all using (user_id = auth.uid());
+create policy "own texts"    on immerse_texts       for all using (user_id = auth.uid());
 
 -- Dictionary: readable by all signed-in users; AI-generated entries
 -- may be inserted (but never modified/deleted) from the client.
