@@ -1,5 +1,6 @@
 import { Type } from "@google/genai";
 import { ai, CHAT_MODEL } from "@/lib/ai";
+import { gateAiRequest } from "@/lib/guest-limits";
 import type { ImmerseKind, ImmerseLevel } from "@/lib/types";
 
 const STORY_SCHEMA = {
@@ -36,6 +37,9 @@ const LEVEL_GUIDE: Record<ImmerseLevel, string> = {
 };
 
 export async function POST(req: Request) {
+  const gate = await gateAiRequest("immerse");
+  if (!gate.ok) return gate.response;
+
   try {
     const { kind = "story", level = "beginner" } = (await req
       .json()
@@ -61,12 +65,17 @@ learners can infer meaning from context.`,
 
     const story = response.text ? JSON.parse(response.text) : null;
     if (!story) throw new Error("empty response");
+    await gate.commit();
     return Response.json({ story });
   } catch (err) {
     console.error("[/api/immerse]", err);
-    return Response.json(
-      { error: "Inhalt konnte nicht generiert werden." },
-      { status: 502 },
-    );
+    const msg = err instanceof Error ? err.message : String(err);
+    const quotaHit = /RESOURCE_EXHAUSTED|"code"\s*:\s*429/.test(msg);
+    const error = !process.env.GEMINI_API_KEY
+      ? "GEMINI_API_KEY fehlt auf dem Server — in Vercel unter Settings → Environment Variables setzen und neu deployen."
+      : quotaHit
+        ? "Gemini-Tageslimit erreicht (Free Tier: 20 Anfragen/Tag pro Modell). Morgen wieder verfügbar — oder Billing in Google AI Studio aktivieren."
+        : "Inhalt konnte nicht generiert werden (siehe Vercel Function Logs).";
+    return Response.json({ error }, { status: quotaHit ? 429 : 502 });
   }
 }

@@ -14,12 +14,15 @@ export interface CoachMessage {
 
 export type VoiceState = "idle" | "listening" | "speaking";
 
+export type CefrLevel = "A1" | "A2" | "B1" | "B2" | "C1" | "C2";
+
 /** AI-generated vocabulary card (Foundations demo). */
 export interface DemoWord {
   lemma: string;
   gender: "der" | "die" | "das" | null;
   pos: string;
   meaning_en: string;
+  cefr_level: CefrLevel | string;
   example_de: string;
   example_en: string;
 }
@@ -45,4 +48,5 @@ export interface WordDefinition {
   gender: "der" | "die" | "das" | null;
   pos: string;
   meaning_en: string;
+  cefr_level?: CefrLevel | string;
 }

@@ -1,5 +1,6 @@
 import { Type } from "@google/genai";
 import { ai, LITE_MODEL } from "@/lib/ai";
+import { createSupabaseServer } from "@/lib/supabase-server";
 import type { Correction } from "@/lib/types";
 
 const CORRECTION_SYSTEM = `You check a German learner's message for errors
@@ -25,6 +26,12 @@ const CORRECTION_SCHEMA = {
 export async function POST(req: Request) {
   // Corrections are ambient — any failure (rate limit, malformed JSON)
   // degrades to "no correction" instead of a 500.
+  const supabase = await createSupabaseServer();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return Response.json({ correction: null }, { status: 401 });
+
   try {
     const { text } = (await req.json()) as { text: string };
 

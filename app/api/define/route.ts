@@ -1,5 +1,6 @@
 import { Type } from "@google/genai";
 import { ai, LITE_MODEL } from "@/lib/ai";
+import { createSupabaseServer } from "@/lib/supabase-server";
 
 const DEFINITION_SCHEMA = {
   type: Type.OBJECT,
@@ -18,11 +19,23 @@ const DEFINITION_SCHEMA = {
       type: Type.STRING,
       description: "Short English meaning as used in the given sentence",
     },
+    cefr_level: {
+      type: Type.STRING,
+      description: "CEFR difficulty of the word: A1 | A2 | B1 | B2 | C1 | C2",
+    },
   },
-  required: ["lemma", "gender", "pos", "meaning_en"],
+  required: ["lemma", "gender", "pos", "meaning_en", "cefr_level"],
 };
 
 export async function POST(req: Request) {
+  const supabase = await createSupabaseServer();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) {
+    return Response.json({ error: "Nicht angemeldet." }, { status: 401 });
+  }
+
   try {
     const { word, sentence } = (await req.json()) as {
       word: string;

@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useRef, useState } from "react";
+import Link from "next/link";
 import type { CoachMessage, VoiceState } from "@/lib/types";
 import { ChatLog } from "./chat-log";
 import { Composer } from "./composer";
@@ -16,6 +17,7 @@ export function SpeakView() {
   ]);
   const [isStreaming, setIsStreaming] = useState(false);
   const [voiceState, setVoiceState] = useState<VoiceState>("idle");
+  const [limitMsg, setLimitMsg] = useState<string | null>(null);
   const idRef = useRef(0);
 
   const nextId = () => `m${++idRef.current}`;
@@ -69,6 +71,20 @@ export function SpeakView() {
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ messages: history }),
         });
+        if (res.status === 403) {
+          const body = await res.json().catch(() => null);
+          if (body?.code === "guest_limit") {
+            setLimitMsg(body.error);
+            setMessages((prev) =>
+              prev.map((m) =>
+                m.id === assistantId
+                  ? { ...m, content: "Das Gast-Limit ist erreicht — erstelle ein Konto, um weiterzusprechen." }
+                  : m,
+              ),
+            );
+            return;
+          }
+        }
         if (!res.ok || !res.body) throw new Error(`chat failed: ${res.status}`);
 
         const reader = res.body.getReader();
@@ -114,7 +130,19 @@ export function SpeakView() {
 
         <ChatLog messages={messages} isStreaming={isStreaming} />
 
-        <Composer onSend={sendMessage} disabled={isStreaming} />
+        {limitMsg ? (
+          <div className="flex shrink-0 flex-col items-center gap-3 border-t border-border px-6 py-5 text-center">
+            <p className="text-sm text-muted">{limitMsg}</p>
+            <Link
+              href="/login"
+              className="rounded-lg bg-accent px-4 py-2 text-sm font-medium text-white"
+            >
+              Konto erstellen
+            </Link>
+          </div>
+        ) : (
+          <Composer onSend={sendMessage} disabled={isStreaming} />
+        )}
       </section>
 
       {/* Right — voice mode */}

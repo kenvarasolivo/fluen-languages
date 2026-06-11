@@ -29,6 +29,13 @@ create table profiles (
   cefr_level      text not null default 'B1'
                   check (cefr_level in ('A1','A2','B1','B2','C1','C2')),
   new_cards_per_day int not null default 10,
+
+  -- Guest (anonymous-session) usage counters. Only enforced while the
+  -- user is anonymous; registered accounts are unlimited.
+  usage_foundations int not null default 0,
+  usage_immerse     int not null default 0,
+  usage_chat        int not null default 0,
+
   created_at      timestamptz not null default now()
 );
 

@@ -1,4 +1,5 @@
 import { ai, CHAT_MODEL } from "@/lib/ai";
+import { gateAiRequest } from "@/lib/guest-limits";
 
 const COACH_SYSTEM = `You are FLEUN's German conversation partner.
 
@@ -18,7 +19,18 @@ interface ChatTurn {
 }
 
 export async function POST(req: Request) {
+  // One request = one user message — that's what the guest quota counts.
+  const gate = await gateAiRequest("chat");
+  if (!gate.ok) return gate.response;
+
   const { messages } = (await req.json()) as { messages: ChatTurn[] };
+
+  if (!process.env.GEMINI_API_KEY) {
+    return new Response(
+      "GEMINI_API_KEY fehlt auf dem Server — Umgebungsvariable setzen und neu deployen.",
+      { status: 502 },
+    );
+  }
 
   const stream = await ai.models.generateContentStream({
     model: CHAT_MODEL,
@@ -28,6 +40,9 @@ export async function POST(req: Request) {
       parts: [{ text: m.content }],
     })),
   });
+
+  // The model accepted the request — count it against the guest quota.
+  await gate.commit();
 
   const encoder = new TextEncoder();
   const body = new ReadableStream<Uint8Array>({

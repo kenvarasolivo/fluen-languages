@@ -4,8 +4,9 @@ import { GoogleGenAI } from "@google/genai";
 export const ai = new GoogleGenAI({});
 
 /**
- * Free-tier strategy: gemini-3.5-flash only allows ~20 requests/day free,
- * so we stay on the 2.5 family which has far higher free limits.
+ * Free-tier quotas are PER MODEL per day (gemini-2.5-flash is currently
+ * 20 requests/day free — same as 3.5). Spreading calls across flash and
+ * flash-lite doubles the daily budget.
  * Check yours at https://aistudio.google.com/rate-limit
  */
 

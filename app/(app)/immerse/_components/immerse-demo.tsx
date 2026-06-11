@@ -1,7 +1,8 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { Plus, Check, RefreshCw } from "lucide-react";
+import { useState } from "react";
+import Link from "next/link";
+import { Plus, Check, Sparkles } from "lucide-react";
 import { supabase, ensureSession } from "@/lib/supabase";
 import type {
   ImmerseKind,
@@ -37,33 +38,43 @@ export function ImmerseDemo() {
   const [showEnglish, setShowEnglish] = useState(false);
   const [story, setStory] = useState<Story | null>(null);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [limitMsg, setLimitMsg] = useState<string | null>(null);
   const [popover, setPopover] = useState<PopoverState | null>(null);
 
-  const generate = async (l = level, k = kind) => {
+  // Generation costs tokens, so it only ever runs on an explicit click —
+  // never on mount, never when switching level or kind.
+  const generate = async () => {
     setLoading(true);
-    setError(false);
+    setError(null);
+    setLimitMsg(null);
     setPopover(null);
     try {
       const res = await fetch("/api/immerse", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ level: l, kind: k }),
+        body: JSON.stringify({ level, kind }),
       });
-      if (!res.ok) throw new Error(String(res.status));
+      if (!res.ok) {
+        const body = await res.json().catch(() => null);
+        if (body?.code === "guest_limit") {
+          setLimitMsg(body.error);
+          return;
+        }
+        throw new Error(body?.error ?? String(res.status));
+      }
       const data = await res.json();
       setStory(data.story);
-    } catch {
-      setError(true);
+    } catch (err) {
+      setError(
+        err instanceof Error && err.message.length > 4
+          ? err.message
+          : "Generierung fehlgeschlagen — versuch es nochmal.",
+      );
     } finally {
       setLoading(false);
     }
   };
-
-  useEffect(() => {
-    generate();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
 
   const onWordClick = async (
     e: React.MouseEvent,
@@ -108,12 +119,23 @@ export function ImmerseDemo() {
         d.gender === "der" || d.gender === "die" || d.gender === "das"
           ? d.gender
           : null;
+      const cefr =
+        d.cefr_level && ["A1", "A2", "B1", "B2", "C1", "C2"].includes(d.cefr_level)
+          ? d.cefr_level
+          : null;
 
       // Insert into the shared dictionary if missing, then read the id back.
       await supabase
         .from("words")
         .upsert(
-          { language: "de", lemma: d.lemma, pos, gender, meaning_en: d.meaning_en },
+          {
+            language: "de",
+            lemma: d.lemma,
+            pos,
+            gender,
+            meaning_en: d.meaning_en,
+            cefr_level: cefr,
+          },
           { onConflict: "language,lemma,pos", ignoreDuplicates: true },
         );
       const { data: word, error } = await supabase
@@ -158,17 +180,17 @@ export function ImmerseDemo() {
         </button>
       </header>
 
-      {/* Controls */}
+      {/* Controls — switching only sets options; generation is the button. */}
       <div className="flex shrink-0 flex-wrap items-center gap-2 border-b border-border px-6 py-3">
-        <Segmented options={LEVELS} value={level} onChange={(v) => { setLevel(v); generate(v, kind); }} />
-        <Segmented options={KINDS} value={kind} onChange={(v) => { setKind(v); generate(level, v); }} />
+        <Segmented options={LEVELS} value={level} onChange={setLevel} />
+        <Segmented options={KINDS} value={kind} onChange={setKind} />
         <button
-          onClick={() => generate()}
+          onClick={generate}
           disabled={loading}
-          className="ml-auto flex items-center gap-1.5 rounded-md border border-border px-2.5 py-1.5 text-xs text-muted transition-colors hover:border-border-strong hover:text-foreground disabled:opacity-40"
+          className="ml-auto flex items-center gap-1.5 rounded-md bg-accent px-3 py-1.5 text-xs font-medium text-white transition-opacity disabled:opacity-40"
         >
-          <RefreshCw size={12} strokeWidth={1.75} className={loading ? "animate-spin" : ""} />
-          Neu generieren
+          <Sparkles size={12} strokeWidth={2} />
+          {story ? "Neu generieren" : "Generieren"}
         </button>
       </div>
 
@@ -176,10 +198,29 @@ export function ImmerseDemo() {
       <div className="flex-1 overflow-y-auto">
         <div className="mx-auto max-w-2xl px-6 py-10">
           {loading && <p className="text-sm text-muted">Wird generiert …</p>}
-          {error && !loading && (
-            <p className="text-sm text-muted">
-              Generierung fehlgeschlagen — versuch es nochmal.
-            </p>
+
+          {error && !loading && <p className="text-sm text-muted">{error}</p>}
+
+          {limitMsg && !loading && (
+            <div className="flex flex-col items-start gap-3">
+              <p className="text-sm text-muted">{limitMsg}</p>
+              <Link
+                href="/login"
+                className="rounded-lg bg-accent px-4 py-2 text-sm font-medium text-white"
+              >
+                Konto erstellen
+              </Link>
+            </div>
+          )}
+
+          {!story && !loading && !error && !limitMsg && (
+            <div className="flex flex-col items-center gap-3 pt-16 text-center">
+              <p className="text-sm">Noch kein Text.</p>
+              <p className="max-w-xs text-xs leading-relaxed text-muted">
+                Wähl Niveau und Format, dann tippe auf <em>Generieren</em>.
+                Inhalte entstehen nur auf Klick — nie automatisch.
+              </p>
+            </div>
           )}
 
           {story && !loading && (

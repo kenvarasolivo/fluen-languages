@@ -1,12 +1,13 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Volume2 } from "lucide-react";
+import Link from "next/link";
+import { Sparkles, Volume2 } from "lucide-react";
 import { supabase, ensureSession } from "@/lib/supabase";
 import { gradeCard, isDueSoon, type SrsFields } from "@/lib/srs";
 import type { DemoWord } from "@/lib/types";
 
-type Phase = "loading" | "review" | "done" | "error";
+type Phase = "loading" | "empty" | "generating" | "review" | "done" | "error";
 
 interface QueueCard extends SrsFields {
   id: string; // user_words.id
@@ -21,6 +22,8 @@ interface QueueCard extends SrsFields {
 const SRS_COLUMNS =
   "id, state, due, stability, difficulty, elapsed_days, scheduled_days, reps, lapses, last_review, context_sentence, context_translation";
 
+class GuestLimitError extends Error {}
+
 function speakGerman(text: string) {
   if (typeof speechSynthesis === "undefined") return;
   speechSynthesis.cancel();
@@ -34,11 +37,16 @@ function sanitizeGender(g: string | null | undefined) {
   return g === "der" || g === "die" || g === "das" ? g : null;
 }
 
+function sanitizeLevel(l: string | null | undefined) {
+  return l && ["A1", "A2", "B1", "B2", "C1", "C2"].includes(l) ? l : null;
+}
+
 export function ReviewDemo() {
   const [phase, setPhase] = useState<Phase>("loading");
   const [queue, setQueue] = useState<QueueCard[]>([]);
   const [flipped, setFlipped] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
+  const [limitMsg, setLimitMsg] = useState<string | null>(null);
   const userIdRef = useRef<string | null>(null);
 
   const fetchQueue = useCallback(async (): Promise<QueueCard[]> => {
@@ -60,7 +68,11 @@ export function ReviewDemo() {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ level: "B1", count: 10 }),
     });
-    if (!res.ok) throw new Error("generation failed");
+    if (!res.ok) {
+      const body = await res.json().catch(() => null);
+      if (body?.code === "guest_limit") throw new GuestLimitError(body.error);
+      throw new Error(body?.error ?? "generation failed");
+    }
     const { words } = (await res.json()) as { words: DemoWord[] };
 
     // Dictionary rows are shared — insert only the missing ones, then
@@ -71,6 +83,7 @@ export function ReviewDemo() {
       pos: w.pos || "phrase",
       gender: sanitizeGender(w.gender),
       meaning_en: w.meaning_en,
+      cefr_level: sanitizeLevel(w.cefr_level),
     }));
     const { error: insertErr } = await supabase
       .from("words")
@@ -107,33 +120,58 @@ export function ReviewDemo() {
     if (cardErr) throw cardErr;
   }, []);
 
-  const load = useCallback(
-    async (forceGenerate = false) => {
-      setPhase("loading");
-      setFlipped(false);
-      try {
-        const session = await ensureSession();
-        userIdRef.current = session.user.id;
+  /** Load the due queue. Never generates — that's a deliberate click. */
+  const load = useCallback(async () => {
+    setPhase("loading");
+    setFlipped(false);
+    try {
+      const session = await ensureSession();
+      userIdRef.current = session.user.id;
 
-        let cards = forceGenerate ? [] : await fetchQueue();
-        if (cards.length === 0) {
-          await generateCards(session.user.id);
-          cards = await fetchQueue();
-        }
-        setQueue(cards);
-        setPhase(cards.length > 0 ? "review" : "done");
-      } catch (err) {
-        console.error("[foundations]", err);
-        setErrorMsg(
-          err instanceof Error && /anonymous/i.test(err.message)
-            ? 'Aktiviere "Allow anonymous sign-ins" in Supabase → Authentication.'
-            : "Laden fehlgeschlagen — stimmen die Supabase-Keys in .env.local?",
-        );
-        setPhase("error");
+      const cards = await fetchQueue();
+      setQueue(cards);
+      setPhase(cards.length > 0 ? "review" : "empty");
+    } catch (err) {
+      console.error("[foundations]", err);
+      const msg = err instanceof Error ? err.message : "";
+      setErrorMsg(
+        msg && msg !== "not signed in"
+          ? msg
+          : "Laden fehlgeschlagen — prüfe die Supabase-Keys und die Vercel-Logs.",
+      );
+      setPhase("error");
+    }
+  }, [fetchQueue]);
+
+  /** Explicit, token-conscious generation — only ever runs on click. */
+  const generate = useCallback(async () => {
+    setPhase("generating");
+    setFlipped(false);
+    setLimitMsg(null);
+    try {
+      const session = await ensureSession();
+      userIdRef.current = session.user.id;
+
+      await generateCards(session.user.id);
+      const cards = await fetchQueue();
+      setQueue(cards);
+      setPhase(cards.length > 0 ? "review" : "empty");
+    } catch (err) {
+      console.error("[foundations generate]", err);
+      if (err instanceof GuestLimitError) {
+        setLimitMsg(err.message);
+        setPhase("empty");
+        return;
       }
-    },
-    [fetchQueue, generateCards],
-  );
+      const msg = err instanceof Error ? err.message : "";
+      setErrorMsg(
+        msg && msg !== "generation failed"
+          ? msg
+          : "Generierung fehlgeschlagen — versuch es nochmal.",
+      );
+      setPhase("error");
+    }
+  }, [fetchQueue, generateCards]);
 
   useEffect(() => {
     load();
@@ -214,6 +252,10 @@ export function ReviewDemo() {
           <p className="text-sm text-muted">Karten werden geladen …</p>
         )}
 
+        {phase === "generating" && (
+          <p className="text-sm text-muted">Neue Wörter werden generiert …</p>
+        )}
+
         {phase === "error" && (
           <div className="flex max-w-sm flex-col items-center gap-4 text-center">
             <p className="text-sm text-muted">{errorMsg}</p>
@@ -226,15 +268,37 @@ export function ReviewDemo() {
           </div>
         )}
 
-        {phase === "done" && (
-          <div className="flex flex-col items-center gap-4">
-            <p className="text-sm">Fertig. Alles ist gelernt.</p>
-            <button
-              onClick={() => load(true)}
-              className="rounded-lg border border-border px-4 py-2 text-sm text-muted transition-colors hover:border-border-strong hover:text-foreground"
-            >
-              Neue Wörter generieren
-            </button>
+        {(phase === "empty" || phase === "done") && (
+          <div className="flex max-w-sm flex-col items-center gap-4 text-center">
+            <p className="text-sm">
+              {phase === "done"
+                ? "Fertig. Alles ist gelernt."
+                : "Keine Karten fällig."}
+            </p>
+            {limitMsg ? (
+              <>
+                <p className="text-sm text-muted">{limitMsg}</p>
+                <Link
+                  href="/login"
+                  className="rounded-lg bg-accent px-4 py-2 text-sm font-medium text-white"
+                >
+                  Konto erstellen
+                </Link>
+              </>
+            ) : (
+              <>
+                <button
+                  onClick={generate}
+                  className="flex items-center gap-2 rounded-lg border border-border px-4 py-2 text-sm text-muted transition-colors hover:border-border-strong hover:text-foreground"
+                >
+                  <Sparkles size={14} strokeWidth={1.75} />
+                  Neue Wörter generieren
+                </button>
+                <p className="text-xs text-muted">
+                  Generiert 10 Wörter per KI — nur auf Klick, nie automatisch.
+                </p>
+              </>
+            )}
           </div>
         )}
 

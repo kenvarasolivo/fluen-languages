@@ -1,8 +1,18 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LayoutGrid, Layers, Clapperboard, MessageCircle } from "lucide-react";
+import {
+  LayoutGrid,
+  Layers,
+  Clapperboard,
+  MessageCircle,
+  Library,
+  LogIn,
+  LogOut,
+} from "lucide-react";
+import { supabase } from "@/lib/supabase";
 import { ThemeToggle } from "@/components/theme-toggle";
 
 const nav = [
@@ -10,10 +20,32 @@ const nav = [
   { href: "/learn", label: "Foundations", icon: Layers },
   { href: "/immerse", label: "Immerse", icon: Clapperboard },
   { href: "/speak", label: "Speak", icon: MessageCircle },
+  { href: "/cards", label: "Cards", icon: Library },
 ];
+
+type Account =
+  | { kind: "guest" }
+  | { kind: "user"; email: string };
 
 export function Sidebar() {
   const pathname = usePathname();
+  const [account, setAccount] = useState<Account | null>(null);
+
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      if (!user) return;
+      setAccount(
+        user.is_anonymous
+          ? { kind: "guest" }
+          : { kind: "user", email: user.email ?? "Konto" },
+      );
+    });
+  }, []);
+
+  const signOut = async () => {
+    await supabase.auth.signOut();
+    window.location.href = "/login";
+  };
 
   return (
     <aside className="flex h-full w-56 shrink-0 flex-col border-r border-border bg-surface">
@@ -42,6 +74,35 @@ export function Sidebar() {
           );
         })}
       </nav>
+
+      {/* Account */}
+      <div className="border-t border-border px-3 py-3">
+        {account?.kind === "guest" && (
+          <Link
+            href="/login"
+            className="flex items-center gap-3 rounded-md px-2.5 py-2 text-sm text-muted transition-colors hover:bg-surface-raised hover:text-foreground"
+          >
+            <LogIn size={16} strokeWidth={1.75} />
+            <span className="flex-1">Anmelden</span>
+            <span className="text-[10px] uppercase tracking-wide">Gast</span>
+          </Link>
+        )}
+        {account?.kind === "user" && (
+          <div className="flex items-center gap-2 px-2.5 py-1">
+            <p className="min-w-0 flex-1 truncate text-xs text-muted" title={account.email}>
+              {account.email}
+            </p>
+            <button
+              onClick={signOut}
+              aria-label="Abmelden"
+              title="Abmelden"
+              className="text-muted transition-colors hover:text-foreground"
+            >
+              <LogOut size={14} strokeWidth={1.75} />
+            </button>
+          </div>
+        )}
+      </div>
 
       <div className="flex items-center justify-between border-t border-border px-5 py-3">
         <p className="text-xs text-muted">Deutsch · B1</p>
