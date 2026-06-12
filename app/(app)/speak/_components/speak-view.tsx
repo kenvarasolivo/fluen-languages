@@ -223,16 +223,18 @@ export function SpeakView() {
     <div className="flex h-full">
       {/* Left — chat log */}
       <section className="flex min-w-0 flex-1 flex-col">
-        <header className="flex h-14 shrink-0 items-center justify-between border-b border-border px-6">
-          <h1 className="text-sm font-medium">Speak</h1>
+        <header className="flex h-14 shrink-0 items-center justify-between border-b border-border bg-surface px-6">
+          <h1 className="text-sm font-semibold tracking-tight">Speak</h1>
           <div className="flex items-center gap-3">
-            <span className="text-xs text-muted">Gespräch · Deutsch B1</span>
+            <span className="text-xs font-medium tracking-wide text-muted">
+              Gespräch · Deutsch B1
+            </span>
             {hasSession && (
               <button
                 onClick={deleteConversation}
                 aria-label="Gespräch löschen"
                 title="Gespräch löschen"
-                className="rounded-md p-1.5 text-muted transition-colors hover:text-foreground"
+                className="rounded-md p-1.5 text-muted transition-colors duration-150 hover:bg-negative/10 hover:text-negative"
               >
                 <Trash2 size={14} strokeWidth={2} />
               </button>
@@ -243,11 +245,11 @@ export function SpeakView() {
         <ChatLog messages={messages} isStreaming={isStreaming} />
 
         {limitMsg ? (
-          <div className="flex shrink-0 flex-col items-center gap-3 border-t border-border px-6 py-5 text-center">
+          <div className="flex shrink-0 flex-col items-center gap-3 border-t border-border bg-surface px-6 py-5 text-center">
             <p className="text-sm text-muted">{limitMsg}</p>
             <Link
               href="/login"
-              className="rounded-lg bg-accent px-4 py-2 text-sm font-medium text-white"
+              className="rounded-lg bg-accent px-4 py-2 text-sm font-medium text-white shadow-xs transition-colors duration-150 hover:bg-accent/90"
             >
               Konto erstellen
             </Link>

@@ -15,7 +15,7 @@ export function ChatMessage({
       <div className="flex flex-col items-end gap-1.5">
         <div
           lang="de"
-          className="max-w-[80%] rounded-2xl rounded-br-md border border-border bg-surface-raised px-4 py-2.5 text-sm leading-relaxed"
+          className="max-w-[80%] rounded-2xl rounded-br-md border border-border bg-surface-raised px-4 py-2.5 text-sm leading-relaxed shadow-xs"
         >
           {message.content}
         </div>
@@ -26,8 +26,8 @@ export function ChatMessage({
 
   return (
     <div className="flex max-w-[85%] flex-col gap-1.5">
-      <span className="flex items-center gap-1.5 text-xs text-muted">
-        <span className="size-1.5 rounded-full bg-accent" />
+      <span className="flex items-center gap-1.5 text-[11px] font-medium uppercase tracking-[0.08em] text-muted">
+        <span className="size-1.5 rounded-full bg-accent shadow-[0_0_6px] shadow-accent/50" />
         Coach
       </span>
       <p lang="de" className="text-sm leading-relaxed">

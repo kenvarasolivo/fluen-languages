@@ -94,13 +94,13 @@ export function VoicePanel({
   };
 
   return (
-    <section className="hidden w-[400px] shrink-0 flex-col items-center justify-center gap-10 border-l border-border bg-surface lg:flex">
+    <section className="hidden w-[400px] shrink-0 flex-col items-center justify-center gap-12 border-l border-border bg-surface lg:flex">
       <button
         onClick={toggle}
         disabled={!supported}
         data-state={state}
         aria-label={state === "listening" ? "Stop listening" : "Start voice mode"}
-        className="orb flex size-44 items-center justify-center rounded-full bg-surface-raised text-foreground disabled:opacity-40"
+        className="orb flex size-44 items-center justify-center rounded-full text-foreground disabled:opacity-40"
       >
         {state === "listening" ? (
           <Square size={28} strokeWidth={1.5} className="text-accent" />
@@ -121,7 +121,9 @@ export function VoicePanel({
           </p>
         ) : (
           <>
-            <p className="text-sm">{statusLabel[state]}</p>
+            <p className={`text-sm font-medium ${state !== "idle" ? "text-accent" : ""}`}>
+              {statusLabel[state]}
+            </p>
             <p className="text-xs text-muted">Sprich frei. Niemand bewertet dich.</p>
           </>
         )}

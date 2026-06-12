@@ -2,8 +2,9 @@
 
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { Trash2 } from "lucide-react";
+import { AlertCircle, Inbox, Library, Loader2, Trash2 } from "lucide-react";
 import { supabase, ensureSession } from "@/lib/supabase";
+import { withGender } from "@/lib/format";
 
 interface CatalogCard {
   id: string;
@@ -123,23 +124,27 @@ export function CardCatalog() {
 
   return (
     <div className="flex h-full flex-col">
-      <header className="flex h-14 shrink-0 items-center justify-between border-b border-border px-6">
-        <h1 className="text-sm font-medium">Cards</h1>
+      <header className="flex h-14 shrink-0 items-center justify-between border-b border-border bg-surface px-6">
+        <h1 className="text-sm font-semibold tracking-tight">Cards</h1>
         {phase === "ready" && (
-          <span className="text-xs tabular-nums text-muted">
+          <span className="rounded-full border border-border bg-surface-raised px-2.5 py-0.5 text-[11px] font-medium tabular-nums text-muted shadow-xs">
             {cards.length} {cards.length === 1 ? "Karte" : "Karten"}
           </span>
         )}
       </header>
 
       {phase === "loading" && (
-        <div className="flex flex-1 items-center justify-center">
+        <div className="flex flex-1 flex-col items-center justify-center gap-3">
+          <Loader2 size={20} strokeWidth={1.75} className="animate-spin text-muted" />
           <p className="text-sm text-muted">Katalog wird geladen …</p>
         </div>
       )}
 
       {phase === "error" && (
-        <div className="flex flex-1 items-center justify-center">
+        <div className="flex flex-1 flex-col items-center justify-center gap-3 px-6 text-center">
+          <span className="flex size-10 items-center justify-center rounded-full border border-border bg-surface-raised shadow-xs">
+            <AlertCircle size={18} strokeWidth={1.75} className="text-negative" />
+          </span>
           <p className="text-sm text-muted">
             Katalog konnte nicht geladen werden.
           </p>
@@ -147,38 +152,50 @@ export function CardCatalog() {
       )}
 
       {phase === "guest" && (
-        <div className="flex flex-1 flex-col items-center justify-center gap-4 px-6 text-center">
-          <p className="text-sm">Der Kartenkatalog gehört zu deinem Konto.</p>
-          <p className="max-w-xs text-xs leading-relaxed text-muted">
-            Erstelle ein kostenloses Konto, um alle gespeicherten Karten zu
-            sehen — sortiert nach Schwierigkeit. Deine bisherigen Karten
-            bleiben dabei erhalten.
-          </p>
-          <Link
-            href="/login"
-            className="rounded-lg bg-accent px-4 py-2 text-sm font-medium text-white"
-          >
-            Konto erstellen
-          </Link>
+        <div className="flex flex-1 flex-col items-center justify-center px-6">
+          <div className="flex w-full max-w-sm flex-col items-center gap-4 rounded-2xl border border-border bg-surface-raised px-8 py-10 text-center shadow-raised">
+            <span className="flex size-11 items-center justify-center rounded-xl bg-accent-soft">
+              <Library size={20} strokeWidth={1.75} className="text-accent" />
+            </span>
+            <p className="text-sm font-medium">Der Kartenkatalog gehört zu deinem Konto.</p>
+            <p className="max-w-xs text-xs leading-relaxed text-muted">
+              Erstelle ein kostenloses Konto, um alle gespeicherten Karten zu
+              sehen — sortiert nach Schwierigkeit. Deine bisherigen Karten
+              bleiben dabei erhalten.
+            </p>
+            <Link
+              href="/login"
+              className="mt-1 rounded-lg bg-accent px-4 py-2 text-sm font-medium text-white shadow-xs transition-colors duration-150 hover:bg-accent/90"
+            >
+              Konto erstellen
+            </Link>
+          </div>
         </div>
       )}
 
       {phase === "ready" && (
         <>
           {/* Difficulty tabs — "Alle" shows everything */}
-          <div className="flex shrink-0 flex-wrap items-center gap-1 border-b border-border px-6 py-3">
+          <div className="flex shrink-0 flex-wrap items-center gap-1 border-b border-border bg-surface px-6 py-2.5">
             {tabs.map((t) => (
               <button
                 key={t.id}
                 onClick={() => setTab(t.id)}
-                className={`rounded-md px-2.5 py-1 text-xs transition-colors ${
+                aria-pressed={tab === t.id}
+                className={`rounded-md px-2.5 py-1 text-xs transition-colors duration-150 ${
                   tab === t.id
-                    ? "bg-accent-soft text-foreground"
-                    : "text-muted hover:text-foreground"
+                    ? "bg-accent-soft font-medium text-accent"
+                    : "text-muted hover:bg-foreground/[0.04] hover:text-foreground"
                 }`}
               >
                 {t.label}
-                <span className="ml-1.5 tabular-nums opacity-60">{t.count}</span>
+                <span
+                  className={`ml-1.5 tabular-nums ${
+                    tab === t.id ? "text-accent/70" : "opacity-60"
+                  }`}
+                >
+                  {t.count}
+                </span>
               </button>
             ))}
           </div>
@@ -186,59 +203,78 @@ export function CardCatalog() {
           <div className="flex-1 overflow-y-auto">
             <div className="mx-auto max-w-3xl px-6 py-6">
               {visible.length === 0 ? (
-                <p className="pt-10 text-center text-sm text-muted">
-                  Noch keine Karten. Generiere welche in Foundations oder
-                  sammle Wörter in Immerse.
-                </p>
+                <div className="flex flex-col items-center gap-3 pt-16 text-center">
+                  <span className="flex size-11 items-center justify-center rounded-xl border border-border bg-surface-raised shadow-xs">
+                    <Inbox size={20} strokeWidth={1.5} className="text-muted" />
+                  </span>
+                  <p className="max-w-xs text-sm leading-relaxed text-muted">
+                    Noch keine Karten. Generiere welche in Foundations oder
+                    sammle Wörter in Immerse.
+                  </p>
+                </div>
               ) : (
                 <ul className="flex flex-col divide-y divide-border">
-                  {visible.map((c) => (
-                    <li
-                      key={c.id}
-                      className="group flex items-baseline gap-4 py-3.5"
-                      onMouseLeave={() =>
-                        setConfirmId((id) => (id === c.id ? null : id))
-                      }
-                    >
-                      <div className="min-w-0 flex-1">
-                        <p lang="de" className="text-sm font-medium">
-                          {c.gender ? `${c.gender} ${c.lemma}` : c.lemma}
-                          <span className="ml-2 text-xs font-normal text-muted">
-                            {c.pos}
-                          </span>
-                        </p>
-                        <p className="mt-0.5 truncate text-sm text-muted">
-                          {c.meaning_en}
-                        </p>
-                      </div>
-                      <span className="shrink-0 rounded border border-border px-1.5 py-0.5 text-[10px] text-muted">
-                        {c.cefr_level ?? "—"}
-                      </span>
-                      <span className="w-24 shrink-0 text-right text-xs text-muted">
-                        {STATE_LABELS[c.state] ?? "—"}
-                      </span>
-                      <span className="w-20 shrink-0 text-right text-xs tabular-nums text-muted">
-                        {formatDue(c.due)}
-                      </span>
-                      <button
-                        onClick={() => deleteCard(c.id)}
-                        aria-label={
-                          confirmId === c.id ? "Löschen bestätigen" : "Karte löschen"
+                  {visible.map((c) => {
+                    const due = formatDue(c.due);
+                    const armed = confirmId === c.id;
+                    return (
+                      <li
+                        key={c.id}
+                        className="group relative -mx-3 flex items-baseline gap-4 px-3 py-3.5 transition-colors duration-150 first:rounded-t-lg last:rounded-b-lg hover:bg-foreground/[0.025]"
+                        onMouseLeave={() =>
+                          setConfirmId((id) => (id === c.id ? null : id))
                         }
-                        className={`shrink-0 self-center transition-colors ${
-                          confirmId === c.id
-                            ? "text-negative"
-                            : "text-muted opacity-0 hover:text-negative group-hover:opacity-100"
-                        }`}
                       >
-                        {confirmId === c.id ? (
-                          <span className="text-xs font-medium">Löschen?</span>
-                        ) : (
-                          <Trash2 size={14} strokeWidth={1.75} />
-                        )}
-                      </button>
-                    </li>
-                  ))}
+                        <div className="min-w-0 flex-1">
+                          <p lang="de" className="text-sm font-medium tracking-tight">
+                            {withGender(c.gender, c.lemma)}
+                            <span className="ml-2 text-xs font-normal text-muted">
+                              {c.pos}
+                            </span>
+                          </p>
+                          <p className="mt-0.5 truncate text-sm text-muted">
+                            {c.meaning_en}
+                          </p>
+                        </div>
+                        <span
+                          className={`shrink-0 rounded-md px-1.5 py-0.5 text-[10px] font-medium tracking-wide ${
+                            c.cefr_level
+                              ? "border border-accent/20 bg-accent-soft text-accent"
+                              : "border border-border text-muted"
+                          }`}
+                        >
+                          {c.cefr_level ?? "—"}
+                        </span>
+                        <span className="w-24 shrink-0 text-right text-xs text-muted">
+                          {STATE_LABELS[c.state] ?? "—"}
+                        </span>
+                        <span
+                          className={`w-20 shrink-0 text-right text-xs tabular-nums ${
+                            due === "jetzt fällig" ? "font-medium text-accent" : "text-muted"
+                          }`}
+                        >
+                          {due}
+                        </span>
+                        <button
+                          onClick={() => deleteCard(c.id)}
+                          aria-label={
+                            armed ? "Löschen bestätigen" : "Karte löschen"
+                          }
+                          className={`shrink-0 self-center rounded-md transition-colors duration-150 ${
+                            armed
+                              ? "pop-in bg-negative/10 px-2 py-1 text-negative"
+                              : "p-1 text-muted opacity-0 hover:bg-negative/10 hover:text-negative focus-visible:opacity-100 group-hover:opacity-100"
+                          }`}
+                        >
+                          {armed ? (
+                            <span className="text-xs font-medium">Löschen?</span>
+                          ) : (
+                            <Trash2 size={14} strokeWidth={1.75} />
+                          )}
+                        </button>
+                      </li>
+                    );
+                  })}
                 </ul>
               )}
             </div>

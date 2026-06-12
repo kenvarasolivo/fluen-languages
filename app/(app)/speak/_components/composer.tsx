@@ -20,8 +20,8 @@ export function Composer({
   };
 
   return (
-    <div className="shrink-0 border-t border-border px-6 py-4">
-      <div className="mx-auto flex max-w-2xl items-center gap-2 rounded-xl border border-border bg-surface px-4 py-2 transition-colors focus-within:border-border-strong">
+    <div className="shrink-0 border-t border-border bg-surface px-6 py-4">
+      <div className="mx-auto flex max-w-2xl items-center gap-2 rounded-xl border border-border bg-surface-raised px-4 py-2 shadow-xs transition-all duration-150 focus-within:border-accent/50 focus-within:ring-[3px] focus-within:ring-accent/15">
         <input
           lang="de"
           value={value}
@@ -39,7 +39,7 @@ export function Composer({
           onClick={submit}
           disabled={disabled || !value.trim()}
           aria-label="Send"
-          className="flex size-7 shrink-0 items-center justify-center rounded-lg bg-accent text-white transition-opacity disabled:opacity-30"
+          className="flex size-7 shrink-0 items-center justify-center rounded-lg bg-accent text-white shadow-xs transition-all duration-150 hover:bg-accent/90 active:scale-95 disabled:opacity-30 disabled:hover:bg-accent"
         >
           <ArrowUp size={15} strokeWidth={2} />
         </button>

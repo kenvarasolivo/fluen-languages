@@ -91,9 +91,9 @@ export function AuthForm() {
   };
 
   return (
-    <div className="mt-10">
+    <div>
       {/* Mode toggle */}
-      <div className="flex rounded-lg border border-border p-0.5">
+      <div className="flex rounded-lg border border-border bg-foreground/[0.03] p-1">
         {(
           [
             { id: "signin", label: "Anmelden" },
@@ -108,9 +108,9 @@ export function AuthForm() {
               setError(null);
               setNotice(null);
             }}
-            className={`flex-1 rounded-md py-1.5 text-xs transition-colors ${
+            className={`flex-1 rounded-md py-1.5 text-xs transition-all duration-150 ${
               mode === o.id
-                ? "bg-surface-raised text-foreground shadow-sm"
+                ? "bg-surface-raised font-medium text-foreground shadow-xs"
                 : "text-muted hover:text-foreground"
             }`}
           >
@@ -127,7 +127,7 @@ export function AuthForm() {
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           placeholder="E-Mail"
-          className="rounded-lg border border-border bg-surface px-3.5 py-2.5 text-sm outline-none transition-colors placeholder:text-muted focus:border-border-strong"
+          className="rounded-xl border border-border bg-surface px-3.5 py-2.5 text-sm shadow-xs outline-none transition-all duration-150 placeholder:text-muted focus:border-accent/50 focus:ring-[3px] focus:ring-accent/15"
         />
         <input
           type="password"
@@ -137,7 +137,7 @@ export function AuthForm() {
           value={password}
           onChange={(e) => setPassword(e.target.value)}
           placeholder="Passwort"
-          className="rounded-lg border border-border bg-surface px-3.5 py-2.5 text-sm outline-none transition-colors placeholder:text-muted focus:border-border-strong"
+          className="rounded-xl border border-border bg-surface px-3.5 py-2.5 text-sm shadow-xs outline-none transition-all duration-150 placeholder:text-muted focus:border-accent/50 focus:ring-[3px] focus:ring-accent/15"
         />
 
         {error && <p className="text-xs text-negative">{error}</p>}
@@ -146,7 +146,7 @@ export function AuthForm() {
         <button
           type="submit"
           disabled={pending !== null}
-          className="mt-1 rounded-lg bg-accent py-2.5 text-sm font-medium text-white transition-opacity disabled:opacity-50"
+          className="mt-1 rounded-xl bg-accent py-2.5 text-sm font-medium text-white shadow-xs transition-all duration-150 hover:bg-accent/90 active:scale-[0.99] disabled:opacity-50 disabled:hover:bg-accent"
         >
           {pending === "form"
             ? "Einen Moment …"
@@ -166,7 +166,7 @@ export function AuthForm() {
         type="button"
         onClick={continueAsGuest}
         disabled={pending !== null}
-        className="mt-6 w-full rounded-lg border border-border py-2.5 text-sm text-muted transition-colors hover:border-border-strong hover:text-foreground disabled:opacity-50"
+        className="mt-6 w-full rounded-xl border border-border bg-surface py-2.5 text-sm text-muted shadow-xs transition-all duration-150 hover:border-border-strong hover:text-foreground active:scale-[0.99] disabled:opacity-50"
       >
         {pending === "guest" ? "Einen Moment …" : "Als Gast fortfahren"}
       </button>

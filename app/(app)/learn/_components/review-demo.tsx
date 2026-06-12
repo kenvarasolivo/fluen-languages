@@ -2,9 +2,10 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import { Sparkles, Volume2 } from "lucide-react";
+import { CheckCircle2, Loader2, Sparkles, Volume2 } from "lucide-react";
 import { supabase, ensureSession } from "@/lib/supabase";
 import { gradeCard, isDueSoon, type SrsFields } from "@/lib/srs";
+import { withGender } from "@/lib/format";
 import type { DemoWord } from "@/lib/types";
 
 type Phase = "loading" | "empty" | "generating" | "review" | "done" | "error";
@@ -182,7 +183,7 @@ export function ReviewDemo() {
   const flip = useCallback(() => {
     if (!card || flipped) return;
     setFlipped(true);
-    speakGerman(card.gender ? `${card.gender} ${card.lemma}` : card.lemma);
+    speakGerman(withGender(card.gender, card.lemma));
   }, [card, flipped]);
 
   const grade = useCallback(
@@ -238,10 +239,10 @@ export function ReviewDemo() {
 
   return (
     <div className="flex h-full flex-col">
-      <header className="flex h-14 shrink-0 items-center justify-between border-b border-border px-6">
-        <h1 className="text-sm font-medium">Foundations</h1>
+      <header className="flex h-14 shrink-0 items-center justify-between border-b border-border bg-surface px-6">
+        <h1 className="text-sm font-semibold tracking-tight">Foundations</h1>
         {phase === "review" && (
-          <span className="text-xs tabular-nums text-muted">
+          <span className="rounded-full border border-border bg-surface-raised px-2.5 py-0.5 text-[11px] font-medium tabular-nums text-muted shadow-xs">
             {newCount} New | {reviewCount} Review
           </span>
         )}
@@ -249,11 +250,19 @@ export function ReviewDemo() {
 
       <div className="flex flex-1 flex-col items-center justify-center gap-8 px-6">
         {phase === "loading" && (
-          <p className="text-sm text-muted">Karten werden geladen …</p>
+          <div className="flex flex-col items-center gap-3">
+            <Loader2 size={20} strokeWidth={1.75} className="animate-spin text-muted" />
+            <p className="text-sm text-muted">Karten werden geladen …</p>
+          </div>
         )}
 
         {phase === "generating" && (
-          <p className="text-sm text-muted">Neue Wörter werden generiert …</p>
+          <div className="flex flex-col items-center gap-3">
+            <span className="flex size-10 items-center justify-center rounded-full bg-accent-soft">
+              <Loader2 size={18} strokeWidth={1.75} className="animate-spin text-accent" />
+            </span>
+            <p className="text-sm text-muted">Neue Wörter werden generiert …</p>
+          </div>
         )}
 
         {phase === "error" && (
@@ -261,7 +270,7 @@ export function ReviewDemo() {
             <p className="text-sm text-muted">{errorMsg}</p>
             <button
               onClick={() => load()}
-              className="rounded-lg border border-border px-4 py-2 text-sm transition-colors hover:border-border-strong"
+              className="rounded-lg border border-border bg-surface-raised px-4 py-2 text-sm shadow-xs transition-all duration-150 hover:border-border-strong active:scale-[0.99]"
             >
               Nochmal versuchen
             </button>
@@ -270,7 +279,20 @@ export function ReviewDemo() {
 
         {(phase === "empty" || phase === "done") && (
           <div className="flex max-w-sm flex-col items-center gap-4 text-center">
-            <p className="text-sm">
+            <span
+              className={`flex size-11 items-center justify-center rounded-xl ${
+                phase === "done"
+                  ? "bg-accent-soft"
+                  : "border border-border bg-surface-raised shadow-xs"
+              }`}
+            >
+              {phase === "done" ? (
+                <CheckCircle2 size={20} strokeWidth={1.75} className="text-accent" />
+              ) : (
+                <Sparkles size={20} strokeWidth={1.5} className="text-muted" />
+              )}
+            </span>
+            <p className="text-sm font-medium">
               {phase === "done"
                 ? "Fertig. Alles ist gelernt."
                 : "Keine Karten fällig."}
@@ -280,7 +302,7 @@ export function ReviewDemo() {
                 <p className="text-sm text-muted">{limitMsg}</p>
                 <Link
                   href="/login"
-                  className="rounded-lg bg-accent px-4 py-2 text-sm font-medium text-white"
+                  className="rounded-lg bg-accent px-4 py-2 text-sm font-medium text-white shadow-xs transition-colors duration-150 hover:bg-accent/90"
                 >
                   Konto erstellen
                 </Link>
@@ -289,7 +311,7 @@ export function ReviewDemo() {
               <>
                 <button
                   onClick={generate}
-                  className="flex items-center gap-2 rounded-lg border border-border px-4 py-2 text-sm text-muted transition-colors hover:border-border-strong hover:text-foreground"
+                  className="flex items-center gap-2 rounded-lg bg-accent px-4 py-2 text-sm font-medium text-white shadow-xs transition-all duration-150 hover:bg-accent/90 active:scale-[0.99]"
                 >
                   <Sparkles size={14} strokeWidth={1.75} />
                   Neue Wörter generieren
@@ -304,24 +326,40 @@ export function ReviewDemo() {
 
         {phase === "review" && card && (
           <>
-            {/* Card */}
+            {/* Card — both faces stacked in one grid cell; the wrapper
+                rotates in 3D, backface-visibility hides the far side. */}
             <button
               onClick={flip}
               lang="de"
-              className="flex min-h-64 w-full max-w-md flex-col items-center justify-center gap-4 rounded-2xl border border-border bg-surface px-8 py-10 text-center transition-colors hover:border-border-strong"
+              className="group w-full max-w-md rounded-2xl text-center [perspective:1200px]"
             >
-              {!flipped ? (
-                <>
-                  <span className="text-3xl font-medium">
-                    {card.gender ? `${card.gender} ${card.lemma}` : card.lemma}
+              <div
+                key={card.id}
+                className={`grid w-full transition-transform duration-500 ease-[cubic-bezier(0.3,0.7,0.3,1)] [transform-style:preserve-3d] ${
+                  flipped ? "[transform:rotateY(180deg)]" : ""
+                }`}
+              >
+                {/* Front */}
+                <div
+                  inert={flipped}
+                  className="flex min-h-64 flex-col items-center justify-center gap-4 rounded-2xl border border-border bg-surface-raised px-8 py-10 shadow-raised transition-[border-color,box-shadow] duration-150 [backface-visibility:hidden] [grid-area:1/1] group-hover:border-accent/30 group-hover:shadow-pop"
+                >
+                  <span className="text-3xl font-semibold tracking-tight">
+                    {withGender(card.gender, card.lemma)}
                   </span>
-                  <span className="text-xs text-muted">{card.pos}</span>
-                </>
-              ) : (
-                <>
+                  <span className="text-[11px] font-medium uppercase tracking-[0.08em] text-muted">
+                    {card.pos}
+                  </span>
+                </div>
+
+                {/* Back — pre-rotated so it reads correctly once the wrapper turns */}
+                <div
+                  inert={!flipped}
+                  className="flex min-h-64 flex-col items-center justify-center gap-4 rounded-2xl border border-border bg-surface-raised px-8 py-10 shadow-raised transition-[border-color,box-shadow] duration-150 [backface-visibility:hidden] [grid-area:1/1] [transform:rotateY(180deg)] group-hover:border-accent/30 group-hover:shadow-pop"
+                >
                   <div className="flex items-center gap-2">
-                    <span className="text-2xl font-medium">
-                      {card.gender ? `${card.gender} ${card.lemma}` : card.lemma}
+                    <span className="text-2xl font-semibold tracking-tight">
+                      {withGender(card.gender, card.lemma)}
                     </span>
                     <span
                       role="button"
@@ -329,9 +367,7 @@ export function ReviewDemo() {
                       aria-label="Play audio"
                       onClick={(e) => {
                         e.stopPropagation();
-                        speakGerman(
-                          card.gender ? `${card.gender} ${card.lemma}` : card.lemma,
-                        );
+                        speakGerman(withGender(card.gender, card.lemma));
                       }}
                       className="text-muted transition-colors hover:text-foreground"
                     >
@@ -349,8 +385,8 @@ export function ReviewDemo() {
                       )}
                     </div>
                   )}
-                </>
-              )}
+                </div>
+              </div>
             </button>
 
             {/* Grade bar / flip hint */}
@@ -363,7 +399,9 @@ export function ReviewDemo() {
               </div>
             ) : (
               <p className="text-xs text-muted">
-                <kbd className="rounded border border-border px-1.5 py-0.5">Space</kbd>{" "}
+                <kbd className="rounded-md border border-border bg-surface-raised px-1.5 py-0.5 font-medium shadow-xs">
+                  Space
+                </kbd>{" "}
                 zum Umdrehen
               </p>
             )}
@@ -375,10 +413,10 @@ export function ReviewDemo() {
 }
 
 const tones = {
-  negative: "text-negative hover:border-negative/40",
-  muted: "text-muted hover:border-border-strong",
-  accent: "text-accent hover:border-accent/40",
-  positive: "text-positive hover:border-positive/40",
+  negative: "text-negative hover:border-negative/40 hover:bg-negative/[0.06]",
+  muted: "text-muted hover:border-border-strong hover:bg-foreground/[0.03]",
+  accent: "text-accent hover:border-accent/40 hover:bg-accent-soft",
+  positive: "text-positive hover:border-positive/40 hover:bg-positive/[0.06]",
 };
 
 function GradeButton({
@@ -395,7 +433,7 @@ function GradeButton({
   return (
     <button
       onClick={onClick}
-      className={`flex w-24 flex-col items-center gap-0.5 rounded-lg border border-border bg-surface py-2.5 text-sm transition-colors ${tones[tone]}`}
+      className={`flex w-24 flex-col items-center gap-0.5 rounded-lg border border-border bg-surface-raised py-2.5 text-sm font-medium shadow-xs transition-all duration-150 active:scale-[0.98] ${tones[tone]}`}
     >
       {label}
       <span className="text-[10px] text-muted">{hint}</span>

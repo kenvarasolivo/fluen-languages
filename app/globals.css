@@ -1,36 +1,77 @@
 @import "tailwindcss";
 
 /* ============================================================
-   FLUEN design tokens — monochrome base, one accent.
+   FLUEN design tokens — warm neutral base, indigo primary plus
+   a small set of friendly secondary accents (coral/amber/teal).
    Light by default; dark theme via <html class="dark">.
+
+   Elevation model:
+     --background      app canvas (lowest)
+     --surface         panels, sidebars, cards at rest
+     --surface-raised  interactive / lifted elements (+ shadow)
+
+   Accent rules: secondary accents are for soft tints, icon chips
+   and gradients — never large flat fills.
    ============================================================ */
 
 :root {
-  --background: #fafafa;
-  --surface: #ffffff;
+  --background: #f7f5f2;
+  --surface: #fbfaf8;
   --surface-raised: #ffffff;
-  --border: #e7e7e4;
-  --border-strong: #d8d8d4;
-  --foreground: #141415;
-  --muted: #6f6f76;
+  --border: #e9e5e0;
+  --border-strong: #d9d3cc;
+  --foreground: #1c1916;
+  --muted: #6e675f;
   --accent: #5e6ad2;
-  --accent-soft: rgba(94, 106, 210, 0.08);
+  --accent-soft: rgba(94, 106, 210, 0.09);
+  --coral: #cf5b41;
+  --coral-soft: rgba(207, 91, 65, 0.1);
+  --amber: #b8821f;
+  --amber-soft: rgba(184, 130, 31, 0.11);
+  --teal: #1f8a78;
+  --teal-soft: rgba(31, 138, 120, 0.1);
   --positive: #3d8a5f;
   --negative: #b45454;
+  --ring: rgba(94, 106, 210, 0.55);
+
+  --shadow-xs: 0 1px 2px rgba(20, 20, 26, 0.05);
+  --shadow-raised:
+    0 1px 2px rgba(20, 20, 26, 0.04),
+    0 2px 8px -2px rgba(20, 20, 26, 0.07);
+  --shadow-pop:
+    0 0 0 1px rgba(20, 20, 26, 0.04),
+    0 4px 12px -2px rgba(20, 20, 26, 0.08),
+    0 16px 40px -12px rgba(20, 20, 26, 0.18);
 }
 
 :root.dark {
-  --background: #0a0a0a;
-  --surface: #101011;
-  --surface-raised: #161618;
-  --border: #1f1f1f;
-  --border-strong: #2a2a2c;
-  --foreground: #fafafa;
-  --muted: #7e7e85;
+  --background: #0c0b0a;
+  --surface: #131110;
+  --surface-raised: #1c1917;
+  --border: #262320;
+  --border-strong: #34302b;
+  --foreground: #f7f5f2;
+  --muted: #8e8880;
   --accent: #5e6ad2;
-  --accent-soft: rgba(94, 106, 210, 0.12);
+  --accent-soft: rgba(94, 106, 210, 0.14);
+  --coral: #ef8a6f;
+  --coral-soft: rgba(239, 138, 111, 0.14);
+  --amber: #e0aa4e;
+  --amber-soft: rgba(224, 170, 78, 0.13);
+  --teal: #4cbfab;
+  --teal-soft: rgba(76, 191, 171, 0.13);
   --positive: #4f9e70;
   --negative: #b45454;
+  --ring: rgba(122, 133, 224, 0.6);
+
+  --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.45);
+  --shadow-raised:
+    0 1px 2px rgba(0, 0, 0, 0.4),
+    0 2px 10px -2px rgba(0, 0, 0, 0.5);
+  --shadow-pop:
+    0 0 0 1px rgba(255, 255, 255, 0.04),
+    0 4px 12px -2px rgba(0, 0, 0, 0.5),
+    0 16px 48px -12px rgba(0, 0, 0, 0.7);
 }
 
 @theme inline {
@@ -43,8 +84,19 @@
   --color-muted: var(--muted);
   --color-accent: var(--accent);
   --color-accent-soft: var(--accent-soft);
+  --color-coral: var(--coral);
+  --color-coral-soft: var(--coral-soft);
+  --color-amber: var(--amber);
+  --color-amber-soft: var(--amber-soft);
+  --color-teal: var(--teal);
+  --color-teal-soft: var(--teal-soft);
   --color-positive: var(--positive);
   --color-negative: var(--negative);
+  --color-ring: var(--ring);
+
+  --shadow-xs: var(--shadow-xs);
+  --shadow-raised: var(--shadow-raised);
+  --shadow-pop: var(--shadow-pop);
 
   --font-sans: var(--font-inter), ui-sans-serif, system-ui, -apple-system,
     "Segoe UI", sans-serif;
@@ -55,10 +107,17 @@ body {
   color: var(--foreground);
   font-feature-settings: "cv11", "ss01";
   -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
 }
 
 ::selection {
-  background: var(--accent-soft);
+  background: rgba(94, 106, 210, 0.25);
+}
+
+/* One consistent, visible keyboard focus everywhere. */
+:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
 }
 
 /* Thin, quiet scrollbars */
@@ -68,34 +127,132 @@ body {
 }
 
 /* ============================================================
-   Voice orb — the one place motion is allowed, and only as
-   functional state feedback.
+   Warm surfaces — soft multi-stop mesh backdrop and gradient
+   headline text. Built from accent tokens so both themes work.
+   ============================================================ */
+
+.bg-mesh {
+  background:
+    radial-gradient(
+      40rem 26rem at 12% -10%,
+      color-mix(in srgb, var(--accent) 9%, transparent),
+      transparent 65%
+    ),
+    radial-gradient(
+      32rem 24rem at 90% 0%,
+      color-mix(in srgb, var(--coral) 8%, transparent),
+      transparent 60%
+    ),
+    radial-gradient(
+      38rem 28rem at 50% 115%,
+      color-mix(in srgb, var(--teal) 7%, transparent),
+      transparent 62%
+    ),
+    var(--background);
+}
+
+.text-gradient-warm {
+  background: linear-gradient(95deg, var(--accent), var(--coral) 90%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+/* ============================================================
+   Micro-motion — entrances for popovers/armed states only.
+   ============================================================ */
+
+@keyframes pop-in {
+  from {
+    opacity: 0;
+    transform: translateY(4px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.pop-in {
+  animation: pop-in 150ms ease-out;
+}
+
+/* Gentle staggered entrance for hero/section content. */
+@keyframes fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.fade-up {
+  animation: fade-up 500ms ease-out both;
+}
+
+.fade-up-1 {
+  animation-delay: 80ms;
+}
+.fade-up-2 {
+  animation-delay: 160ms;
+}
+.fade-up-3 {
+  animation-delay: 240ms;
+}
+
+/* ============================================================
+   Voice orb — the one place richer motion is allowed, and only
+   as functional state feedback.
    ============================================================ */
 
 .orb {
+  background:
+    radial-gradient(
+      circle at 32% 26%,
+      color-mix(in srgb, var(--accent) 14%, transparent),
+      transparent 62%
+    ),
+    var(--surface-raised);
   box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.07),
     0 0 0 1px var(--border-strong),
     0 0 90px -24px var(--accent);
-  transition: box-shadow 200ms ease, transform 200ms ease;
+  transition:
+    box-shadow 200ms ease,
+    transform 200ms ease;
 }
 
 .orb:hover {
+  transform: scale(1.015);
   box-shadow:
-    0 0 0 1px var(--border-strong),
-    0 0 110px -20px var(--accent);
+    inset 0 1px 0 rgba(255, 255, 255, 0.07),
+    0 0 0 1px color-mix(in srgb, var(--accent) 45%, var(--border-strong)),
+    0 0 120px -20px var(--accent);
+}
+
+.orb:active {
+  transform: scale(0.99);
 }
 
 .orb[data-state="listening"] {
   box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.07),
     0 0 0 1px var(--accent),
-    0 0 140px -16px var(--accent);
+    0 0 0 8px var(--accent-soft),
+    0 0 150px -12px var(--accent);
   animation: orb-breathe 2.4s ease-in-out infinite;
 }
 
 .orb[data-state="speaking"] {
   box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.07),
     0 0 0 1px var(--accent),
-    0 0 120px -20px var(--accent);
+    0 0 0 5px var(--accent-soft),
+    0 0 130px -16px var(--accent);
+  animation: orb-speak 1.4s ease-in-out infinite;
 }
 
 @keyframes orb-breathe {
@@ -104,12 +261,46 @@ body {
     transform: scale(1);
   }
   50% {
-    transform: scale(1.03);
+    transform: scale(1.035);
   }
 }
 
+@keyframes orb-speak {
+  0%,
+  100% {
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.07),
+      0 0 0 1px var(--accent),
+      0 0 0 4px var(--accent-soft),
+      0 0 110px -18px var(--accent);
+  }
+  50% {
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.07),
+      0 0 0 1px var(--accent),
+      0 0 0 7px var(--accent-soft),
+      0 0 150px -12px var(--accent);
+  }
+}
+
+/* ============================================================
+   Reduced motion — keep state changes, drop the movement.
+   ============================================================ */
+
 @media (prefers-reduced-motion: reduce) {
-  .orb[data-state="listening"] {
+  *,
+  ::before,
+  ::after {
+    animation-duration: 0.01ms !important;
+    animation-delay: 0s !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+
+  .orb,
+  .orb[data-state="listening"],
+  .orb[data-state="speaking"] {
     animation: none;
+    transform: none;
   }
 }

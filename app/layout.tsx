@@ -9,7 +9,7 @@ const inter = Inter({
 
 export const metadata: Metadata = {
   title: "FLUEN",
-  description: "Deutsch lernen. Nichts sonst.",
+  description: "Sprachen lernen. Nichts sonst.",
 };
 
 export default function RootLayout({

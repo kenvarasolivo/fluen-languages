@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { Plus, Check, Sparkles, History, Trash2 } from "lucide-react";
 import { supabase, ensureSession } from "@/lib/supabase";
+import { withGender } from "@/lib/format";
 import type {
   ImmerseKind,
   ImmerseLevel,
@@ -261,15 +262,16 @@ export function ImmerseDemo() {
 
   return (
     <div className="flex h-full flex-col" onClick={() => setPopover(null)}>
-      <header className="flex h-14 shrink-0 items-center justify-between border-b border-border px-6">
-        <h1 className="text-sm font-medium">Immerse</h1>
+      <header className="flex h-14 shrink-0 items-center justify-between border-b border-border bg-surface px-6">
+        <h1 className="text-sm font-semibold tracking-tight">Immerse</h1>
         <div className="flex items-center gap-2">
           <button
             onClick={() => setShowHistory((v) => !v)}
-            className={`flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs transition-colors ${
+            aria-pressed={showHistory}
+            className={`flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-medium transition-colors duration-150 ${
               showHistory
-                ? "border-accent/40 text-accent"
-                : "border-border text-muted hover:border-border-strong"
+                ? "border-accent/40 bg-accent-soft text-accent"
+                : "border-border text-muted hover:border-border-strong hover:text-foreground"
             }`}
           >
             <History size={12} strokeWidth={2} />
@@ -277,10 +279,11 @@ export function ImmerseDemo() {
           </button>
           <button
             onClick={() => setShowEnglish((v) => !v)}
-            className={`rounded-full border px-2.5 py-1 text-xs transition-colors ${
+            aria-pressed={showEnglish}
+            className={`rounded-full border px-2.5 py-1 text-xs font-medium transition-colors duration-150 ${
               showEnglish
-                ? "border-accent/40 text-accent"
-                : "border-border text-muted hover:border-border-strong"
+                ? "border-accent/40 bg-accent-soft text-accent"
+                : "border-border text-muted hover:border-border-strong hover:text-foreground"
             }`}
           >
             Übersetzung
@@ -289,13 +292,13 @@ export function ImmerseDemo() {
       </header>
 
       {/* Controls — switching only sets options; generation is the button. */}
-      <div className="flex shrink-0 flex-wrap items-center gap-2 border-b border-border px-6 py-3">
+      <div className="flex shrink-0 flex-wrap items-center gap-2 border-b border-border bg-surface px-6 py-2.5">
         <Segmented options={LEVELS} value={level} onChange={setLevel} />
         <Segmented options={KINDS} value={kind} onChange={setKind} />
         <button
           onClick={generate}
           disabled={loading}
-          className="ml-auto flex items-center gap-1.5 rounded-md bg-accent px-3 py-1.5 text-xs font-medium text-white transition-opacity disabled:opacity-40"
+          className="ml-auto flex items-center gap-1.5 rounded-md bg-accent px-3 py-1.5 text-xs font-medium text-white shadow-xs transition-all duration-150 hover:bg-accent/90 active:scale-[0.98] disabled:opacity-40 disabled:hover:bg-accent"
         >
           <Sparkles size={12} strokeWidth={2} />
           {story ? "Neu generieren" : "Generieren"}
@@ -306,8 +309,8 @@ export function ImmerseDemo() {
       <div className="flex-1 overflow-y-auto">
         <div className="mx-auto max-w-2xl px-6 py-10">
           {showHistory && (
-            <div className="mb-8 rounded-xl border border-border">
-              <p className="border-b border-border px-4 py-2.5 text-xs font-medium text-muted">
+            <div className="pop-in mb-8 overflow-hidden rounded-xl border border-border bg-surface-raised shadow-raised">
+              <p className="border-b border-border px-4 py-2.5 text-[11px] font-medium uppercase tracking-[0.08em] text-muted">
                 Gespeicherte Texte
               </p>
               {saved.length === 0 ? (
@@ -323,7 +326,7 @@ export function ImmerseDemo() {
                     >
                       <button
                         onClick={() => openSaved(t)}
-                        className={`min-w-0 flex-1 rounded-md px-2 py-1.5 text-left transition-colors hover:bg-surface-raised ${
+                        className={`min-w-0 flex-1 rounded-md px-2 py-1.5 text-left transition-colors duration-150 hover:bg-foreground/[0.04] ${
                           t.id === currentId ? "text-accent" : ""
                         }`}
                       >
@@ -336,7 +339,7 @@ export function ImmerseDemo() {
                       <button
                         onClick={() => deleteSaved(t.id)}
                         aria-label="Löschen"
-                        className="rounded-md p-2 text-muted opacity-0 transition-opacity hover:text-foreground group-hover:opacity-100"
+                        className="rounded-md p-2 text-muted opacity-0 transition-all duration-150 hover:bg-negative/10 hover:text-negative focus-visible:opacity-100 group-hover:opacity-100"
                       >
                         <Trash2 size={14} strokeWidth={2} />
                       </button>
@@ -347,16 +350,27 @@ export function ImmerseDemo() {
             </div>
           )}
 
-          {loading && <p className="text-sm text-muted">Wird generiert …</p>}
+          {loading && (
+            <div className="flex flex-col items-center gap-3 pt-16">
+              <span className="flex size-10 items-center justify-center rounded-full bg-accent-soft">
+                <Sparkles size={16} strokeWidth={1.75} className="text-accent" />
+              </span>
+              <p className="text-sm text-muted">Wird generiert …</p>
+            </div>
+          )}
 
-          {error && !loading && <p className="text-sm text-muted">{error}</p>}
+          {error && !loading && (
+            <p className="rounded-lg border border-negative/20 bg-negative/[0.06] px-4 py-3 text-sm text-negative">
+              {error}
+            </p>
+          )}
 
           {limitMsg && !loading && (
-            <div className="flex flex-col items-start gap-3">
-              <p className="text-sm text-muted">{limitMsg}</p>
+            <div className="flex w-full max-w-sm flex-col items-start gap-3 rounded-2xl border border-border bg-surface-raised px-6 py-5 shadow-raised">
+              <p className="text-sm leading-relaxed text-muted">{limitMsg}</p>
               <Link
                 href="/login"
-                className="rounded-lg bg-accent px-4 py-2 text-sm font-medium text-white"
+                className="rounded-lg bg-accent px-4 py-2 text-sm font-medium text-white shadow-xs transition-colors duration-150 hover:bg-accent/90"
               >
                 Konto erstellen
               </Link>
@@ -365,7 +379,10 @@ export function ImmerseDemo() {
 
           {!story && !loading && !error && !limitMsg && !showHistory && (
             <div className="flex flex-col items-center gap-3 pt-16 text-center">
-              <p className="text-sm">Noch kein Text.</p>
+              <span className="flex size-11 items-center justify-center rounded-xl border border-border bg-surface-raised shadow-xs">
+                <Sparkles size={20} strokeWidth={1.5} className="text-muted" />
+              </span>
+              <p className="text-sm font-medium">Noch kein Text.</p>
               <p className="max-w-xs text-xs leading-relaxed text-muted">
                 Wähl Niveau und Format, dann tippe auf <em>Generieren</em>.
                 Inhalte entstehen nur auf Klick — nie automatisch.
@@ -375,7 +392,7 @@ export function ImmerseDemo() {
 
           {story && !loading && (
             <article lang="de">
-              <h2 className="text-lg font-medium">{story.title}</h2>
+              <h2 className="text-xl font-semibold tracking-tight">{story.title}</h2>
               <p className="mt-1 text-xs text-muted">
                 Tipp auf ein Wort, um es zu lernen.
               </p>
@@ -396,9 +413,9 @@ export function ImmerseDemo() {
                           </span>
                         )}
                         <div
-                          className={`max-w-[80%] rounded-2xl px-4 py-2.5 ${
+                          className={`max-w-[80%] rounded-2xl px-4 py-2.5 shadow-xs ${
                             right
-                              ? "rounded-br-md bg-accent-soft"
+                              ? "rounded-br-md border border-accent/15 bg-accent-soft"
                               : "rounded-bl-md border border-border bg-surface-raised"
                           }`}
                         >
@@ -441,16 +458,14 @@ export function ImmerseDemo() {
         <div
           onClick={(e) => e.stopPropagation()}
           style={{ left: popover.x, top: popover.y }}
-          className="fixed z-50 w-64 rounded-xl border border-border bg-surface-raised p-4 shadow-xl shadow-black/10"
+          className="pop-in fixed z-50 w-64 rounded-xl border border-border bg-surface-raised p-4 shadow-pop"
         >
           {popover.loading ? (
             <p className="text-xs text-muted">Wird nachgeschlagen …</p>
           ) : popover.definition ? (
             <>
               <p lang="de" className="text-sm font-medium">
-                {popover.definition.gender
-                  ? `${popover.definition.gender} ${popover.definition.lemma}`
-                  : popover.definition.lemma}
+                {withGender(popover.definition.gender, popover.definition.lemma)}
                 <span className="ml-2 text-xs font-normal text-muted">
                   {popover.definition.pos}
                 </span>
@@ -459,7 +474,7 @@ export function ImmerseDemo() {
               <button
                 onClick={addToDeck}
                 disabled={popover.added}
-                className="mt-3 flex w-full items-center justify-center gap-1.5 rounded-lg bg-accent py-1.5 text-xs font-medium text-white transition-opacity disabled:opacity-60"
+                className="mt-3 flex w-full items-center justify-center gap-1.5 rounded-lg bg-accent py-1.5 text-xs font-medium text-white shadow-xs transition-all duration-150 hover:bg-accent/90 active:scale-[0.98] disabled:opacity-60 disabled:hover:bg-accent"
               >
                 {popover.added ? (
                   <>
@@ -491,14 +506,15 @@ function Segmented<T extends string>({
   onChange: (v: T) => void;
 }) {
   return (
-    <div className="flex rounded-md border border-border p-0.5">
+    <div className="flex rounded-md border border-border bg-foreground/[0.03] p-0.5">
       {options.map((o) => (
         <button
           key={o.id}
           onClick={() => onChange(o.id)}
-          className={`rounded px-2.5 py-1 text-xs transition-colors ${
+          aria-pressed={value === o.id}
+          className={`rounded px-2.5 py-1 text-xs transition-all duration-150 ${
             value === o.id
-              ? "bg-surface-raised text-foreground"
+              ? "bg-surface-raised font-medium text-foreground shadow-xs"
               : "text-muted hover:text-foreground"
           }`}
         >

@@ -15,7 +15,7 @@ export function CorrectionBadge({ correction }: { correction: Correction }) {
     return (
       <button
         onClick={() => setOpen(true)}
-        className="flex items-center gap-1 rounded-full border border-border px-2.5 py-1 text-xs text-muted transition-colors hover:border-border-strong hover:text-foreground"
+        className="flex items-center gap-1.5 rounded-full border border-border bg-surface-raised px-2.5 py-1 text-xs text-muted shadow-xs transition-colors duration-150 hover:border-border-strong hover:text-foreground"
       >
         <span className="size-1 rounded-full bg-negative" />
         1 correction
@@ -27,7 +27,7 @@ export function CorrectionBadge({ correction }: { correction: Correction }) {
   return (
     <button
       onClick={() => setOpen(false)}
-      className="max-w-[80%] rounded-lg border border-border bg-surface px-3.5 py-3 text-left text-xs"
+      className="pop-in max-w-[80%] rounded-lg border border-border bg-surface-raised px-3.5 py-3 text-left text-xs shadow-raised transition-colors duration-150 hover:border-border-strong"
     >
       <div lang="de" className="flex flex-wrap items-center gap-2 leading-relaxed">
         <s className="text-negative/80 decoration-negative/40">

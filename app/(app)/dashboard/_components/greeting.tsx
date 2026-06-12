@@ -17,11 +17,14 @@ export function Greeting() {
   }, []);
 
   return (
-    <div className="flex min-h-16 flex-col items-center gap-2 text-center">
-      <h1 lang="de" className="text-3xl font-medium tracking-tight">
-        {greeting ?? " "}
+    <div className="fade-up flex min-h-24 flex-col items-center gap-3 text-center">
+      <h1
+        lang="de"
+        className="text-gradient-warm pb-1 text-4xl font-semibold tracking-[-0.02em] md:text-5xl"
+      >
+        {greeting ?? " "}
       </h1>
-      <p className="text-sm text-muted">Bereit für ein bisschen Deutsch?</p>
+      <p className="text-base text-muted">Bereit für ein bisschen Deutsch?</p>
     </div>
   );
 }

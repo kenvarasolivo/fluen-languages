@@ -35,9 +35,12 @@ export async function middleware(request: NextRequest) {
   } = await supabase.auth.getUser();
 
   const isLoginPage = request.nextUrl.pathname.startsWith("/login");
-  // Public pages reachable without a session (legal pages, etc.).
+  const isLandingPage = request.nextUrl.pathname === "/";
+  // Public pages reachable without a session (landing, legal pages, etc.).
   const isPublicPage =
-    isLoginPage || request.nextUrl.pathname.startsWith("/impressum");
+    isLoginPage ||
+    isLandingPage ||
+    request.nextUrl.pathname.startsWith("/impressum");
 
   if (!user && !isPublicPage) {
     const url = request.nextUrl.clone();
@@ -45,9 +48,10 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(url);
   }
 
-  // Registered users don't need the login screen again.
-  // (Guests may visit it — that's how they upgrade their account.)
-  if (user && !user.is_anonymous && isLoginPage) {
+  // Registered users don't need the login screen or the marketing
+  // landing page again. (Guests may visit both — that's how they
+  // upgrade their account.)
+  if (user && !user.is_anonymous && (isLoginPage || isLandingPage)) {
     const url = request.nextUrl.clone();
     url.pathname = "/dashboard";
     return NextResponse.redirect(url);
