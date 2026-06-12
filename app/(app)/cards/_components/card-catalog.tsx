@@ -124,7 +124,7 @@ export function CardCatalog() {
 
   return (
     <div className="flex h-full flex-col">
-      <header className="flex h-14 shrink-0 items-center justify-between border-b border-border bg-surface px-6">
+      <header className="flex h-14 shrink-0 items-center justify-between border-b border-border bg-surface px-4 sm:px-6">
         <h1 className="text-sm font-semibold tracking-tight">Cards</h1>
         {phase === "ready" && (
           <span className="rounded-full border border-border bg-surface-raised px-2.5 py-0.5 text-[11px] font-medium tabular-nums text-muted shadow-xs">
@@ -175,7 +175,7 @@ export function CardCatalog() {
       {phase === "ready" && (
         <>
           {/* Difficulty tabs — "Alle" shows everything */}
-          <div className="flex shrink-0 flex-wrap items-center gap-1 border-b border-border bg-surface px-6 py-2.5">
+          <div className="flex shrink-0 flex-wrap items-center gap-1 border-b border-border bg-surface px-4 py-2.5 sm:px-6">
             {tabs.map((t) => (
               <button
                 key={t.id}
@@ -200,7 +200,7 @@ export function CardCatalog() {
           </div>
 
           <div className="flex-1 overflow-y-auto">
-            <div className="mx-auto max-w-3xl px-6 py-6">
+            <div className="mx-auto max-w-3xl px-4 py-6 sm:px-6">
               {visible.length === 0 ? (
                 <div className="flex flex-col items-center gap-3 pt-16 text-center">
                   <span className="flex size-11 items-center justify-center rounded-xl border border-border bg-surface-raised shadow-xs">
@@ -219,7 +219,7 @@ export function CardCatalog() {
                     return (
                       <li
                         key={c.id}
-                        className="group relative -mx-3 flex items-baseline gap-4 px-3 py-3.5 transition-colors duration-150 first:rounded-t-lg last:rounded-b-lg hover:bg-foreground/[0.025]"
+                        className="group relative -mx-3 flex items-baseline gap-3 px-3 py-3.5 transition-colors duration-150 first:rounded-t-lg last:rounded-b-lg hover:bg-foreground/[0.025] sm:gap-4"
                         onMouseLeave={() =>
                           setConfirmId((id) => (id === c.id ? null : id))
                         }
@@ -234,6 +234,18 @@ export function CardCatalog() {
                           <p className="mt-0.5 truncate text-sm text-muted">
                             {c.meaning_en}
                           </p>
+                          {/* On phones the state/due columns collapse into
+                              this secondary line. */}
+                          <p className="mt-1 text-[11px] text-muted sm:hidden">
+                            {STATE_LABELS[c.state] ?? "-"} ·{" "}
+                            <span
+                              className={
+                                due === "due now" ? "font-medium text-accent" : ""
+                              }
+                            >
+                              {due}
+                            </span>
+                          </p>
                         </div>
                         <span
                           className={`shrink-0 rounded-md px-1.5 py-0.5 text-[10px] font-medium tracking-wide ${
@@ -244,11 +256,11 @@ export function CardCatalog() {
                         >
                           {c.cefr_level ?? "-"}
                         </span>
-                        <span className="w-24 shrink-0 text-right text-xs text-muted">
+                        <span className="hidden w-24 shrink-0 text-right text-xs text-muted sm:block">
                           {STATE_LABELS[c.state] ?? "-"}
                         </span>
                         <span
-                          className={`w-20 shrink-0 text-right text-xs tabular-nums ${
+                          className={`hidden w-20 shrink-0 text-right text-xs tabular-nums sm:block ${
                             due === "due now" ? "font-medium text-accent" : "text-muted"
                           }`}
                         >
@@ -262,7 +274,7 @@ export function CardCatalog() {
                           className={`shrink-0 self-center rounded-md transition-colors duration-150 ${
                             armed
                               ? "pop-in bg-negative/10 px-2 py-1 text-negative"
-                              : "p-1 text-muted opacity-0 hover:bg-negative/10 hover:text-negative focus-visible:opacity-100 group-hover:opacity-100"
+                              : "p-1.5 text-muted hover:bg-negative/10 hover:text-negative sm:p-1 sm:opacity-0 sm:focus-visible:opacity-100 sm:group-hover:opacity-100"
                           }`}
                         >
                           {armed ? (

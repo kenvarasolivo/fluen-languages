@@ -130,9 +130,9 @@ export function DeckEditor({
 
   return (
     <div className="flex w-full max-w-2xl flex-1 flex-col gap-4 self-center overflow-hidden py-6">
-      <div className="flex items-center justify-between gap-3">
-        <div>
-          <h2 className="text-sm font-semibold tracking-tight">{deck.name}</h2>
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div className="min-w-0">
+          <h2 className="truncate text-sm font-semibold tracking-tight">{deck.name}</h2>
           <p className="mt-0.5 text-xs text-muted">
             {selected.size} {selected.size === 1 ? "card" : "cards"} in this deck
           </p>
@@ -165,7 +165,7 @@ export function DeckEditor({
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           placeholder="Search words ..."
-          className="w-full bg-transparent text-sm outline-none placeholder:text-muted"
+          className="w-full bg-transparent text-base outline-none placeholder:text-muted sm:text-sm"
         />
       </label>
 

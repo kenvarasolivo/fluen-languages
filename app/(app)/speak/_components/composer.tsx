@@ -20,7 +20,7 @@ export function Composer({
   };
 
   return (
-    <div className="shrink-0 border-t border-border bg-surface px-6 py-4">
+    <div className="shrink-0 border-t border-border bg-surface px-4 py-3 sm:px-6 sm:py-4">
       <div className="mx-auto flex max-w-2xl items-center gap-2 rounded-xl border border-border bg-surface-raised px-4 py-2 shadow-xs transition-all duration-150 focus-within:border-accent/50 focus-within:ring-[3px] focus-within:ring-accent/15">
         <input
           lang="de"
@@ -33,7 +33,7 @@ export function Composer({
             }
           }}
           placeholder="Write something in German..."
-          className="flex-1 bg-transparent py-1 text-sm leading-relaxed outline-none placeholder:text-muted"
+          className="min-w-0 flex-1 bg-transparent py-1 text-base leading-relaxed outline-none placeholder:text-muted sm:text-sm"
         />
         <button
           onClick={submit}

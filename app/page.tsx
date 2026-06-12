@@ -174,7 +174,7 @@ export default function LandingPage() {
 
       {/* Footer */}
       <footer className="mt-auto border-t border-border">
-        <div className="mx-auto flex w-full max-w-5xl items-center justify-between px-6 py-6 text-xs text-muted">
+        <div className="mx-auto flex w-full max-w-5xl flex-wrap items-center justify-between gap-2 px-6 py-6 pb-[max(1.5rem,env(safe-area-inset-bottom))] text-xs text-muted">
           <p>© {new Date().getFullYear()} FLUEN · Learn languages. Without the noise.</p>
           <Link
             href="/impressum"

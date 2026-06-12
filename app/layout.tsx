@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
 
@@ -10,6 +10,14 @@ const inter = Inter({
 export const metadata: Metadata = {
   title: "FLUEN",
   description: "Learn languages. Nothing else.",
+};
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  // Lets the app paint behind the iOS notch/home bar; the layouts pad
+  // with env(safe-area-inset-*) where needed.
+  viewportFit: "cover",
 };
 
 export default function RootLayout({

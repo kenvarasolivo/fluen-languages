@@ -391,7 +391,7 @@ export function ReviewDemo() {
 
   return (
     <div className="flex h-full flex-col">
-      <header className="flex h-14 shrink-0 items-center justify-between border-b border-border bg-surface px-6">
+      <header className="flex h-14 shrink-0 items-center justify-between border-b border-border bg-surface px-4 sm:px-6">
         <h1 className="text-sm font-semibold tracking-tight">Foundations</h1>
         <div className="flex items-center gap-3">
           {phase === "review" && !editing && (
@@ -419,7 +419,7 @@ export function ReviewDemo() {
       </header>
 
       {/* Deck switcher — built-in decks plus the user's custom decks */}
-      <div className="flex shrink-0 flex-wrap items-center gap-1 border-b border-border bg-surface px-6 py-2.5">
+      <div className="flex shrink-0 flex-wrap items-center gap-1 border-b border-border bg-surface px-4 py-2.5 sm:px-6">
         {BUILTIN_DECKS.map((d) => (
           <DeckTab
             key={d.id}
@@ -472,7 +472,7 @@ export function ReviewDemo() {
               onKeyDown={(e) => e.key === "Escape" && setNewDeckOpen(false)}
               onBlur={() => !newDeckName.trim() && setNewDeckOpen(false)}
               placeholder="Deck name ..."
-              className="w-32 rounded-md border border-accent/40 bg-surface-raised px-2 py-1 text-xs outline-none placeholder:text-muted"
+              className="w-36 rounded-md border border-accent/40 bg-surface-raised px-2 py-1 text-base outline-none placeholder:text-muted sm:w-32 sm:text-xs"
             />
             <button
               type="submit"
@@ -493,7 +493,7 @@ export function ReviewDemo() {
       </div>
 
       {editing ? (
-        <div className="flex flex-1 flex-col overflow-hidden px-6">
+        <div className="flex flex-1 flex-col overflow-hidden px-4 sm:px-6">
           <DeckEditor
             deck={editing}
             onClose={() => {
@@ -508,7 +508,8 @@ export function ReviewDemo() {
           />
         </div>
       ) : (
-        <div className="flex flex-1 flex-col items-center justify-center gap-8 px-6">
+        <div className="min-h-0 flex-1 overflow-y-auto">
+        <div className="flex min-h-full flex-col items-center justify-center gap-6 px-4 py-6 sm:gap-8 sm:px-6">
           {phase === "loading" && (
             <div className="flex flex-col items-center gap-3">
               <Loader2 size={20} strokeWidth={1.75} className="animate-spin text-muted" />
@@ -676,22 +677,26 @@ export function ReviewDemo() {
 
               {/* Grade bar / flip hint */}
               {flipped ? (
-                <div className="flex gap-2">
+                <div className="flex w-full max-w-md justify-center gap-2">
                   <GradeButton label="Again" hint="1" tone="negative" onClick={() => grade(1)} />
                   <GradeButton label="Hard" hint="2" tone="muted" onClick={() => grade(2)} />
                   <GradeButton label="Good" hint="3" tone="accent" onClick={() => grade(3)} />
                   <GradeButton label="Easy" hint="4" tone="positive" onClick={() => grade(4)} />
                 </div>
               ) : (
-                <p className="text-xs text-muted">
-                  <kbd className="rounded-md border border-border bg-surface-raised px-1.5 py-0.5 font-medium shadow-xs">
-                    Space
-                  </kbd>{" "}
-                  to flip
-                </p>
+                <>
+                  <p className="text-xs text-muted sm:hidden">Tap the card to flip</p>
+                  <p className="hidden text-xs text-muted sm:block">
+                    <kbd className="rounded-md border border-border bg-surface-raised px-1.5 py-0.5 font-medium shadow-xs">
+                      Space
+                    </kbd>{" "}
+                    to flip
+                  </p>
+                </>
               )}
             </>
           )}
+        </div>
         </div>
       )}
     </div>
@@ -743,7 +748,7 @@ function GradeButton({
   return (
     <button
       onClick={onClick}
-      className={`flex w-24 flex-col items-center gap-0.5 rounded-lg border border-border bg-surface-raised py-2.5 text-sm font-medium shadow-xs transition-all duration-150 active:scale-[0.98] ${tones[tone]}`}
+      className={`flex min-w-0 flex-1 flex-col items-center gap-0.5 rounded-lg border border-border bg-surface-raised py-2.5 text-sm font-medium shadow-xs transition-all duration-150 active:scale-[0.98] sm:max-w-24 ${tones[tone]}`}
     >
       {label}
       <span className="text-[10px] text-muted">{hint}</span>

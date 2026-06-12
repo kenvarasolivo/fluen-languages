@@ -27,8 +27,7 @@ type Account =
   | { kind: "guest" }
   | { kind: "user"; email: string };
 
-export function Sidebar() {
-  const pathname = usePathname();
+function useAccount() {
   const [account, setAccount] = useState<Account | null>(null);
 
   useEffect(() => {
@@ -47,8 +46,17 @@ export function Sidebar() {
     window.location.href = "/";
   };
 
+  return { account, signOut };
+}
+
+/** Desktop sidebar — hidden on small screens in favour of the
+    mobile top bar + bottom tab bar. */
+export function Sidebar() {
+  const pathname = usePathname();
+  const { account, signOut } = useAccount();
+
   return (
-    <aside className="flex h-full w-56 shrink-0 flex-col border-r border-border bg-surface">
+    <aside className="hidden h-full w-56 shrink-0 flex-col border-r border-border bg-surface md:flex">
       <div className="flex h-14 shrink-0 items-center border-b border-border px-5">
         <Link
           href="/dashboard"
@@ -122,5 +130,75 @@ export function Sidebar() {
         <ThemeToggle />
       </div>
     </aside>
+  );
+}
+
+/** Slim top bar for small screens — logo, level, theme and account. */
+export function MobileHeader() {
+  const { account, signOut } = useAccount();
+
+  return (
+    <header
+      className="flex h-12 shrink-0 items-center justify-between border-b border-border bg-surface px-4 pt-[env(safe-area-inset-top)] md:hidden"
+    >
+      <Link
+        href="/dashboard"
+        className="flex items-center gap-2 rounded-md text-sm font-semibold tracking-[0.18em]"
+      >
+        <span aria-hidden className="size-2 rounded-[3px] bg-accent shadow-[0_0_8px] shadow-accent/40" />
+        FLUEN
+      </Link>
+      <div className="flex items-center gap-1.5">
+        <p className="mr-1 text-xs font-medium tracking-wide text-muted">
+          German · <span className="text-accent">B1</span>
+        </p>
+        <ThemeToggle />
+        {account?.kind === "guest" && (
+          <Link
+            href="/login"
+            aria-label="Sign in"
+            className="flex items-center gap-1.5 rounded-md p-2 text-muted transition-colors duration-150 hover:bg-foreground/[0.04] hover:text-foreground"
+          >
+            <LogIn size={16} strokeWidth={1.75} />
+          </Link>
+        )}
+        {account?.kind === "user" && (
+          <button
+            onClick={signOut}
+            aria-label="Sign out"
+            title="Sign out"
+            className="rounded-md p-2 text-muted transition-colors duration-150 hover:bg-foreground/[0.04] hover:text-foreground"
+          >
+            <LogOut size={16} strokeWidth={1.75} />
+          </button>
+        )}
+      </div>
+    </header>
+  );
+}
+
+/** Bottom tab bar for small screens. */
+export function MobileNav() {
+  const pathname = usePathname();
+
+  return (
+    <nav className="flex shrink-0 items-stretch border-t border-border bg-surface pb-[env(safe-area-inset-bottom)] md:hidden">
+      {nav.map(({ href, label, icon: Icon }) => {
+        const active = pathname.startsWith(href);
+        return (
+          <Link
+            key={href}
+            href={href}
+            aria-current={active ? "page" : undefined}
+            className={`flex min-w-0 flex-1 flex-col items-center gap-0.5 px-1 pb-1.5 pt-2 text-[10px] font-medium transition-colors duration-150 ${
+              active ? "text-accent" : "text-muted"
+            }`}
+          >
+            <Icon size={20} strokeWidth={active ? 2 : 1.75} />
+            <span className="truncate">{label}</span>
+          </Link>
+        );
+      })}
+    </nav>
   );
 }

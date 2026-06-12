@@ -127,7 +127,7 @@ export function AuthForm() {
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           placeholder="Email"
-          className="rounded-xl border border-border bg-surface px-3.5 py-2.5 text-sm shadow-xs outline-none transition-all duration-150 placeholder:text-muted focus:border-accent/50 focus:ring-[3px] focus:ring-accent/15"
+          className="rounded-xl border border-border bg-surface px-3.5 py-2.5 text-base shadow-xs outline-none transition-all duration-150 placeholder:text-muted focus:border-accent/50 focus:ring-[3px] focus:ring-accent/15 sm:text-sm"
         />
         <input
           type="password"
@@ -137,7 +137,7 @@ export function AuthForm() {
           value={password}
           onChange={(e) => setPassword(e.target.value)}
           placeholder="Password"
-          className="rounded-xl border border-border bg-surface px-3.5 py-2.5 text-sm shadow-xs outline-none transition-all duration-150 placeholder:text-muted focus:border-accent/50 focus:ring-[3px] focus:ring-accent/15"
+          className="rounded-xl border border-border bg-surface px-3.5 py-2.5 text-base shadow-xs outline-none transition-all duration-150 placeholder:text-muted focus:border-accent/50 focus:ring-[3px] focus:ring-accent/15 sm:text-sm"
         />
 
         {error && <p className="text-xs text-negative">{error}</p>}

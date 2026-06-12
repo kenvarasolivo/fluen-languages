@@ -159,9 +159,10 @@ export function ImmerseDemo() {
     const word = rawWord.replace(/[.,!?;:"'„“()–—]/g, "");
     if (!word) return;
 
+    // Keep the popover fully on-screen, even near the edges of a phone.
     setPopover({
-      x: Math.min(e.clientX, window.innerWidth - 280),
-      y: e.clientY + 12,
+      x: Math.max(8, Math.min(e.clientX, window.innerWidth - 272)),
+      y: Math.min(e.clientY + 12, window.innerHeight - 190),
       word,
       sentence,
       definition: null,
@@ -262,7 +263,7 @@ export function ImmerseDemo() {
 
   return (
     <div className="flex h-full flex-col" onClick={() => setPopover(null)}>
-      <header className="flex h-14 shrink-0 items-center justify-between border-b border-border bg-surface px-6">
+      <header className="flex h-14 shrink-0 items-center justify-between border-b border-border bg-surface px-4 sm:px-6">
         <h1 className="text-sm font-semibold tracking-tight">Immerse</h1>
         <div className="flex items-center gap-2">
           <button
@@ -292,7 +293,7 @@ export function ImmerseDemo() {
       </header>
 
       {/* Controls — switching only sets options; generation is the button. */}
-      <div className="flex shrink-0 flex-wrap items-center gap-2 border-b border-border bg-surface px-6 py-2.5">
+      <div className="flex shrink-0 flex-wrap items-center gap-2 border-b border-border bg-surface px-4 py-2.5 sm:px-6">
         <Segmented options={LEVELS} value={level} onChange={setLevel} />
         <Segmented options={KINDS} value={kind} onChange={setKind} />
         <button
@@ -307,7 +308,7 @@ export function ImmerseDemo() {
 
       {/* Content */}
       <div className="flex-1 overflow-y-auto">
-        <div className="mx-auto max-w-2xl px-6 py-10">
+        <div className="mx-auto max-w-2xl px-4 py-8 sm:px-6 sm:py-10">
           {showHistory && (
             <div className="pop-in mb-8 overflow-hidden rounded-xl border border-border bg-surface-raised shadow-raised">
               <p className="border-b border-border px-4 py-2.5 text-[11px] font-medium uppercase tracking-[0.08em] text-muted">
@@ -339,7 +340,7 @@ export function ImmerseDemo() {
                       <button
                         onClick={() => deleteSaved(t.id)}
                         aria-label="Delete"
-                        className="rounded-md p-2 text-muted opacity-0 transition-all duration-150 hover:bg-negative/10 hover:text-negative focus-visible:opacity-100 group-hover:opacity-100"
+                        className="rounded-md p-2 text-muted transition-all duration-150 hover:bg-negative/10 hover:text-negative sm:opacity-0 sm:focus-visible:opacity-100 sm:group-hover:opacity-100"
                       >
                         <Trash2 size={14} strokeWidth={2} />
                       </button>
