@@ -76,7 +76,7 @@ may itself be A2).`,
     console.error("[/api/foundations]", err);
     return aiErrorResponse(
       err,
-      "Wörter konnten nicht generiert werden (siehe Vercel Function Logs).",
+      "Words could not be generated (see the Vercel function logs).",
     );
   }
 }

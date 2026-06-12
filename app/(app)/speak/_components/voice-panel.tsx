@@ -5,9 +5,9 @@ import { Mic, Square } from "lucide-react";
 import type { VoiceState } from "@/lib/types";
 
 const statusLabel: Record<VoiceState, string> = {
-  idle: "Tippe, um zu sprechen",
-  listening: "Ich höre zu …",
-  speaking: "Coach spricht …",
+  idle: "Tap to speak",
+  listening: "Listening ...",
+  speaking: "Coach is speaking ...",
 };
 
 /**
@@ -112,8 +112,8 @@ export function VoicePanel({
       <div className="flex min-h-12 flex-col items-center gap-1.5 px-8 text-center">
         {!supported ? (
           <p className="text-xs text-muted">
-            Spracherkennung wird von diesem Browser nicht unterstützt —
-            probier Chrome oder Edge.
+            Speech recognition is not supported by this browser -
+            try Chrome or Edge.
           </p>
         ) : interim ? (
           <p lang="de" className="text-sm text-muted">
@@ -124,7 +124,7 @@ export function VoicePanel({
             <p className={`text-sm font-medium ${state !== "idle" ? "text-accent" : ""}`}>
               {statusLabel[state]}
             </p>
-            <p className="text-xs text-muted">Sprich frei. Niemand bewertet dich.</p>
+            <p className="text-xs text-muted">Speak freely. No one is judging you.</p>
           </>
         )}
       </div>

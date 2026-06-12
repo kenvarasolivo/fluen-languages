@@ -37,7 +37,7 @@ export function Sidebar() {
       setAccount(
         user.is_anonymous
           ? { kind: "guest" }
-          : { kind: "user", email: user.email ?? "Konto" },
+          : { kind: "user", email: user.email ?? "Account" },
       );
     });
   }, []);
@@ -92,9 +92,9 @@ export function Sidebar() {
             className="flex items-center gap-3 rounded-md px-2.5 py-2 text-sm text-muted transition-colors duration-150 hover:bg-foreground/[0.04] hover:text-foreground"
           >
             <LogIn size={16} strokeWidth={1.75} />
-            <span className="flex-1">Anmelden</span>
+            <span className="flex-1">Sign in</span>
             <span className="rounded-full border border-border px-1.5 py-px text-[10px] uppercase tracking-wide">
-              Gast
+              Guest
             </span>
           </Link>
         )}
@@ -105,8 +105,8 @@ export function Sidebar() {
             </p>
             <button
               onClick={signOut}
-              aria-label="Abmelden"
-              title="Abmelden"
+              aria-label="Sign out"
+              title="Sign out"
               className="rounded-md p-1.5 text-muted transition-colors duration-150 hover:bg-foreground/[0.04] hover:text-foreground"
             >
               <LogOut size={14} strokeWidth={1.75} />
@@ -117,7 +117,7 @@ export function Sidebar() {
 
       <div className="flex items-center justify-between border-t border-border px-5 py-3">
         <p className="text-xs font-medium tracking-wide text-muted">
-          Deutsch · <span className="text-accent">B1</span>
+          German · <span className="text-accent">B1</span>
         </p>
         <ThemeToggle />
       </div>

@@ -32,7 +32,7 @@ export function Composer({
               submit();
             }
           }}
-          placeholder="Schreib etwas auf Deutsch…"
+          placeholder="Write something in German..."
           className="flex-1 bg-transparent py-1 text-sm leading-relaxed outline-none placeholder:text-muted"
         />
         <button
@@ -45,7 +45,7 @@ export function Composer({
         </button>
       </div>
       <p className="mx-auto mt-2 max-w-2xl text-xs text-muted">
-        Fehler sind hier erwünscht — du bekommst leise Korrekturen.
+        Mistakes are welcome here - you get quiet corrections.
       </p>
     </div>
   );

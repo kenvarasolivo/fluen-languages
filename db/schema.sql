@@ -15,6 +15,8 @@ drop table if exists chat_sessions cascade;
 drop table if exists user_media_progress cascade;
 drop table if exists media_cues cascade;
 drop table if exists media_items cascade;
+drop table if exists deck_cards cascade;
+drop table if exists decks cascade;
 drop table if exists review_logs cascade;
 drop table if exists user_words cascade;
 drop table if exists words cascade;
@@ -108,6 +110,25 @@ create table user_words (
 create index user_words_due_idx on user_words (user_id, due);
 
 -- ------------------------------------------------------------
+-- Custom card decks (user-named groups of existing cards)
+-- ------------------------------------------------------------
+create table decks (
+  id         uuid primary key default gen_random_uuid(),
+  user_id    uuid not null references profiles(id) on delete cascade,
+  name       text not null,
+  created_at timestamptz not null default now()
+);
+
+create index decks_user_idx on decks (user_id, created_at);
+
+create table deck_cards (
+  deck_id      uuid not null references decks(id) on delete cascade,
+  user_word_id uuid not null references user_words(id) on delete cascade,
+  added_at     timestamptz not null default now(),
+  primary key (deck_id, user_word_id)
+);
+
+-- ------------------------------------------------------------
 -- Review history
 -- ------------------------------------------------------------
 create table review_logs (
@@ -199,6 +220,8 @@ create index immerse_texts_user_idx on immerse_texts (user_id, created_at desc);
 alter table profiles            enable row level security;
 alter table words               enable row level security;
 alter table user_words          enable row level security;
+alter table decks               enable row level security;
+alter table deck_cards          enable row level security;
 alter table review_logs         enable row level security;
 alter table media_items         enable row level security;
 alter table media_cues          enable row level security;
@@ -210,6 +233,15 @@ alter table immerse_texts       enable row level security;
 -- Own-row access for user data
 create policy "own profile"  on profiles            for all using (id = auth.uid());
 create policy "own words"    on user_words          for all using (user_id = auth.uid());
+create policy "own decks"    on decks               for all using (user_id = auth.uid());
+-- deck_cards has no user_id column — ownership flows through the deck.
+create policy "own deck cards" on deck_cards for all
+  using (
+    exists (select 1 from decks d where d.id = deck_id and d.user_id = auth.uid())
+  )
+  with check (
+    exists (select 1 from decks d where d.id = deck_id and d.user_id = auth.uid())
+  );
 create policy "own logs"     on review_logs         for all using (user_id = auth.uid());
 create policy "own progress" on user_media_progress for all using (user_id = auth.uid());
 create policy "own sessions" on chat_sessions       for all using (user_id = auth.uid());

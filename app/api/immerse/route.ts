@@ -99,7 +99,7 @@ learners can infer meaning from context.`,
     console.error("[/api/immerse]", err);
     return aiErrorResponse(
       err,
-      "Inhalt konnte nicht generiert werden (siehe Vercel Function Logs).",
+      "Content could not be generated (see the Vercel function logs).",
     );
   }
 }

@@ -12,7 +12,7 @@ export function aiErrorResponse(err: unknown, fallback: string): Response {
     return Response.json(
       {
         error:
-          "GEMINI_API_KEY fehlt auf dem Server — in Vercel unter Settings → Environment Variables setzen und neu deployen.",
+          "GEMINI_API_KEY is missing on the server - set it in Vercel under Settings > Environment Variables and redeploy.",
       },
       { status: 502 },
     );
@@ -21,7 +21,7 @@ export function aiErrorResponse(err: unknown, fallback: string): Response {
     return Response.json(
       {
         error:
-          "Die KI ist gerade überlastet — das ist meist nur kurz. Versuch es in ein paar Minuten nochmal.",
+          "The AI is overloaded right now - this is usually brief. Try again in a few minutes.",
       },
       { status: 503 },
     );
@@ -30,7 +30,7 @@ export function aiErrorResponse(err: unknown, fallback: string): Response {
     return Response.json(
       {
         error:
-          "Gemini-Tageslimit erreicht (Free Tier: 20 Anfragen/Tag pro Modell). Morgen wieder verfügbar — oder Billing in Google AI Studio aktivieren.",
+          "Gemini daily limit reached (free tier: 20 requests/day per model). Available again tomorrow - or enable billing in Google AI Studio.",
       },
       { status: 429 },
     );

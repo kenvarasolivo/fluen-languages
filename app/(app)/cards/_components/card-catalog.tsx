@@ -26,16 +26,16 @@ const LEVELS = ["A1", "A2", "B1", "B2", "C1", "C2"] as const;
 const NO_LEVEL = "–";
 
 const STATE_LABELS: Record<number, string> = {
-  0: "Neu",
-  1: "Lernen",
-  2: "Wiederholen",
-  3: "Neu lernen",
+  0: "New",
+  1: "Learning",
+  2: "Review",
+  3: "Relearning",
 };
 
 function formatDue(due: string) {
   const d = new Date(due);
-  if (d.getTime() <= Date.now()) return "jetzt fällig";
-  return d.toLocaleDateString("de-DE", { day: "numeric", month: "short" });
+  if (d.getTime() <= Date.now()) return "due now";
+  return d.toLocaleDateString("en-GB", { day: "numeric", month: "short" });
 }
 
 export function CardCatalog() {
@@ -102,14 +102,14 @@ export function CardCatalog() {
 
   const tabs = useMemo(() => {
     const t: { id: string; label: string; count: number }[] = [
-      { id: "all", label: "Alle", count: cards.length },
+      { id: "all", label: "All", count: cards.length },
     ];
     for (const lvl of LEVELS) {
       const count = counts.get(lvl) ?? 0;
       if (count > 0) t.push({ id: lvl, label: lvl, count });
     }
     if ((counts.get(NO_LEVEL) ?? 0) > 0) {
-      t.push({ id: NO_LEVEL, label: "Ohne Level", count: counts.get(NO_LEVEL)! });
+      t.push({ id: NO_LEVEL, label: "No level", count: counts.get(NO_LEVEL)! });
     }
     return t;
   }, [cards.length, counts]);
@@ -128,7 +128,7 @@ export function CardCatalog() {
         <h1 className="text-sm font-semibold tracking-tight">Cards</h1>
         {phase === "ready" && (
           <span className="rounded-full border border-border bg-surface-raised px-2.5 py-0.5 text-[11px] font-medium tabular-nums text-muted shadow-xs">
-            {cards.length} {cards.length === 1 ? "Karte" : "Karten"}
+            {cards.length} {cards.length === 1 ? "card" : "cards"}
           </span>
         )}
       </header>
@@ -136,7 +136,7 @@ export function CardCatalog() {
       {phase === "loading" && (
         <div className="flex flex-1 flex-col items-center justify-center gap-3">
           <Loader2 size={20} strokeWidth={1.75} className="animate-spin text-muted" />
-          <p className="text-sm text-muted">Katalog wird geladen …</p>
+          <p className="text-sm text-muted">Loading catalog ...</p>
         </div>
       )}
 
@@ -146,7 +146,7 @@ export function CardCatalog() {
             <AlertCircle size={18} strokeWidth={1.75} className="text-negative" />
           </span>
           <p className="text-sm text-muted">
-            Katalog konnte nicht geladen werden.
+            The catalog could not be loaded.
           </p>
         </div>
       )}
@@ -157,17 +157,16 @@ export function CardCatalog() {
             <span className="flex size-11 items-center justify-center rounded-xl bg-accent-soft">
               <Library size={20} strokeWidth={1.75} className="text-accent" />
             </span>
-            <p className="text-sm font-medium">Der Kartenkatalog gehört zu deinem Konto.</p>
+            <p className="text-sm font-medium">The card catalog belongs to your account.</p>
             <p className="max-w-xs text-xs leading-relaxed text-muted">
-              Erstelle ein kostenloses Konto, um alle gespeicherten Karten zu
-              sehen — sortiert nach Schwierigkeit. Deine bisherigen Karten
-              bleiben dabei erhalten.
+              Create a free account to see all your saved cards - sorted by
+              difficulty. The cards you already have will be kept.
             </p>
             <Link
               href="/login"
               className="mt-1 rounded-lg bg-accent px-4 py-2 text-sm font-medium text-white shadow-xs transition-colors duration-150 hover:bg-accent/90"
             >
-              Konto erstellen
+              Create account
             </Link>
           </div>
         </div>
@@ -208,8 +207,8 @@ export function CardCatalog() {
                     <Inbox size={20} strokeWidth={1.5} className="text-muted" />
                   </span>
                   <p className="max-w-xs text-sm leading-relaxed text-muted">
-                    Noch keine Karten. Generiere welche in Foundations oder
-                    sammle Wörter in Immerse.
+                    No cards yet. Generate some in Foundations or collect
+                    words in Immerse.
                   </p>
                 </div>
               ) : (
@@ -243,14 +242,14 @@ export function CardCatalog() {
                               : "border border-border text-muted"
                           }`}
                         >
-                          {c.cefr_level ?? "—"}
+                          {c.cefr_level ?? "-"}
                         </span>
                         <span className="w-24 shrink-0 text-right text-xs text-muted">
-                          {STATE_LABELS[c.state] ?? "—"}
+                          {STATE_LABELS[c.state] ?? "-"}
                         </span>
                         <span
                           className={`w-20 shrink-0 text-right text-xs tabular-nums ${
-                            due === "jetzt fällig" ? "font-medium text-accent" : "text-muted"
+                            due === "due now" ? "font-medium text-accent" : "text-muted"
                           }`}
                         >
                           {due}
@@ -258,7 +257,7 @@ export function CardCatalog() {
                         <button
                           onClick={() => deleteCard(c.id)}
                           aria-label={
-                            armed ? "Löschen bestätigen" : "Karte löschen"
+                            armed ? "Confirm delete" : "Delete card"
                           }
                           className={`shrink-0 self-center rounded-md transition-colors duration-150 ${
                             armed
@@ -267,7 +266,7 @@ export function CardCatalog() {
                           }`}
                         >
                           {armed ? (
-                            <span className="text-xs font-medium">Löschen?</span>
+                            <span className="text-xs font-medium">Delete?</span>
                           ) : (
                             <Trash2 size={14} strokeWidth={1.75} />
                           )}

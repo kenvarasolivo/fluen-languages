@@ -33,7 +33,7 @@ export async function POST(req: Request) {
     data: { user },
   } = await supabase.auth.getUser();
   if (!user) {
-    return Response.json({ error: "Nicht angemeldet." }, { status: 401 });
+    return Response.json({ error: "Not signed in." }, { status: 401 });
   }
 
   try {

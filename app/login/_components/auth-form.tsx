@@ -46,7 +46,7 @@ export function AuthForm() {
         const { error } = await supabase.auth.updateUser({ email, password });
         if (error) throw error;
         setNotice(
-          "Konto erstellt. Falls eine Bestätigungs-E-Mail kommt, bestätige sie — deine Karten bleiben erhalten.",
+          "Account created. If a confirmation email arrives, confirm it - your cards will be kept.",
         );
         setTimeout(goToApp, 1600);
         return;
@@ -58,11 +58,11 @@ export function AuthForm() {
         goToApp();
       } else {
         // Email confirmation is enabled in Supabase.
-        setNotice("Fast geschafft — bestätige deine E-Mail-Adresse, dann kannst du dich anmelden.");
+        setNotice("Almost there - confirm your email address, then you can sign in.");
         setMode("signin");
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Etwas ist schiefgelaufen.");
+      setError(err instanceof Error ? err.message : "Something went wrong.");
     } finally {
       setPending(null);
     }
@@ -84,7 +84,7 @@ export function AuthForm() {
       goToApp();
     } catch (err) {
       setError(
-        err instanceof Error ? err.message : "Gast-Modus nicht verfügbar.",
+        err instanceof Error ? err.message : "Guest mode is not available.",
       );
       setPending(null);
     }
@@ -96,8 +96,8 @@ export function AuthForm() {
       <div className="flex rounded-lg border border-border bg-foreground/[0.03] p-1">
         {(
           [
-            { id: "signin", label: "Anmelden" },
-            { id: "register", label: "Konto erstellen" },
+            { id: "signin", label: "Sign in" },
+            { id: "register", label: "Create account" },
           ] as { id: Mode; label: string }[]
         ).map((o) => (
           <button
@@ -126,7 +126,7 @@ export function AuthForm() {
           autoComplete="email"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
-          placeholder="E-Mail"
+          placeholder="Email"
           className="rounded-xl border border-border bg-surface px-3.5 py-2.5 text-sm shadow-xs outline-none transition-all duration-150 placeholder:text-muted focus:border-accent/50 focus:ring-[3px] focus:ring-accent/15"
         />
         <input
@@ -136,7 +136,7 @@ export function AuthForm() {
           autoComplete={mode === "signin" ? "current-password" : "new-password"}
           value={password}
           onChange={(e) => setPassword(e.target.value)}
-          placeholder="Passwort"
+          placeholder="Password"
           className="rounded-xl border border-border bg-surface px-3.5 py-2.5 text-sm shadow-xs outline-none transition-all duration-150 placeholder:text-muted focus:border-accent/50 focus:ring-[3px] focus:ring-accent/15"
         />
 
@@ -149,16 +149,16 @@ export function AuthForm() {
           className="mt-1 rounded-xl bg-accent py-2.5 text-sm font-medium text-white shadow-xs transition-all duration-150 hover:bg-accent/90 active:scale-[0.99] disabled:opacity-50 disabled:hover:bg-accent"
         >
           {pending === "form"
-            ? "Einen Moment …"
+            ? "One moment ..."
             : mode === "signin"
-              ? "Anmelden"
-              : "Konto erstellen"}
+              ? "Sign in"
+              : "Create account"}
         </button>
       </form>
 
       <div className="mt-6 flex items-center gap-3">
         <div className="h-px flex-1 bg-border" />
-        <span className="text-xs text-muted">oder</span>
+        <span className="text-xs text-muted">or</span>
         <div className="h-px flex-1 bg-border" />
       </div>
 
@@ -168,11 +168,10 @@ export function AuthForm() {
         disabled={pending !== null}
         className="mt-6 w-full rounded-xl border border-border bg-surface py-2.5 text-sm text-muted shadow-xs transition-all duration-150 hover:border-border-strong hover:text-foreground active:scale-[0.99] disabled:opacity-50"
       >
-        {pending === "guest" ? "Einen Moment …" : "Als Gast fortfahren"}
+        {pending === "guest" ? "One moment ..." : "Continue as guest"}
       </button>
       <p className="mt-3 text-center text-xs leading-relaxed text-muted">
-        Gäste können einmal Karten generieren, einen Text lesen und 5
-        Nachrichten schreiben.
+        Guests can generate cards once, read one text and write 5 messages.
       </p>
     </div>
   );

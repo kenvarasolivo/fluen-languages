@@ -24,7 +24,7 @@ export function Greeting() {
       >
         {greeting ?? " "}
       </h1>
-      <p className="text-base text-muted">Bereit für ein bisschen Deutsch?</p>
+      <p className="text-base text-muted">Ready for a bit of German?</p>
     </div>
   );
 }

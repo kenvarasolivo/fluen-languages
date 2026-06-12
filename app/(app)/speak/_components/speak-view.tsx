@@ -163,7 +163,7 @@ export function SpeakView() {
             setMessages((prev) =>
               prev.map((m) =>
                 m.id === assistantId
-                  ? { ...m, content: "Das Gast-Limit ist erreicht — erstelle ein Konto, um weiterzusprechen." }
+                  ? { ...m, content: "The guest limit has been reached - create an account to keep talking." }
                   : m,
               ),
             );
@@ -208,7 +208,7 @@ export function SpeakView() {
         setMessages((prev) =>
           prev.map((m) =>
             m.id === assistantId
-              ? { ...m, content: "— Verbindung unterbrochen. Versuch es nochmal." }
+              ? { ...m, content: "Connection lost. Please try again." }
               : m,
           ),
         );
@@ -227,13 +227,13 @@ export function SpeakView() {
           <h1 className="text-sm font-semibold tracking-tight">Speak</h1>
           <div className="flex items-center gap-3">
             <span className="text-xs font-medium tracking-wide text-muted">
-              Gespräch · Deutsch B1
+              Conversation · German B1
             </span>
             {hasSession && (
               <button
                 onClick={deleteConversation}
-                aria-label="Gespräch löschen"
-                title="Gespräch löschen"
+                aria-label="Delete conversation"
+                title="Delete conversation"
                 className="rounded-md p-1.5 text-muted transition-colors duration-150 hover:bg-negative/10 hover:text-negative"
               >
                 <Trash2 size={14} strokeWidth={2} />
@@ -251,7 +251,7 @@ export function SpeakView() {
               href="/login"
               className="rounded-lg bg-accent px-4 py-2 text-sm font-medium text-white shadow-xs transition-colors duration-150 hover:bg-accent/90"
             >
-              Konto erstellen
+              Create account
             </Link>
           </div>
         ) : (

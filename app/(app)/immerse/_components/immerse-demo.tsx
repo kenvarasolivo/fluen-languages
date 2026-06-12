@@ -33,7 +33,7 @@ const LEVELS: { id: ImmerseLevel; label: string }[] = [
 ];
 
 const KINDS: { id: ImmerseKind; label: string }[] = [
-  { id: "story", label: "Geschichte" },
+  { id: "story", label: "Story" },
   { id: "dialog", label: "Dialog" },
 ];
 
@@ -120,7 +120,7 @@ export function ImmerseDemo() {
       setError(
         err instanceof Error && err.message.length > 4
           ? err.message
-          : "Generierung fehlgeschlagen — versuch es nochmal.",
+          : "Generation failed - please try again.",
       );
     } finally {
       setLoading(false);
@@ -275,7 +275,7 @@ export function ImmerseDemo() {
             }`}
           >
             <History size={12} strokeWidth={2} />
-            Verlauf
+            History
           </button>
           <button
             onClick={() => setShowEnglish((v) => !v)}
@@ -286,7 +286,7 @@ export function ImmerseDemo() {
                 : "border-border text-muted hover:border-border-strong hover:text-foreground"
             }`}
           >
-            Übersetzung
+            Translation
           </button>
         </div>
       </header>
@@ -301,7 +301,7 @@ export function ImmerseDemo() {
           className="ml-auto flex items-center gap-1.5 rounded-md bg-accent px-3 py-1.5 text-xs font-medium text-white shadow-xs transition-all duration-150 hover:bg-accent/90 active:scale-[0.98] disabled:opacity-40 disabled:hover:bg-accent"
         >
           <Sparkles size={12} strokeWidth={2} />
-          {story ? "Neu generieren" : "Generieren"}
+          {story ? "Regenerate" : "Generate"}
         </button>
       </div>
 
@@ -311,11 +311,11 @@ export function ImmerseDemo() {
           {showHistory && (
             <div className="pop-in mb-8 overflow-hidden rounded-xl border border-border bg-surface-raised shadow-raised">
               <p className="border-b border-border px-4 py-2.5 text-[11px] font-medium uppercase tracking-[0.08em] text-muted">
-                Gespeicherte Texte
+                Saved texts
               </p>
               {saved.length === 0 ? (
                 <p className="px-4 py-3 text-xs text-muted">
-                  Noch nichts gespeichert.
+                  Nothing saved yet.
                 </p>
               ) : (
                 <ul>
@@ -332,13 +332,13 @@ export function ImmerseDemo() {
                       >
                         <span className="block truncate text-sm">{t.title}</span>
                         <span className="text-xs text-muted">
-                          {t.kind === "dialog" ? "Dialog" : "Geschichte"} · {t.level} ·{" "}
-                          {new Date(t.created_at).toLocaleDateString("de-DE")}
+                          {t.kind === "dialog" ? "Dialog" : "Story"} · {t.level} ·{" "}
+                          {new Date(t.created_at).toLocaleDateString("en-GB")}
                         </span>
                       </button>
                       <button
                         onClick={() => deleteSaved(t.id)}
-                        aria-label="Löschen"
+                        aria-label="Delete"
                         className="rounded-md p-2 text-muted opacity-0 transition-all duration-150 hover:bg-negative/10 hover:text-negative focus-visible:opacity-100 group-hover:opacity-100"
                       >
                         <Trash2 size={14} strokeWidth={2} />
@@ -355,7 +355,7 @@ export function ImmerseDemo() {
               <span className="flex size-10 items-center justify-center rounded-full bg-accent-soft">
                 <Sparkles size={16} strokeWidth={1.75} className="text-accent" />
               </span>
-              <p className="text-sm text-muted">Wird generiert …</p>
+              <p className="text-sm text-muted">Generating ...</p>
             </div>
           )}
 
@@ -372,7 +372,7 @@ export function ImmerseDemo() {
                 href="/login"
                 className="rounded-lg bg-accent px-4 py-2 text-sm font-medium text-white shadow-xs transition-colors duration-150 hover:bg-accent/90"
               >
-                Konto erstellen
+                Create account
               </Link>
             </div>
           )}
@@ -382,10 +382,10 @@ export function ImmerseDemo() {
               <span className="flex size-11 items-center justify-center rounded-xl border border-border bg-surface-raised shadow-xs">
                 <Sparkles size={20} strokeWidth={1.5} className="text-muted" />
               </span>
-              <p className="text-sm font-medium">Noch kein Text.</p>
+              <p className="text-sm font-medium">No text yet.</p>
               <p className="max-w-xs text-xs leading-relaxed text-muted">
-                Wähl Niveau und Format, dann tippe auf <em>Generieren</em>.
-                Inhalte entstehen nur auf Klick — nie automatisch.
+                Pick a level and format, then tap <em>Generate</em>.
+                Content is only created on click - never automatically.
               </p>
             </div>
           )}
@@ -393,8 +393,8 @@ export function ImmerseDemo() {
           {story && !loading && (
             <article lang="de">
               <h2 className="text-xl font-semibold tracking-tight">{story.title}</h2>
-              <p className="mt-1 text-xs text-muted">
-                Tipp auf ein Wort, um es zu lernen.
+              <p lang="en" className="mt-1 text-xs text-muted">
+                Tap a word to learn it.
               </p>
 
               {isDialog ? (
@@ -461,7 +461,7 @@ export function ImmerseDemo() {
           className="pop-in fixed z-50 w-64 rounded-xl border border-border bg-surface-raised p-4 shadow-pop"
         >
           {popover.loading ? (
-            <p className="text-xs text-muted">Wird nachgeschlagen …</p>
+            <p className="text-xs text-muted">Looking it up ...</p>
           ) : popover.definition ? (
             <>
               <p lang="de" className="text-sm font-medium">
@@ -478,7 +478,7 @@ export function ImmerseDemo() {
               >
                 {popover.added ? (
                   <>
-                    <Check size={12} strokeWidth={2} /> Im Deck
+                    <Check size={12} strokeWidth={2} /> In deck
                   </>
                 ) : (
                   <>
@@ -488,7 +488,7 @@ export function ImmerseDemo() {
               </button>
             </>
           ) : (
-            <p className="text-xs text-muted">Keine Definition gefunden.</p>
+            <p className="text-xs text-muted">No definition found.</p>
           )}
         </div>
       )}

@@ -27,6 +27,12 @@ export interface DemoWord {
   example_en: string;
 }
 
+/** A user-named custom deck of existing cards (Foundations). */
+export interface Deck {
+  id: string;
+  name: string;
+}
+
 /** One line of an AI-generated story or dialog (Immerse demo). */
 export interface StoryLine {
   speaker: string | null;

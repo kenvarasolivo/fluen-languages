@@ -28,7 +28,7 @@ export async function POST(req: Request) {
 
   if (!process.env.GEMINI_API_KEY) {
     return Response.json(
-      { error: "GEMINI_API_KEY fehlt auf dem Server — Umgebungsvariable setzen und neu deployen." },
+      { error: "GEMINI_API_KEY is missing on the server - set the environment variable and redeploy." },
       { status: 502 },
     );
   }
@@ -50,7 +50,7 @@ export async function POST(req: Request) {
     });
   } catch (err) {
     console.error("[/api/chat]", err);
-    return aiErrorResponse(err, "Antwort fehlgeschlagen — versuch es nochmal.");
+    return aiErrorResponse(err, "Reply failed - please try again.");
   }
 
   // The model accepted the request — count it against the guest quota.

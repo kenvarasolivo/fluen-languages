@@ -110,7 +110,7 @@ export function StatsGrid() {
                     : ""
               }`}
             >
-              {value ?? "–"}
+              {value ?? "-"}
             </p>
             <p className="text-[11px] font-medium uppercase tracking-[0.08em] text-muted">
               {label}
@@ -126,8 +126,8 @@ export function StatsGrid() {
           className="group flex items-center gap-2 rounded-full border border-border bg-surface-raised px-4 py-2 text-sm text-muted shadow-xs transition-all duration-150 hover:border-border-strong hover:text-foreground"
         >
           {stats.due === 1
-            ? "Eine Karte wartet auf dich"
-            : `${stats.due} Karten warten auf dich`}
+            ? "One card is waiting for you"
+            : `${stats.due} cards are waiting for you`}
           <ArrowRight
             size={14}
             aria-hidden
@@ -138,7 +138,7 @@ export function StatsGrid() {
       {stats && stats.due === 0 && stats.reviewsToday > 0 && (
         <p className="flex items-center gap-2 rounded-full border border-border bg-surface-raised px-4 py-2 text-sm text-muted shadow-xs">
           <CheckCircle2 size={14} className="text-positive" aria-hidden />
-          Alles erledigt für heute — schön gemacht!
+          All done for today - nicely done!
         </p>
       )}
     </div>

@@ -16,10 +16,10 @@ export type GuestFeature = keyof typeof GUEST_LIMITS;
 
 const LIMIT_MESSAGES: Record<GuestFeature, string> = {
   foundations:
-    "Als Gast kannst du nur einmal Karten generieren. Erstelle ein kostenloses Konto, um weiterzulernen.",
+    "As a guest you can only generate cards once. Create a free account to keep learning.",
   immerse:
-    "Als Gast kannst du nur einen Text generieren. Erstelle ein kostenloses Konto, um weiterzulesen.",
-  chat: "Als Gast sind 5 Nachrichten möglich. Erstelle ein kostenloses Konto, um weiterzusprechen.",
+    "As a guest you can only generate one text. Create a free account to keep reading.",
+  chat: "Guests get 5 messages. Create a free account to keep talking.",
 };
 
 type GateResult =
@@ -42,7 +42,7 @@ export async function gateAiRequest(feature: GuestFeature): Promise<GateResult> 
     return {
       ok: false,
       response: Response.json(
-        { error: "Nicht angemeldet.", code: "unauthorized" },
+        { error: "Not signed in.", code: "unauthorized" },
         { status: 401 },
       ),
     };
