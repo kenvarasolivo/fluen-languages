@@ -293,15 +293,15 @@ export function ImmerseDemo() {
       </header>
 
       {/* Controls — switching only sets options; generation is the button. */}
-      <div className="flex shrink-0 flex-wrap items-center gap-2 border-b border-border bg-surface px-4 py-2.5 sm:px-6">
+      <div className="flex shrink-0 flex-wrap items-center gap-2 border-b border-border bg-surface px-4 py-3 sm:px-6">
         <Segmented options={LEVELS} value={level} onChange={setLevel} />
         <Segmented options={KINDS} value={kind} onChange={setKind} />
         <button
           onClick={generate}
           disabled={loading}
-          className="ml-auto flex items-center gap-1.5 rounded-md bg-accent px-3 py-1.5 text-xs font-medium text-white shadow-xs transition-all duration-150 hover:bg-accent/90 active:scale-[0.98] disabled:opacity-40 disabled:hover:bg-accent"
+          className="ml-auto flex items-center gap-1.5 rounded-md bg-accent px-3.5 py-1.5 text-sm font-medium text-white shadow-xs transition-all duration-150 hover:bg-accent/90 active:scale-[0.98] disabled:opacity-40 disabled:hover:bg-accent"
         >
-          <Sparkles size={12} strokeWidth={2} />
+          <Sparkles size={14} strokeWidth={2} />
           {story ? "Regenerate" : "Generate"}
         </button>
       </div>
@@ -513,7 +513,7 @@ function Segmented<T extends string>({
           key={o.id}
           onClick={() => onChange(o.id)}
           aria-pressed={value === o.id}
-          className={`rounded px-2.5 py-1 text-xs transition-all duration-150 ${
+          className={`rounded px-3 py-1.5 text-sm transition-all duration-150 ${
             value === o.id
               ? "bg-surface-raised font-medium text-foreground shadow-xs"
               : "text-muted hover:text-foreground"

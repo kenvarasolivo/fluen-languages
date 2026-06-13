@@ -175,13 +175,13 @@ export function CardCatalog() {
       {phase === "ready" && (
         <>
           {/* Difficulty tabs — "Alle" shows everything */}
-          <div className="flex shrink-0 flex-wrap items-center gap-1 border-b border-border bg-surface px-4 py-2.5 sm:px-6">
+          <div className="flex shrink-0 flex-wrap items-center gap-1.5 border-b border-border bg-surface px-4 py-3 sm:px-6">
             {tabs.map((t) => (
               <button
                 key={t.id}
                 onClick={() => setTab(t.id)}
                 aria-pressed={tab === t.id}
-                className={`rounded-md px-2.5 py-1 text-xs transition-colors duration-150 ${
+                className={`rounded-md px-3 py-1.5 text-sm transition-colors duration-150 ${
                   tab === t.id
                     ? "bg-accent-soft font-medium text-accent"
                     : "text-muted hover:bg-foreground/[0.04] hover:text-foreground"

@@ -16,21 +16,25 @@ export type VoiceState = "idle" | "listening" | "speaking";
 
 export type CefrLevel = "A1" | "A2" | "B1" | "B2" | "C1" | "C2";
 
-/** AI-generated vocabulary card (Foundations demo). */
-export interface DemoWord {
-  lemma: string;
-  gender: "der" | "die" | "das" | null;
-  pos: string;
-  meaning_en: string;
-  cefr_level: CefrLevel | string;
-  example_de: string;
-  example_en: string;
-}
-
 /** A user-named custom deck of existing cards (Foundations). */
 export interface Deck {
   id: string;
   name: string;
+}
+
+/** Result of drawing the next curriculum batch (/api/curriculum/next). */
+export interface DrawResult {
+  /** How many new cards were added to the learner's deck. */
+  added: number;
+  /** The CEFR theme the batch was drawn from (null when none added). */
+  theme: string | null;
+  level: CefrLevel;
+  /** Unseen curriculum words still left at this level. */
+  remaining: number;
+  /** True when the level is fully seeded and the learner owns all of it. */
+  levelComplete: boolean;
+  /** The level to advance to, when levelComplete and one exists. */
+  nextLevel: CefrLevel | null;
 }
 
 /** One line of an AI-generated story or dialog (Immerse demo). */

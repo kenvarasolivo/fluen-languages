@@ -29,7 +29,7 @@ create table profiles (
   id              uuid primary key references auth.users(id) on delete cascade,
   display_name    text,
   target_language text not null default 'de',
-  cefr_level      text not null default 'B1'
+  cefr_level      text not null default 'A1'
                   check (cefr_level in ('A1','A2','B1','B2','C1','C2')),
   new_cards_per_day int not null default 10,
 

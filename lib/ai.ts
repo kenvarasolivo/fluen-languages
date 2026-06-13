@@ -14,4 +14,4 @@ export const ai = new GoogleGenAI({});
 export const CHAT_MODEL = "gemini-2.5-flash";
 
 /** High-frequency lightweight calls (corrections, word definitions). */
-export const LITE_MODEL = "gemini-2.5-flash-lite";
+export const LITE_MODEL = "gemini-3.1-flash-lite";

@@ -15,8 +15,27 @@ import {
 import { supabase, ensureSession } from "@/lib/supabase";
 import { gradeCard, isDueSoon, type SrsFields } from "@/lib/srs";
 import { withGender } from "@/lib/format";
-import type { Deck, DemoWord } from "@/lib/types";
+import type { CefrLevel, Deck, DrawResult } from "@/lib/types";
+import { themeOrder } from "@/lib/curriculum";
 import { DeckEditor } from "./deck-editor";
+
+/** "Auto" lets the server pick the next theme in curriculum order. */
+const AUTO_THEME = "auto";
+
+/** Title-case a theme id for display ("food & drink" → "Food & drink"). */
+function themeLabel(theme: string) {
+  if (theme === AUTO_THEME) return "Auto (next up)";
+  return theme.charAt(0).toUpperCase() + theme.slice(1);
+}
+
+/** Levels a learner can draw from (matches the curriculum). */
+const LEVELS: { id: CefrLevel; label: string }[] = [
+  { id: "A1", label: "A1" },
+  { id: "A2", label: "A2" },
+  { id: "B1", label: "B1" },
+  { id: "B2", label: "B2" },
+  { id: "C1", label: "C1" },
+];
 
 type Phase = "loading" | "empty" | "generating" | "review" | "done" | "error";
 
@@ -84,14 +103,6 @@ function speakGerman(text: string) {
   speechSynthesis.speak(u);
 }
 
-function sanitizeGender(g: string | null | undefined) {
-  return g === "der" || g === "die" || g === "das" ? g : null;
-}
-
-function sanitizeLevel(l: string | null | undefined) {
-  return l && ["A1", "A2", "B1", "B2", "C1", "C2"].includes(l) ? l : null;
-}
-
 function shuffle<T>(arr: T[]): T[] {
   const a = [...arr];
   for (let i = a.length - 1; i > 0; i--) {
@@ -116,6 +127,16 @@ export function ReviewDemo() {
   const [editing, setEditing] = useState<Deck | null>(null);
   const [newDeckOpen, setNewDeckOpen] = useState(false);
   const [newDeckName, setNewDeckName] = useState("");
+
+  // The learner's current level (persisted on profiles) drives which
+  // curriculum words "New words" draws next.
+  const [level, setLevel] = useState<CefrLevel>("A1");
+  // Which theme the next draw pulls from ("auto" = next in curriculum order).
+  const [theme, setTheme] = useState<string>(AUTO_THEME);
+  // Set when a level is exhausted, offering a one-click bump to the next.
+  const [advanceTo, setAdvanceTo] = useState<CefrLevel | null>(null);
+  // Brief feedback when a draw added nothing (e.g. theme already learned).
+  const [notice, setNotice] = useState<string | null>(null);
 
   const isBuiltin = (id: string): id is BuiltinDeckId =>
     BUILTIN_DECKS.some((d) => d.id === id);
@@ -180,64 +201,28 @@ export function ReviewDemo() {
     });
   }, []);
 
-  /** Generate fresh AI vocabulary and persist it as new cards. */
-  const generateCards = useCallback(async (userId: string) => {
-    const res = await fetch("/api/foundations", {
+  /**
+   * Draw the next ordered batch from the A1–C1 curriculum. The server
+   * picks the words (core grammar first, then one theme at a time),
+   * lazily generating them only when a cell runs low, and inserts the
+   * new cards itself — so here we just relay the result.
+   */
+  const drawCards = useCallback(async (): Promise<DrawResult> => {
+    const res = await fetch("/api/curriculum/next", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ level: "B1", count: 10 }),
+      body: JSON.stringify({
+        count: 10,
+        theme: theme === AUTO_THEME ? undefined : theme,
+      }),
     });
     if (!res.ok) {
       const body = await res.json().catch(() => null);
       if (body?.code === "guest_limit") throw new GuestLimitError(body.error);
       throw new Error(body?.error ?? "generation failed");
     }
-    const { words } = (await res.json()) as { words: DemoWord[] };
-
-    // Dictionary rows are shared — insert only the missing ones, then
-    // read ids back (upsert+DO NOTHING keeps RLS to insert-only).
-    const dictRows = words.map((w) => ({
-      language: "de",
-      lemma: w.lemma,
-      pos: w.pos || "phrase",
-      gender: sanitizeGender(w.gender),
-      meaning_en: w.meaning_en,
-      cefr_level: sanitizeLevel(w.cefr_level),
-    }));
-    const { error: insertErr } = await supabase
-      .from("words")
-      .upsert(dictRows, { onConflict: "language,lemma,pos", ignoreDuplicates: true });
-    if (insertErr) throw insertErr;
-
-    const { data: dict, error: dictErr } = await supabase
-      .from("words")
-      .select("id, lemma, pos")
-      .eq("language", "de")
-      .in("lemma", words.map((w) => w.lemma));
-    if (dictErr) throw dictErr;
-
-    const idFor = (w: DemoWord) =>
-      dict?.find((d) => d.lemma === w.lemma && d.pos === (w.pos || "phrase"))?.id ??
-      dict?.find((d) => d.lemma === w.lemma)?.id;
-
-    const cardRows = words.flatMap((w) => {
-      const wordId = idFor(w);
-      if (!wordId) return [];
-      return [
-        {
-          user_id: userId,
-          word_id: wordId,
-          context_sentence: w.example_de,
-          context_translation: w.example_en,
-          source: "generated",
-        },
-      ];
-    });
-    const { error: cardErr } = await supabase
-      .from("user_words")
-      .upsert(cardRows, { onConflict: "user_id,word_id", ignoreDuplicates: true });
-    if (cardErr) throw cardErr;
-  }, []);
+    return (await res.json()) as DrawResult;
+  }, [theme]);
 
   /** Load the selected deck's queue. Never generates — that's a deliberate click. */
   const load = useCallback(async () => {
@@ -262,16 +247,28 @@ export function ReviewDemo() {
     }
   }, [fetchQueue, deckId]);
 
-  /** Explicit, token-conscious generation — only ever runs on click. */
+  /** Explicit, token-conscious draw — only ever runs on click. */
   const generate = useCallback(async () => {
     setPhase("generating");
     setFlipped(false);
     setLimitMsg(null);
+    setAdvanceTo(null);
+    setNotice(null);
     try {
       const session = await ensureSession();
       userIdRef.current = session.user.id;
 
-      await generateCards(session.user.id);
+      const result = await drawCards();
+      // Level exhausted — offer a one-click bump to the next level.
+      if (result.levelComplete && result.nextLevel) setAdvanceTo(result.nextLevel);
+      else if (result.added === 0) {
+        setNotice(
+          theme === AUTO_THEME
+            ? `No new ${level} words available right now.`
+            : `You've already learned every "${themeLabel(theme)}" word at ${level}.`,
+        );
+      }
+
       const cards = await fetchQueue(deckId);
       setQueue(cards);
       setPhase(cards.length > 0 ? "review" : "empty");
@@ -290,27 +287,53 @@ export function ReviewDemo() {
       );
       setPhase("error");
     }
-  }, [fetchQueue, generateCards, deckId]);
+  }, [fetchQueue, drawCards, deckId, theme, level]);
 
   useEffect(() => {
     load();
   }, [load]);
 
-  // Custom decks are loaded once; create/delete keep the list in sync.
+  // Custom decks and the saved level are loaded once on mount.
   useEffect(() => {
     (async () => {
       try {
-        await ensureSession();
-        const { data, error } = await supabase
-          .from("decks")
-          .select("id, name")
-          .order("created_at");
-        if (error) throw error;
-        setDecks(data ?? []);
+        const session = await ensureSession();
+        const [{ data: deckData, error: deckErr }, { data: profile }] =
+          await Promise.all([
+            supabase.from("decks").select("id, name").order("created_at"),
+            supabase
+              .from("profiles")
+              .select("cefr_level")
+              .eq("id", session.user.id)
+              .single(),
+          ]);
+        if (deckErr) throw deckErr;
+        setDecks(deckData ?? []);
+        const saved = profile?.cefr_level;
+        if (saved && LEVELS.some((l) => l.id === saved)) setLevel(saved as CefrLevel);
       } catch (err) {
         console.error("[decks]", err);
       }
     })();
+  }, []);
+
+  /** Persist the chosen level; the next draw reads it server-side. */
+  const changeLevel = useCallback(async (next: CefrLevel) => {
+    setLevel(next);
+    // Themes differ per level (core only at A1/A2), so reset the choice.
+    setTheme(AUTO_THEME);
+    setAdvanceTo(null);
+    setNotice(null);
+    try {
+      const session = await ensureSession();
+      const { error } = await supabase
+        .from("profiles")
+        .update({ cefr_level: next })
+        .eq("id", session.user.id);
+      if (error) throw error;
+    } catch (err) {
+      console.error("[level update]", err);
+    }
   }, []);
 
   const createDeck = useCallback(async () => {
@@ -460,7 +483,7 @@ export function ReviewDemo() {
       </header>
 
       {/* Deck switcher — built-in decks plus the user's custom decks */}
-      <div className="flex shrink-0 flex-wrap items-center gap-1 border-b border-border bg-surface px-4 py-2.5 sm:px-6">
+      <div className="flex shrink-0 flex-wrap items-center gap-1.5 border-b border-border bg-surface px-4 py-3 sm:px-6">
         {BUILTIN_DECKS.map((d) => (
           <DeckTab
             key={d.id}
@@ -487,13 +510,13 @@ export function ReviewDemo() {
               <button
                 onClick={() => setEditing(d)}
                 aria-label={`Edit deck "${d.name}"`}
-                className={`ml-0.5 rounded-md p-1 transition-colors duration-150 ${
+                className={`ml-0.5 rounded-md p-1.5 transition-colors duration-150 ${
                   editing?.id === d.id
                     ? "bg-accent-soft text-accent"
                     : "text-muted hover:bg-foreground/[0.04] hover:text-foreground"
                 }`}
               >
-                <Pencil size={12} strokeWidth={1.75} />
+                <Pencil size={14} strokeWidth={1.75} />
               </button>
             )}
           </span>
@@ -513,11 +536,11 @@ export function ReviewDemo() {
               onKeyDown={(e) => e.key === "Escape" && setNewDeckOpen(false)}
               onBlur={() => !newDeckName.trim() && setNewDeckOpen(false)}
               placeholder="Deck name ..."
-              className="w-36 rounded-md border border-accent/40 bg-surface-raised px-2 py-1 text-base outline-none placeholder:text-muted sm:w-32 sm:text-xs"
+              className="w-36 rounded-md border border-accent/40 bg-surface-raised px-2.5 py-1.5 text-base outline-none placeholder:text-muted sm:w-32 sm:text-sm"
             />
             <button
               type="submit"
-              className="rounded-md bg-accent px-2 py-1 text-xs font-medium text-white transition-colors duration-150 hover:bg-accent/90"
+              className="rounded-md bg-accent px-3 py-1.5 text-sm font-medium text-white transition-colors duration-150 hover:bg-accent/90"
             >
               OK
             </button>
@@ -525,12 +548,38 @@ export function ReviewDemo() {
         ) : (
           <button
             onClick={() => setNewDeckOpen(true)}
-            className="flex items-center gap-1 rounded-md px-2.5 py-1 text-xs text-muted transition-colors duration-150 hover:bg-foreground/[0.04] hover:text-foreground"
+            className="flex items-center gap-1 rounded-md px-3 py-1.5 text-sm text-muted transition-colors duration-150 hover:bg-foreground/[0.04] hover:text-foreground"
           >
-            <Plus size={12} strokeWidth={2} />
+            <Plus size={14} strokeWidth={2} />
             New deck
           </button>
         )}
+
+        {/* Level + theme pickers — decide which curriculum words "New words"
+            draws and from which topic. */}
+        <div className="ml-auto flex items-center gap-2">
+          <select
+            value={theme}
+            onChange={(e) => {
+              setTheme(e.target.value);
+              setNotice(null);
+            }}
+            aria-label="Theme to draw from"
+            className="rounded-md border border-border bg-surface-raised px-2.5 py-1.5 text-sm text-foreground shadow-xs outline-none transition-colors duration-150 hover:border-border-strong focus:border-accent/40"
+          >
+            {[AUTO_THEME, ...themeOrder(level)].map((t) => (
+              <option key={t} value={t}>
+                {themeLabel(t)}
+              </option>
+            ))}
+          </select>
+          <div className="flex items-center gap-2">
+            <span className="hidden text-xs font-medium text-muted sm:inline">
+              Level
+            </span>
+            <LevelPicker value={level} onChange={changeLevel} />
+          </div>
+        </div>
       </div>
 
       {editing ? (
@@ -551,6 +600,34 @@ export function ReviewDemo() {
       ) : (
         <div className="min-h-0 flex-1 overflow-y-auto">
         <div className="flex min-h-full flex-col items-center justify-center gap-6 px-4 py-6 sm:gap-8 sm:px-6">
+          {notice && (
+            <div className="pop-in w-full max-w-lg rounded-xl border border-border bg-surface-raised px-4 py-3 text-center text-sm text-muted shadow-xs">
+              {notice}
+            </div>
+          )}
+          {advanceTo && (
+            <div className="pop-in flex w-full max-w-lg flex-wrap items-center justify-between gap-3 rounded-xl border border-accent/30 bg-accent-soft px-4 py-3">
+              <p className="text-sm">
+                You&apos;ve covered all of{" "}
+                <span className="font-semibold">{level}</span>. Ready for{" "}
+                <span className="font-semibold">{advanceTo}</span>?
+              </p>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => setAdvanceTo(null)}
+                  className="rounded-lg border border-border bg-surface-raised px-3 py-1.5 text-xs font-medium text-muted shadow-xs transition-colors duration-150 hover:text-foreground"
+                >
+                  Not yet
+                </button>
+                <button
+                  onClick={() => changeLevel(advanceTo)}
+                  className="rounded-lg bg-accent px-3 py-1.5 text-xs font-medium text-white shadow-xs transition-colors duration-150 hover:bg-accent/90"
+                >
+                  Move to {advanceTo}
+                </button>
+              </div>
+            </div>
+          )}
           {phase === "loading" && (
             <div className="flex flex-col items-center gap-3">
               <Loader2 size={20} strokeWidth={1.75} className="animate-spin text-muted" />
@@ -644,7 +721,8 @@ export function ReviewDemo() {
                     Generate new words
                   </button>
                   <p className="text-xs text-muted">
-                    Generates 10 words with AI - only on click, never automatically.
+                    Adds the next 10 words for your {level} level - only on
+                    click, never automatically.
                   </p>
                 </>
               )}
@@ -762,7 +840,7 @@ function DeckTab({
     <button
       onClick={onClick}
       aria-pressed={active}
-      className={`max-w-40 truncate rounded-md px-2.5 py-1 text-xs transition-colors duration-150 ${
+      className={`max-w-40 truncate rounded-md px-3 py-1.5 text-sm transition-colors duration-150 ${
         active
           ? "bg-accent-soft font-medium text-accent"
           : "text-muted hover:bg-foreground/[0.04] hover:text-foreground"
@@ -770,6 +848,34 @@ function DeckTab({
     >
       {label}
     </button>
+  );
+}
+
+/** Compact A1–C1 segmented control. */
+function LevelPicker({
+  value,
+  onChange,
+}: {
+  value: CefrLevel;
+  onChange: (v: CefrLevel) => void;
+}) {
+  return (
+    <div className="flex rounded-md border border-border bg-foreground/[0.03] p-0.5">
+      {LEVELS.map((l) => (
+        <button
+          key={l.id}
+          onClick={() => onChange(l.id)}
+          aria-pressed={value === l.id}
+          className={`rounded px-2.5 py-1 text-sm transition-all duration-150 ${
+            value === l.id
+              ? "bg-surface-raised font-medium text-foreground shadow-xs"
+              : "text-muted hover:text-foreground"
+          }`}
+        >
+          {l.label}
+        </button>
+      ))}
+    </div>
   );
 }
 
