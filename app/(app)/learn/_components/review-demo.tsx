@@ -360,11 +360,16 @@ export function ReviewDemo() {
 
   const card = queue[0];
 
+  // Toggle: reveal the answer, or close the card again to re-test yourself.
   const flip = useCallback(() => {
-    if (!card || flipped) return;
-    setFlipped(true);
-    speakGerman(withGender(card.gender, card.lemma));
-  }, [card, flipped]);
+    if (!card) return;
+    setFlipped((f) => {
+      const next = !f;
+      if (next) speakGerman(withGender(card.gender, card.lemma));
+      else if (typeof speechSynthesis !== "undefined") speechSynthesis.cancel();
+      return next;
+    });
+  }, [card]);
 
   const grade = useCallback(
     (rating: 1 | 2 | 3 | 4) => {
@@ -801,11 +806,16 @@ export function ReviewDemo() {
 
               {/* Grade bar / flip hint */}
               {flipped ? (
-                <div className="flex w-full max-w-lg justify-center gap-2">
-                  <GradeButton label="Again" hint="1" tone="negative" onClick={() => grade(1)} />
-                  <GradeButton label="Hard" hint="2" tone="muted" onClick={() => grade(2)} />
-                  <GradeButton label="Good" hint="3" tone="accent" onClick={() => grade(3)} />
-                  <GradeButton label="Easy" hint="4" tone="positive" onClick={() => grade(4)} />
+                <div className="flex w-full max-w-lg flex-col items-center gap-2.5">
+                  <div className="flex w-full justify-center gap-2">
+                    <GradeButton label="Again" hint="1" tone="negative" onClick={() => grade(1)} />
+                    <GradeButton label="Hard" hint="2" tone="muted" onClick={() => grade(2)} />
+                    <GradeButton label="Good" hint="3" tone="accent" onClick={() => grade(3)} />
+                    <GradeButton label="Easy" hint="4" tone="positive" onClick={() => grade(4)} />
+                  </div>
+                  <p className="text-xs text-muted">
+                    Tap the card to flip it back
+                  </p>
                 </div>
               ) : (
                 <>

@@ -1,4 +1,4 @@
-import { ai, CHAT_MODEL } from "@/lib/ai";
+import { ai, CHAT_MODEL, LITE_MODEL } from "@/lib/ai";
 import { aiErrorResponse } from "@/lib/ai-errors";
 import { gateAiRequest } from "@/lib/guest-limits";
 
@@ -36,7 +36,7 @@ export async function POST(req: Request) {
   let stream;
   try {
     stream = await ai.models.generateContentStream({
-      model: CHAT_MODEL,
+      model: LITE_MODEL,
       config: {
         systemInstruction: COACH_SYSTEM,
         // Thinking would eat the small output budget before any text.

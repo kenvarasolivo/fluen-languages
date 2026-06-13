@@ -45,15 +45,25 @@ export function VoicePanel({
   // Set when the current recognizer captured a final transcript, so its
   // `onend` doesn't drop us back to "idle" while the reply is forming.
   const submittedRef = useRef(false);
+  // Pending "end of turn" timer — speech is only submitted after a short
+  // pause, so brief mid-sentence silences don't cut the user off.
+  const silenceRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+
+  // How long the user can pause before a turn is considered finished.
+  const SILENCE_MS = 2800;
 
   useEffect(() => {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const w = window as any;
     setSupported(Boolean(w.SpeechRecognition || w.webkitSpeechRecognition));
-    return () => recRef.current?.abort?.();
+    return () => {
+      clearTimeout(silenceRef.current);
+      recRef.current?.abort?.();
+    };
   }, []);
 
   const stopListening = () => {
+    clearTimeout(silenceRef.current);
     recRef.current?.stop();
     recRef.current = null;
   };
@@ -70,26 +80,45 @@ export function VoicePanel({
     const rec = new SR();
     rec.lang = "de-DE";
     rec.interimResults = true;
+    // Keep the mic open across natural pauses; we decide when the turn is
+    // over ourselves (after SILENCE_MS of quiet) instead of letting the
+    // browser end on the first finalized phrase.
+    rec.continuous = true;
+
+    // Latest transcript split into already-finalized and still-interim
+    // parts; rebuilt from scratch on every result event.
+    let finalText = "";
+    let interimText = "";
+
+    // End the turn: hand the collected speech to the parent and stop.
+    const commit = () => {
+      clearTimeout(silenceRef.current);
+      const text = (finalText + interimText).trim();
+      if (!text || submittedRef.current) return;
+      submittedRef.current = true;
+      setInterim("");
+      onTranscript(text);
+      onStateChange("thinking");
+      rec.stop();
+    };
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     rec.onresult = (e: any) => {
-      let text = "";
-      let isFinal = false;
+      finalText = "";
+      interimText = "";
       for (const result of e.results) {
-        text += result[0].transcript;
-        if (result.isFinal) isFinal = true;
+        if (result.isFinal) finalText += result[0].transcript + " ";
+        else interimText += result[0].transcript;
       }
-      setInterim(text);
-      if (isFinal && text.trim()) {
-        setInterim("");
-        submittedRef.current = true;
-        onTranscript(text.trim());
-        onStateChange("thinking");
-        rec.stop();
-      }
+      setInterim((finalText + interimText).trim());
+      // Restart the silence countdown on every bit of speech — the turn
+      // ends only once the user has actually paused.
+      clearTimeout(silenceRef.current);
+      silenceRef.current = setTimeout(commit, SILENCE_MS);
     };
 
     rec.onend = () => {
+      clearTimeout(silenceRef.current);
       recRef.current = null;
       setInterim("");
       // If we handed off a transcript, the parent now owns the state
@@ -100,6 +129,7 @@ export function VoicePanel({
     };
 
     rec.onerror = () => {
+      clearTimeout(silenceRef.current);
       recRef.current = null;
       setInterim("");
       onStateChange("idle");
