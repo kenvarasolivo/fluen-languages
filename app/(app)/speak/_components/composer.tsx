@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { ArrowUp } from "lucide-react";
+import { useActiveLanguage } from "@/lib/use-active-language";
 
 export function Composer({
   onSend,
@@ -10,6 +11,7 @@ export function Composer({
   onSend: (text: string) => void;
   disabled: boolean;
 }) {
+  const language = useActiveLanguage();
   const [value, setValue] = useState("");
 
   const submit = () => {
@@ -23,7 +25,7 @@ export function Composer({
     <div className="shrink-0 border-t border-border bg-surface px-4 py-3 sm:px-6 sm:py-4">
       <div className="mx-auto flex max-w-2xl items-center gap-2 rounded-xl border border-border bg-surface-raised px-4 py-2 shadow-xs transition-all duration-150 focus-within:border-accent/50 focus-within:ring-[3px] focus-within:ring-accent/15">
         <input
-          lang="de"
+          lang={language.htmlLang}
           value={value}
           onChange={(e) => setValue(e.target.value)}
           onKeyDown={(e) => {
@@ -32,7 +34,7 @@ export function Composer({
               submit();
             }
           }}
-          placeholder="Write something in German..."
+          placeholder={`Write something in ${language.name}...`}
           className="min-w-0 flex-1 bg-transparent py-1 text-base leading-relaxed outline-none placeholder:text-muted sm:text-sm"
         />
         <button

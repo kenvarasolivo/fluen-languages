@@ -1,7 +1,20 @@
 # FLUEN — Architecture & Product Design
 
-> German-only language learning. Three methodologies, one dashboard, zero gamified bloat.
+> Multi-language learning (German & Spanish today). Each language is its own
+> environment — separate cards, decks, conversations, immerse texts and CEFR
+> level — switchable from the sidebar, Duolingo-style. Three methodologies,
+> one dashboard, zero gamified bloat.
 > SRS for foundations · Comprehensible Input for immersion · AI Coach for output.
+
+**Language model:** the active language lives on `profiles.target_language`
+(the source of truth for server routes) and is mirrored to `localStorage` for
+instant client reads; switching reloads the app. Per-language CEFR level lives
+in `user_languages`. The dictionary (`words`) and every learner-owned table
+(`user_words` via the dictionary, `decks`, `immerse_texts`, `chat_sessions`)
+is keyed by language so nothing bleeds across environments. The shared
+language registry is `lib/languages.ts`; server routes resolve the active
+environment via `lib/learning-context.ts`. The Speak coach replies at native
+(C2) level regardless of the learner's level.
 
 ---
 

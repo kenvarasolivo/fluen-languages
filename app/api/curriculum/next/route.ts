@@ -3,6 +3,8 @@ import { ai, LITE_MODEL } from "@/lib/ai";
 import { aiErrorResponse } from "@/lib/ai-errors";
 import { gateAiRequest } from "@/lib/guest-limits";
 import { createSupabaseServer } from "@/lib/supabase-server";
+import { getLearningContext } from "@/lib/learning-context";
+import type { LanguageDef } from "@/lib/languages";
 import {
   CORE,
   LEVEL_GUIDE,
@@ -18,8 +20,6 @@ const MAX_EXTENDS = 2;
 /** Words to generate per extend — keeps each AI call small and cheap. */
 const EXTEND_BATCH = 15;
 
-const CEFR = ["A1", "A2", "B1", "B2", "C1", "C2"] as const;
-
 const CELL_SCHEMA = {
   type: Type.ARRAY,
   items: {
@@ -27,18 +27,19 @@ const CELL_SCHEMA = {
     properties: {
       lemma: {
         type: Type.STRING,
-        description: "Base form WITHOUT the article, e.g. 'Haus', 'laufen'",
+        description: "Base form WITHOUT the article, e.g. 'Haus', 'laufen', 'casa'",
       },
       gender: {
         type: Type.STRING,
         nullable: true,
-        description: "der/die/das for nouns, null for everything else",
+        description:
+          "The noun's gender article (e.g. der/die/das, el/la), null for everything else",
       },
       pos: { type: Type.STRING, description: "noun | verb | adjective | adverb | phrase" },
       meaning_en: { type: Type.STRING },
       example_de: {
         type: Type.STRING,
-        description: "One short, natural German sentence using the word",
+        description: "One short, natural sentence in the target language using the word",
       },
       example_en: { type: Type.STRING },
     },
@@ -58,12 +59,13 @@ interface CurriculumWord {
   example_en: string | null;
 }
 
-function sanitizeGender(g: string | null | undefined) {
-  return g === "der" || g === "die" || g === "das" ? g : null;
-}
-
-function sanitizeLevel(l: string | null | undefined): CefrLevel {
-  return (CEFR as readonly string[]).includes(l ?? "") ? (l as CefrLevel) : "A1";
+/** Keep only an article that's valid for the language; else null. */
+function sanitizeGender(
+  g: string | null | undefined,
+  language: LanguageDef,
+): string | null {
+  const v = g?.toLowerCase().trim();
+  return v && language.articles.includes(v) ? v : null;
 }
 
 export async function POST(req: Request) {
@@ -80,12 +82,8 @@ export async function POST(req: Request) {
       .json()
       .catch(() => ({}))) as { count?: number; theme?: string };
 
-    const { data: profile } = await supabase
-      .from("profiles")
-      .select("cefr_level")
-      .eq("id", user.id)
-      .single();
-    const level = sanitizeLevel(profile?.cefr_level);
+    // Draw from the active language environment at the learner's level in it.
+    const { language, level } = await getLearningContext(supabase, user.id);
 
     // An explicit theme pins the draw to one cell; otherwise we auto-pick
     // in curriculum order. Ignore a theme that isn't valid for this level.
@@ -105,7 +103,7 @@ export async function POST(req: Request) {
       const { data, error } = await supabase
         .from("words")
         .select("id, lemma, pos, gender, meaning_en, theme, freq_rank, example_de, example_en")
-        .eq("language", "de")
+        .eq("language", language.code)
         .eq("cefr_level", level)
         .not("freq_rank", "is", null);
       if (error) throw error;
@@ -165,7 +163,7 @@ export async function POST(req: Request) {
         }
       }
 
-      await extendCell(supabase, level, cell, curriculum);
+      await extendCell(supabase, language, level, cell, curriculum);
       generated = true;
       curriculum = await fetchCurriculum();
       pool = poolOf(curriculum);
@@ -216,6 +214,7 @@ export async function POST(req: Request) {
  */
 async function extendCell(
   supabase: Awaited<ReturnType<typeof createSupabaseServer>>,
+  language: LanguageDef,
   level: CefrLevel,
   theme: string,
   curriculum: CurriculumWord[],
@@ -226,10 +225,7 @@ async function extendCell(
   const need = Math.min(cellTarget(theme) - inCell.length, EXTEND_BATCH);
   if (need <= 0) return;
 
-  const themeBrief =
-    theme === CORE
-      ? `the grammatical backbone: modal verbs, auxiliary verbs, pronouns, articles, the most common conjunctions and prepositions, and the highest-frequency verbs — function words that are grammatical glue and don't belong to any topic`
-      : `the topic "${theme}"`;
+  const themeBrief = theme === CORE ? language.coreBrief : `the topic "${theme}"`;
 
   const avoid = [...inLevel].slice(0, 400).join(", ");
 
@@ -243,12 +239,13 @@ async function extendCell(
       thinkingConfig: { thinkingBudget: 0 },
       maxOutputTokens: 8192,
     },
-    contents: `Generate the next ${need} most useful German words for a ${level} learner
+    contents: `Generate the next ${need} most useful ${language.name} words for a ${level} learner
 (${LEVEL_GUIDE[level]}) covering ${themeBrief}.
 Order them from most to least useful/frequent.
 Pick genuinely common words appropriate to ${level} — not obscure ones.
-${avoid ? `Do NOT include any of these already-covered words: ${avoid}.` : ""}
-Each example sentence must be short, natural, and use the word.`,
+For nouns, set "gender" to the correct article (${language.articles.join("/")}); null otherwise.
+The "example_de" field holds a short, natural ${language.name} sentence using the word; "example_en" is its English translation.
+${avoid ? `Do NOT include any of these already-covered words: ${avoid}.` : ""}`,
   });
 
   const words = response.text ? (JSON.parse(response.text) as Array<{
@@ -263,10 +260,10 @@ Each example sentence must be short, natural, and use the word.`,
   const rows = words
     .filter((w) => w.lemma && !inLevel.has(w.lemma.toLowerCase()))
     .map((w, i) => ({
-      language: "de",
+      language: language.code,
       lemma: w.lemma,
       pos: w.pos || "phrase",
-      gender: sanitizeGender(w.gender),
+      gender: sanitizeGender(w.gender, language),
       meaning_en: w.meaning_en,
       cefr_level: level,
       theme,

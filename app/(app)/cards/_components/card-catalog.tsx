@@ -5,6 +5,8 @@ import Link from "next/link";
 import { AlertCircle, Inbox, Library, Loader2, Trash2 } from "lucide-react";
 import { supabase, ensureSession } from "@/lib/supabase";
 import { withGender } from "@/lib/format";
+import { getActiveLanguageCode } from "@/lib/languages";
+import { useActiveLanguage } from "@/lib/use-active-language";
 
 interface CatalogCard {
   id: string;
@@ -39,6 +41,7 @@ function formatDue(due: string) {
 }
 
 export function CardCatalog() {
+  const language = useActiveLanguage();
   const [phase, setPhase] = useState<Phase>("loading");
   const [cards, setCards] = useState<CatalogCard[]>([]);
   const [tab, setTab] = useState<string>("all");
@@ -74,8 +77,9 @@ export function CardCatalog() {
         const { data, error } = await supabase
           .from("user_words")
           .select(
-            "id, state, due, created_at, source, context_sentence, words(lemma, gender, pos, meaning_en, cefr_level)",
+            "id, state, due, created_at, source, context_sentence, words!inner(lemma, gender, pos, meaning_en, cefr_level, language)",
           )
+          .eq("words.language", getActiveLanguageCode())
           .order("created_at", { ascending: false });
         if (error) throw error;
 
@@ -225,7 +229,7 @@ export function CardCatalog() {
                         }
                       >
                         <div className="min-w-0 flex-1">
-                          <p lang="de" className="text-sm font-medium tracking-tight">
+                          <p lang={language.htmlLang} className="text-sm font-medium tracking-tight">
                             {withGender(c.gender, c.lemma)}
                             <span className="ml-2 text-xs font-normal text-muted">
                               {c.pos}

@@ -2,6 +2,8 @@
 
 import { useEffect, useRef, useState } from "react";
 import { Mic, Square, X } from "lucide-react";
+import { getActiveLanguageCode, getLanguage } from "@/lib/languages";
+import { useActiveLanguage } from "@/lib/use-active-language";
 import type { VoiceState } from "@/lib/types";
 
 const statusLabel: Record<VoiceState, string> = {
@@ -34,6 +36,7 @@ export function VoicePanel({
   onStateChange: (s: VoiceState) => void;
   onTranscript: (text: string) => void;
 }) {
+  const language = useActiveLanguage();
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const recRef = useRef<any>(null);
   const [interim, setInterim] = useState("");
@@ -78,7 +81,7 @@ export function VoicePanel({
     submittedRef.current = false;
 
     const rec = new SR();
-    rec.lang = "de-DE";
+    rec.lang = getLanguage(getActiveLanguageCode()).speechLang;
     rec.interimResults = true;
     // Keep the mic open across natural pauses; we decide when the turn is
     // over ourselves (after SILENCE_MS of quiet) instead of letting the
@@ -201,7 +204,7 @@ export function VoicePanel({
           try Chrome or Edge.
         </p>
       ) : interim ? (
-        <p lang="de" className="text-sm text-muted">
+        <p lang={language.htmlLang} className="text-sm text-muted">
           „{interim}“
         </p>
       ) : (

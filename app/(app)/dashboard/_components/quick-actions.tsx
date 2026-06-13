@@ -13,7 +13,7 @@ const actions = [
   {
     href: "/immerse",
     label: "Immerse",
-    desc: "Read & watch real German, tap to save words.",
+    desc: "Read real texts and tap to save new words.",
     icon: Clapperboard,
     tile: "tile-coral",
     chip: "bg-coral-soft text-coral",

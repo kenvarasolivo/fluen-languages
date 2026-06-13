@@ -1,22 +1,31 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { Trash2 } from "lucide-react";
 import { supabase, ensureSession } from "@/lib/supabase";
+import {
+  DEFAULT_LANGUAGE,
+  getActiveLanguageCode,
+  getLanguage,
+} from "@/lib/languages";
+import { useActiveLanguage } from "@/lib/use-active-language";
 import type { CoachMessage, VoiceState } from "@/lib/types";
 import { ChatLog } from "./chat-log";
 import { Composer } from "./composer";
 import { VoicePanel } from "./voice-panel";
 
-const WELCOME: CoachMessage = {
-  id: "welcome",
-  role: "assistant",
-  content: "Hallo! Worüber möchtest du heute sprechen?",
-};
-
 export function SpeakView() {
-  const [messages, setMessages] = useState<CoachMessage[]>([WELCOME]);
+  const language = useActiveLanguage();
+  // The coach's opening line, in whichever language is active.
+  const welcome = useMemo<CoachMessage>(
+    () => ({ id: "welcome", role: "assistant", content: language.welcome }),
+    [language.welcome],
+  );
+
+  const [messages, setMessages] = useState<CoachMessage[]>([
+    { id: "welcome", role: "assistant", content: getLanguage(DEFAULT_LANGUAGE).welcome },
+  ]);
   const [isStreaming, setIsStreaming] = useState(false);
   const [voiceState, setVoiceState] = useState<VoiceState>("idle");
   const [limitMsg, setLimitMsg] = useState<string | null>(null);
@@ -25,13 +34,23 @@ export function SpeakView() {
   const sessionIdRef = useRef<string | null>(null);
   const [hasSession, setHasSession] = useState(false);
 
-  // Resume the most recent conversation instead of starting empty.
+  // Keep the standalone welcome in the active language until a real
+  // conversation is loaded.
+  useEffect(() => {
+    setMessages((prev) =>
+      prev.length === 1 && prev[0].id === "welcome" ? [welcome] : prev,
+    );
+  }, [welcome]);
+
+  // Resume the most recent conversation in this language instead of
+  // starting empty.
   useEffect(() => {
     let cancelled = false;
     (async () => {
       const { data: session } = await supabase
         .from("chat_sessions")
         .select("id")
+        .eq("language", getActiveLanguageCode())
         .order("started_at", { ascending: false })
         .limit(1)
         .maybeSingle();
@@ -46,19 +65,19 @@ export function SpeakView() {
 
       sessionIdRef.current = session.id;
       setHasSession(true);
-      setMessages([WELCOME, ...(rows as CoachMessage[])]);
+      setMessages([welcome, ...(rows as CoachMessage[])]);
     })();
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [welcome]);
 
   const ensureChatSession = useCallback(async () => {
     if (sessionIdRef.current) return sessionIdRef.current;
     const auth = await ensureSession();
     const { data, error } = await supabase
       .from("chat_sessions")
-      .insert({ user_id: auth.user.id, mode: "text" })
+      .insert({ user_id: auth.user.id, language: getActiveLanguageCode(), mode: "text" })
       .select("id")
       .single();
     if (error || !data) throw error ?? new Error("session insert failed");
@@ -90,27 +109,30 @@ export function SpeakView() {
     const id = sessionIdRef.current;
     sessionIdRef.current = null;
     setHasSession(false);
-    setMessages([WELCOME]);
+    setMessages([welcome]);
     if (!id) return;
     const { error } = await supabase.from("chat_sessions").delete().eq("id", id);
     if (error) console.error("[chat delete]", error);
-  }, []);
+  }, [welcome]);
 
-  const speakReply = useCallback((text: string) => {
-    // Nothing to speak — release the voice loop so it can listen again.
-    if (typeof speechSynthesis === "undefined" || !text) {
-      setVoiceState("idle");
-      return;
-    }
-    speechSynthesis.cancel();
-    const u = new SpeechSynthesisUtterance(text);
-    u.lang = "de-DE";
-    u.rate = 0.95;
-    u.onend = () => setVoiceState("idle");
-    u.onerror = () => setVoiceState("idle");
-    setVoiceState("speaking");
-    speechSynthesis.speak(u);
-  }, []);
+  const speakReply = useCallback(
+    (text: string) => {
+      // Nothing to speak — release the voice loop so it can listen again.
+      if (typeof speechSynthesis === "undefined" || !text) {
+        setVoiceState("idle");
+        return;
+      }
+      speechSynthesis.cancel();
+      const u = new SpeechSynthesisUtterance(text);
+      u.lang = language.speechLang;
+      u.rate = 0.95;
+      u.onend = () => setVoiceState("idle");
+      u.onerror = () => setVoiceState("idle");
+      setVoiceState("speaking");
+      speechSynthesis.speak(u);
+    },
+    [language.speechLang],
+  );
 
   const sendMessage = useCallback(
     async (text: string, fromVoice = false) => {
@@ -234,7 +256,7 @@ export function SpeakView() {
           <h1 className="text-sm font-semibold tracking-tight">Speak</h1>
           <div className="flex items-center gap-3">
             <span className="hidden text-xs font-medium tracking-wide text-muted sm:inline">
-              Conversation · German B1
+              Conversation · {language.nativeName}
             </span>
             {hasSession && (
               <button

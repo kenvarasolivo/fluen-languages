@@ -1,6 +1,7 @@
 import { Type } from "@google/genai";
 import { ai, LITE_MODEL } from "@/lib/ai";
 import { createSupabaseServer } from "@/lib/supabase-server";
+import { getLearningContext } from "@/lib/learning-context";
 
 const DEFINITION_SCHEMA = {
   type: Type.OBJECT,
@@ -12,7 +13,8 @@ const DEFINITION_SCHEMA = {
     gender: {
       type: Type.STRING,
       nullable: true,
-      description: "der/die/das for nouns, null otherwise",
+      description:
+        "The noun's gender article (e.g. der/die/das, el/la), null otherwise",
     },
     pos: { type: Type.STRING },
     meaning_en: {
@@ -41,6 +43,7 @@ export async function POST(req: Request) {
       word: string;
       sentence: string;
     };
+    const { language } = await getLearningContext(supabase, user.id);
 
     const response = await ai.models.generateContent({
       model: LITE_MODEL,
@@ -48,7 +51,7 @@ export async function POST(req: Request) {
         responseMimeType: "application/json",
         responseSchema: DEFINITION_SCHEMA,
       },
-      contents: `Define the German word "${word}" as it is used in this sentence:
+      contents: `Define the ${language.name} word "${word}" as it is used in this sentence:
 "${sentence}"`,
     });
 

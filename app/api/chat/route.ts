@@ -1,11 +1,17 @@
-import { ai, CHAT_MODEL, LITE_MODEL } from "@/lib/ai";
+import { ai, LITE_MODEL } from "@/lib/ai";
 import { aiErrorResponse } from "@/lib/ai-errors";
 import { gateAiRequest } from "@/lib/guest-limits";
+import { createSupabaseServer } from "@/lib/supabase-server";
+import { getLearningContext } from "@/lib/learning-context";
+import type { LanguageDef } from "@/lib/languages";
 
-const COACH_SYSTEM = `You are FLUEN's German conversation partner.
+/** Coach prompt — speaks like an educated native (C2) in the target language. */
+function coachSystem(language: LanguageDef): string {
+  return `You are FLUEN's ${language.name} conversation partner.
 
 Rules:
-- Reply ONLY in German, calibrated slightly above the learner's level (i+1).
+- Reply ONLY in ${language.name}. Speak like an educated native speaker
+  (C2): natural, idiomatic and fluent — never simplified or textbook-stiff.
 - Be a conversation partner, not a lecturer. Never correct mistakes in your
   reply — a separate system handles corrections. Just respond naturally to
   what the learner meant.
@@ -13,6 +19,7 @@ Rules:
   Always end with something that invites a response: a question, a gentle
   prompt, an opinion to react to.
 - Warm, low-stakes, zero condescension.`;
+}
 
 interface ChatTurn {
   role: "user" | "assistant";
@@ -23,6 +30,13 @@ export async function POST(req: Request) {
   // One request = one user message — that's what the guest quota counts.
   const gate = await gateAiRequest("chat");
   if (!gate.ok) return gate.response;
+
+  // Which language environment this conversation belongs to.
+  const supabase = await createSupabaseServer();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  const { language } = await getLearningContext(supabase, user!.id);
 
   const { messages } = (await req.json()) as { messages: ChatTurn[] };
 
@@ -38,7 +52,7 @@ export async function POST(req: Request) {
     stream = await ai.models.generateContentStream({
       model: LITE_MODEL,
       config: {
-        systemInstruction: COACH_SYSTEM,
+        systemInstruction: coachSystem(language),
         // Thinking would eat the small output budget before any text.
         thinkingConfig: { thinkingBudget: 0 },
         maxOutputTokens: 256,

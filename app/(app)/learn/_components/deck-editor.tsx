@@ -4,6 +4,8 @@ import { useEffect, useMemo, useState } from "react";
 import { Check, Loader2, Plus, Search, Trash2 } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { withGender } from "@/lib/format";
+import { getActiveLanguageCode } from "@/lib/languages";
+import { useActiveLanguage } from "@/lib/use-active-language";
 import type { Deck } from "@/lib/types";
 
 interface PickableWord {
@@ -28,6 +30,7 @@ export function DeckEditor({
   onClose: () => void;
   onDeleted: () => void;
 }) {
+  const language = useActiveLanguage();
   const [loading, setLoading] = useState(true);
   const [words, setWords] = useState<PickableWord[]>([]);
   const [selected, setSelected] = useState<Set<string>>(new Set());
@@ -37,11 +40,13 @@ export function DeckEditor({
   useEffect(() => {
     (async () => {
       try {
+        const lang = getActiveLanguageCode();
         const [{ data: all, error: wordsErr }, { data: members, error: memErr }] =
           await Promise.all([
             supabase
               .from("user_words")
-              .select("id, words(lemma, gender, pos, meaning_en)")
+              .select("id, words!inner(lemma, gender, pos, meaning_en, language)")
+              .eq("words.language", lang)
               .order("created_at", { ascending: false }),
             supabase
               .from("deck_cards")
@@ -207,7 +212,7 @@ export function DeckEditor({
                         <Plus size={12} strokeWidth={2} className="text-muted" />
                       )}
                     </span>
-                    <span lang="de" className="min-w-0 flex-1 truncate text-sm font-medium">
+                    <span lang={language.htmlLang} className="min-w-0 flex-1 truncate text-sm font-medium">
                       {withGender(w.gender, w.lemma)}
                       <span className="ml-2 text-xs font-normal text-muted">{w.pos}</span>
                     </span>

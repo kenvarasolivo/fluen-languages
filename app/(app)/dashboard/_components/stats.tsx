@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { AlarmClock, Sparkles, Library, CheckCircle2, ArrowRight } from "lucide-react";
 import { supabase, ensureSession } from "@/lib/supabase";
+import { getActiveLanguageCode } from "@/lib/languages";
 
 interface Stats {
   due: number;
@@ -19,6 +20,7 @@ export function StatsGrid() {
     (async () => {
       try {
         await ensureSession();
+        const lang = getActiveLanguageCode();
         const now = new Date().toISOString();
         const startOfDay = new Date();
         startOfDay.setHours(0, 0, 0, 0);
@@ -26,23 +28,18 @@ export function StatsGrid() {
         const count = (q: PromiseLike<{ count: number | null }>) =>
           q.then((r) => r.count ?? 0);
 
+        // Card counts are scoped to the active language via an inner join
+        // on the dictionary; reviews-today stays a simple global tally.
+        const inLang = () =>
+          supabase
+            .from("user_words")
+            .select("*, words!inner(language)", { count: "exact", head: true })
+            .eq("words.language", lang);
+
         const [due, fresh, total, reviewsToday] = await Promise.all([
-          count(
-            supabase
-              .from("user_words")
-              .select("*", { count: "exact", head: true })
-              .gt("state", 0)
-              .lte("due", now),
-          ),
-          count(
-            supabase
-              .from("user_words")
-              .select("*", { count: "exact", head: true })
-              .eq("state", 0),
-          ),
-          count(
-            supabase.from("user_words").select("*", { count: "exact", head: true }),
-          ),
+          count(inLang().gt("state", 0).lte("due", now)),
+          count(inLang().eq("state", 0)),
+          count(inLang()),
           count(
             supabase
               .from("review_logs")

@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { ThemeToggle } from "@/components/theme-toggle";
+import { LanguageSwitcher } from "@/components/language-switcher";
 
 const nav = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutGrid },
@@ -124,10 +125,7 @@ export function Sidebar() {
       </div>
 
       <div className="flex items-center justify-between border-t border-border px-4 py-3">
-        <span className="inline-flex items-center gap-1.5 rounded-full border border-border bg-surface-raised px-2.5 py-1 text-xs font-medium tracking-wide text-muted shadow-xs">
-          <span aria-hidden className="text-sm leading-none">🇩🇪</span>
-          German · <span className="text-accent">B1</span>
-        </span>
+        <LanguageSwitcher />
         <ThemeToggle />
       </div>
     </aside>
@@ -150,10 +148,7 @@ export function MobileHeader() {
         FLUEN
       </Link>
       <div className="flex items-center gap-1.5">
-        <p className="mr-1 flex items-center gap-1 text-xs font-medium tracking-wide text-muted">
-          <span aria-hidden className="text-sm leading-none">🇩🇪</span>
-          German · <span className="text-accent">B1</span>
-        </p>
+        <LanguageSwitcher variant="compact" />
         <ThemeToggle />
         {account?.kind === "guest" && (
           <Link

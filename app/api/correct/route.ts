@@ -1,13 +1,17 @@
 import { Type } from "@google/genai";
 import { ai, LITE_MODEL } from "@/lib/ai";
 import { createSupabaseServer } from "@/lib/supabase-server";
+import { getLearningContext } from "@/lib/learning-context";
+import type { LanguageDef } from "@/lib/languages";
 import type { Correction } from "@/lib/types";
 
-const CORRECTION_SYSTEM = `You check a German learner's message for errors
-(grammar, gender, case, word order, idiomatic usage). Judge only genuinely
-wrong usage — informal register and minor punctuation are fine. If there are
-multiple errors, correct the full sentence once and explain the most
+function correctionSystem(language: LanguageDef): string {
+  return `You check a ${language.name} learner's message for errors
+(grammar, gender, agreement, word order, idiomatic usage). Judge only
+genuinely wrong usage — informal register and minor punctuation are fine. If
+there are multiple errors, correct the full sentence once and explain the most
 important error in one short English sentence.`;
+}
 
 const CORRECTION_SCHEMA = {
   type: Type.OBJECT,
@@ -34,11 +38,12 @@ export async function POST(req: Request) {
 
   try {
     const { text } = (await req.json()) as { text: string };
+    const { language } = await getLearningContext(supabase, user.id);
 
     const response = await ai.models.generateContent({
       model: LITE_MODEL,
       config: {
-        systemInstruction: CORRECTION_SYSTEM,
+        systemInstruction: correctionSystem(language),
         responseMimeType: "application/json",
         responseSchema: CORRECTION_SCHEMA,
       },

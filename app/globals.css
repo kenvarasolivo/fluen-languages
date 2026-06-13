@@ -187,12 +187,22 @@ body {
 }
 
 /* The three German flag bands as a slim accent rule. */
-.flag-rule {
+.flag-rule-de {
   background: linear-gradient(
     90deg,
     #111 0 33.3%,
     #d7141a 33.3% 66.6%,
     #ffce00 66.6% 100%
+  );
+}
+
+/* Spanish flag bands (red / gold / red) as a slim accent rule. */
+.flag-rule-es {
+  background: linear-gradient(
+    90deg,
+    #aa151b 0 25%,
+    #f1bf00 25% 75%,
+    #aa151b 75% 100%
   );
 }
 

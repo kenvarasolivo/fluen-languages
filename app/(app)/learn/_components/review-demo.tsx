@@ -15,6 +15,8 @@ import {
 import { supabase, ensureSession } from "@/lib/supabase";
 import { gradeCard, isDueSoon, type SrsFields } from "@/lib/srs";
 import { withGender } from "@/lib/format";
+import { getActiveLanguageCode } from "@/lib/languages";
+import { useActiveLanguage } from "@/lib/use-active-language";
 import type { CefrLevel, Deck, DrawResult } from "@/lib/types";
 import { themeOrder } from "@/lib/curriculum";
 import { DeckEditor } from "./deck-editor";
@@ -39,8 +41,11 @@ const LEVELS: { id: CefrLevel; label: string }[] = [
 
 type Phase = "loading" | "empty" | "generating" | "review" | "done" | "error";
 
-/** Which language is shown on the prompt side before flipping. */
-type Direction = "en-de" | "de-en";
+/**
+ * Which side is shown as the prompt before flipping: the learner's
+ * English ("en-target") or the target language ("target-en").
+ */
+type Direction = "en-target" | "target-en";
 
 /**
  * Soft, part-of-speech-keyed card tints. Each maps to one of the design
@@ -94,11 +99,11 @@ const RANDOM_DECK_SIZE = 15;
 
 class GuestLimitError extends Error {}
 
-function speakGerman(text: string) {
+function speak(text: string, speechLang: string) {
   if (typeof speechSynthesis === "undefined") return;
   speechSynthesis.cancel();
   const u = new SpeechSynthesisUtterance(text);
-  u.lang = "de-DE";
+  u.lang = speechLang;
   u.rate = 0.92;
   speechSynthesis.speak(u);
 }
@@ -113,11 +118,12 @@ function shuffle<T>(arr: T[]): T[] {
 }
 
 export function ReviewDemo() {
+  const language = useActiveLanguage();
   const [phase, setPhase] = useState<Phase>("loading");
   const [queue, setQueue] = useState<QueueCard[]>([]);
   const [flipped, setFlipped] = useState(false);
-  // Default to English prompt → German answer; toggleable per session.
-  const [direction, setDirection] = useState<Direction>("en-de");
+  // Default to English prompt → target-language answer; toggleable per session.
+  const [direction, setDirection] = useState<Direction>("en-target");
   const [errorMsg, setErrorMsg] = useState("");
   const [limitMsg, setLimitMsg] = useState<string | null>(null);
   const userIdRef = useRef<string | null>(null);
@@ -142,7 +148,10 @@ export function ReviewDemo() {
     BUILTIN_DECKS.some((d) => d.id === id);
 
   const fetchQueue = useCallback(async (deck: string): Promise<QueueCard[]> => {
-    const wordsJoin = "words(lemma, gender, pos, meaning_en)";
+    // Inner-join + filter so a queue only ever holds cards from the
+    // active language environment.
+    const lang = getActiveLanguageCode();
+    const wordsJoin = "words!inner(lemma, gender, pos, meaning_en, language)";
 
     if (deck === "random") {
       // Supabase has no random ordering from the client — pull a window
@@ -150,6 +159,7 @@ export function ReviewDemo() {
       const { data, error } = await supabase
         .from("user_words")
         .select(`${SRS_COLUMNS}, ${wordsJoin}`)
+        .eq("words.language", lang)
         .limit(200);
       if (error) throw error;
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -163,6 +173,7 @@ export function ReviewDemo() {
       const { data, error } = await supabase
         .from("user_words")
         .select(`${SRS_COLUMNS}, ${wordsJoin}`)
+        .eq("words.language", lang)
         .in("state", [0, 1, 3])
         .order("due")
         .limit(30);
@@ -177,6 +188,7 @@ export function ReviewDemo() {
       const { data, error } = await supabase
         .from("user_words")
         .select(`${SRS_COLUMNS}, ${wordsJoin}`)
+        .eq("words.language", lang)
         .eq("state", 2)
         .lte("due", new Date().toISOString())
         .order("due")
@@ -186,7 +198,8 @@ export function ReviewDemo() {
       return (data as any[]).map(({ words, ...srs }) => ({ ...srs, ...words }));
     }
 
-    // Custom deck — membership lives in deck_cards.
+    // Custom deck — membership lives in deck_cards. Decks are already
+    // language-scoped, so every member card is in the active language.
     const { data, error } = await supabase
       .from("deck_cards")
       .select(`user_words(${SRS_COLUMNS}, ${wordsJoin})`)
@@ -293,23 +306,30 @@ export function ReviewDemo() {
     load();
   }, [load]);
 
-  // Custom decks and the saved level are loaded once on mount.
+  // Custom decks (for this language) and the saved level are loaded once
+  // on mount.
   useEffect(() => {
     (async () => {
       try {
+        const lang = getActiveLanguageCode();
         const session = await ensureSession();
-        const [{ data: deckData, error: deckErr }, { data: profile }] =
+        const [{ data: deckData, error: deckErr }, { data: ul }] =
           await Promise.all([
-            supabase.from("decks").select("id, name").order("created_at"),
             supabase
-              .from("profiles")
+              .from("decks")
+              .select("id, name")
+              .eq("language", lang)
+              .order("created_at"),
+            supabase
+              .from("user_languages")
               .select("cefr_level")
-              .eq("id", session.user.id)
-              .single(),
+              .eq("user_id", session.user.id)
+              .eq("language", lang)
+              .maybeSingle(),
           ]);
         if (deckErr) throw deckErr;
         setDecks(deckData ?? []);
-        const saved = profile?.cefr_level;
+        const saved = ul?.cefr_level;
         if (saved && LEVELS.some((l) => l.id === saved)) setLevel(saved as CefrLevel);
       } catch (err) {
         console.error("[decks]", err);
@@ -317,7 +337,7 @@ export function ReviewDemo() {
     })();
   }, []);
 
-  /** Persist the chosen level; the next draw reads it server-side. */
+  /** Persist the chosen level for this language; the next draw reads it server-side. */
   const changeLevel = useCallback(async (next: CefrLevel) => {
     setLevel(next);
     // Themes differ per level (core only at A1/A2), so reset the choice.
@@ -325,11 +345,14 @@ export function ReviewDemo() {
     setAdvanceTo(null);
     setNotice(null);
     try {
+      const lang = getActiveLanguageCode();
       const session = await ensureSession();
       const { error } = await supabase
-        .from("profiles")
-        .update({ cefr_level: next })
-        .eq("id", session.user.id);
+        .from("user_languages")
+        .upsert(
+          { user_id: session.user.id, language: lang, cefr_level: next },
+          { onConflict: "user_id,language" },
+        );
       if (error) throw error;
     } catch (err) {
       console.error("[level update]", err);
@@ -340,10 +363,11 @@ export function ReviewDemo() {
     const name = newDeckName.trim();
     if (!name) return;
     try {
+      const lang = getActiveLanguageCode();
       const session = await ensureSession();
       const { data, error } = await supabase
         .from("decks")
-        .insert({ user_id: session.user.id, name })
+        .insert({ user_id: session.user.id, language: lang, name })
         .select("id, name")
         .single();
       if (error) throw error;
@@ -365,11 +389,11 @@ export function ReviewDemo() {
     if (!card) return;
     setFlipped((f) => {
       const next = !f;
-      if (next) speakGerman(withGender(card.gender, card.lemma));
+      if (next) speak(withGender(card.gender, card.lemma), language.speechLang);
       else if (typeof speechSynthesis !== "undefined") speechSynthesis.cancel();
       return next;
     });
-  }, [card]);
+  }, [card, language]);
 
   const grade = useCallback(
     (rating: 1 | 2 | 3 | 4) => {
@@ -453,14 +477,16 @@ export function ReviewDemo() {
           {!editing && phase !== "loading" && phase !== "error" && (
             <button
               onClick={() => {
-                setDirection((d) => (d === "en-de" ? "de-en" : "en-de"));
+                setDirection((d) => (d === "en-target" ? "target-en" : "en-target"));
                 setFlipped(false);
               }}
               title="Switch which language is shown first"
               className="flex items-center gap-1.5 rounded-lg border border-border bg-surface-raised px-2.5 py-1.5 text-[11px] font-medium text-muted shadow-xs transition-colors duration-150 hover:border-border-strong hover:text-foreground"
             >
               <ArrowLeftRight size={12} strokeWidth={1.75} />
-              {direction === "en-de" ? "EN → DE" : "DE → EN"}
+              {direction === "en-target"
+                ? `EN → ${language.htmlLang.toUpperCase()}`
+                : `${language.htmlLang.toUpperCase()} → EN`}
             </button>
           )}
           {phase === "review" && !editing && (
@@ -753,8 +779,8 @@ export function ReviewDemo() {
                     inert={flipped}
                     className={`flex min-h-80 flex-col items-center justify-center gap-4 rounded-2xl border border-border ${posTint(card.pos)} px-8 py-12 shadow-raised transition-[border-color,box-shadow] duration-150 [backface-visibility:hidden] [grid-area:1/1] group-hover:border-accent/30 group-hover:shadow-pop`}
                   >
-                    {direction === "de-en" ? (
-                      <span lang="de" className="text-4xl font-semibold tracking-tight sm:text-5xl">
+                    {direction === "target-en" ? (
+                      <span lang={language.htmlLang} className="text-4xl font-semibold tracking-tight sm:text-5xl">
                         {withGender(card.gender, card.lemma)}
                       </span>
                     ) : (
@@ -773,7 +799,7 @@ export function ReviewDemo() {
                     className={`flex min-h-80 flex-col items-center justify-center gap-4 rounded-2xl border border-border ${posTint(card.pos)} px-8 py-12 shadow-raised transition-[border-color,box-shadow] duration-150 [backface-visibility:hidden] [grid-area:1/1] [transform:rotateY(180deg)] group-hover:border-accent/30 group-hover:shadow-pop`}
                   >
                     <div className="flex items-center gap-2">
-                      <span lang="de" className="text-3xl font-semibold tracking-tight">
+                      <span lang={language.htmlLang} className="text-3xl font-semibold tracking-tight">
                         {withGender(card.gender, card.lemma)}
                       </span>
                       <span
@@ -782,7 +808,7 @@ export function ReviewDemo() {
                         aria-label="Play audio"
                         onClick={(e) => {
                           e.stopPropagation();
-                          speakGerman(withGender(card.gender, card.lemma));
+                          speak(withGender(card.gender, card.lemma), language.speechLang);
                         }}
                         className="text-muted transition-colors hover:text-foreground"
                       >

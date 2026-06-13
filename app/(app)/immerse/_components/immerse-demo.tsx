@@ -5,6 +5,8 @@ import Link from "next/link";
 import { Plus, Check, Sparkles, History, Trash2 } from "lucide-react";
 import { supabase, ensureSession } from "@/lib/supabase";
 import { withGender } from "@/lib/format";
+import { getActiveLanguageCode } from "@/lib/languages";
+import { useActiveLanguage } from "@/lib/use-active-language";
 import type {
   ImmerseKind,
   ImmerseLevel,
@@ -38,6 +40,7 @@ const KINDS: { id: ImmerseKind; label: string }[] = [
 ];
 
 export function ImmerseDemo() {
+  const language = useActiveLanguage();
   const [level, setLevel] = useState<ImmerseLevel>("A1");
   const [kind, setKind] = useState<ImmerseKind>("story");
   const [showEnglish, setShowEnglish] = useState(false);
@@ -57,6 +60,7 @@ export function ImmerseDemo() {
       const { data } = await supabase
         .from("immerse_texts")
         .select("id, kind, level, title, lines, created_at")
+        .eq("language", getActiveLanguageCode())
         .order("created_at", { ascending: false })
         .limit(20);
       if (cancelled || !data?.length) return;
@@ -135,6 +139,7 @@ export function ImmerseDemo() {
         .from("immerse_texts")
         .insert({
           user_id: session.user.id,
+          language: getActiveLanguageCode(),
           kind,
           level,
           title: s.title,
@@ -188,11 +193,13 @@ export function ImmerseDemo() {
     const d = popover.definition;
     const sentence = popover.sentence;
     try {
+      const lang = getActiveLanguageCode();
       const session = await ensureSession();
       const pos = d.pos || "phrase";
+      // Keep only an article valid for the active language (der/die/das, el/la, ...).
       const gender =
-        d.gender === "der" || d.gender === "die" || d.gender === "das"
-          ? d.gender
+        d.gender && language.articles.includes(d.gender.toLowerCase())
+          ? d.gender.toLowerCase()
           : null;
       const cefr =
         d.cefr_level && ["A1", "A2", "B1", "B2", "C1", "C2"].includes(d.cefr_level)
@@ -204,7 +211,7 @@ export function ImmerseDemo() {
         .from("words")
         .upsert(
           {
-            language: "de",
+            language: lang,
             lemma: d.lemma,
             pos,
             gender,
@@ -216,7 +223,7 @@ export function ImmerseDemo() {
       const { data: word, error } = await supabase
         .from("words")
         .select("id")
-        .eq("language", "de")
+        .eq("language", lang)
         .eq("lemma", d.lemma)
         .eq("pos", pos)
         .single();
@@ -392,7 +399,7 @@ export function ImmerseDemo() {
           )}
 
           {story && !loading && (
-            <article lang="de">
+            <article lang={language.htmlLang}>
               <h2 className="text-xl font-semibold tracking-tight">{story.title}</h2>
               <p lang="en" className="mt-1 text-xs text-muted">
                 Tap a word to learn it.
@@ -465,7 +472,7 @@ export function ImmerseDemo() {
             <p className="text-xs text-muted">Looking it up ...</p>
           ) : popover.definition ? (
             <>
-              <p lang="de" className="text-sm font-medium">
+              <p lang={language.htmlLang} className="text-sm font-medium">
                 {withGender(popover.definition.gender, popover.definition.lemma)}
                 <span className="ml-2 text-xs font-normal text-muted">
                   {popover.definition.pos}

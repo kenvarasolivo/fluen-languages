@@ -18,6 +18,7 @@ drop table if exists media_items cascade;
 drop table if exists deck_cards cascade;
 drop table if exists decks cascade;
 drop table if exists review_logs cascade;
+drop table if exists user_languages cascade;
 drop table if exists user_words cascade;
 drop table if exists words cascade;
 drop table if exists profiles cascade;
@@ -61,15 +62,30 @@ create trigger on_auth_user_created
   for each row execute function public.handle_new_user();
 
 -- ------------------------------------------------------------
--- German dictionary. AI-generated entries are inserted by
--- signed-in users; rows are shared/deduplicated by lemma+pos.
+-- Per-language learner state. Each language is its own environment,
+-- so the CEFR level is tracked per (user, language): a learner can be
+-- B1 in German and A1 in Spanish at once. profiles.target_language
+-- holds whichever one is currently active.
+-- ------------------------------------------------------------
+create table user_languages (
+  user_id    uuid not null references profiles(id) on delete cascade,
+  language   text not null,
+  cefr_level text not null default 'A1'
+             check (cefr_level in ('A1','A2','B1','B2','C1','C2')),
+  created_at timestamptz not null default now(),
+  primary key (user_id, language)
+);
+
+-- ------------------------------------------------------------
+-- Shared multi-language dictionary. AI-generated entries are inserted
+-- by signed-in users; rows are shared/deduplicated by language+lemma+pos.
 -- ------------------------------------------------------------
 create table words (
   id          uuid primary key default gen_random_uuid(),
   language    text not null default 'de',
-  lemma       text not null,                  -- "Haus", "laufen"
+  lemma       text not null,                  -- "Haus", "laufen", "casa"
   pos         text not null,                  -- noun / verb / adjective / ...
-  gender      text check (gender in ('der','die','das')),   -- nouns only
+  gender      text,                           -- nouns only: der/die/das, el/la, ...
   plural      text,                           -- "Häuser"
   meaning_en  text not null,
   cefr_level  text check (cefr_level in ('A1','A2','B1','B2','C1','C2')),
@@ -115,11 +131,12 @@ create index user_words_due_idx on user_words (user_id, due);
 create table decks (
   id         uuid primary key default gen_random_uuid(),
   user_id    uuid not null references profiles(id) on delete cascade,
+  language   text not null default 'de',
   name       text not null,
   created_at timestamptz not null default now()
 );
 
-create index decks_user_idx on decks (user_id, created_at);
+create index decks_user_idx on decks (user_id, language, created_at);
 
 create table deck_cards (
   deck_id      uuid not null references decks(id) on delete cascade,
@@ -183,9 +200,13 @@ create table user_media_progress (
 create table chat_sessions (
   id         uuid primary key default gen_random_uuid(),
   user_id    uuid not null references profiles(id) on delete cascade,
+  language   text not null default 'de',
   mode       text not null default 'text' check (mode in ('text','voice')),
   started_at timestamptz not null default now()
 );
+
+create index chat_sessions_user_lang_idx
+  on chat_sessions (user_id, language, started_at desc);
 
 create table chat_messages (
   id         uuid primary key default gen_random_uuid(),
@@ -205,6 +226,7 @@ create index chat_messages_session_idx on chat_messages (session_id, created_at)
 create table immerse_texts (
   id         uuid primary key default gen_random_uuid(),
   user_id    uuid not null references profiles(id) on delete cascade,
+  language   text not null default 'de',
   kind       text not null check (kind in ('story','dialog')),
   level      text not null check (level in ('A1','A2','B1','B2','C1')),
   title      text not null,
@@ -212,12 +234,13 @@ create table immerse_texts (
   created_at timestamptz not null default now()
 );
 
-create index immerse_texts_user_idx on immerse_texts (user_id, created_at desc);
+create index immerse_texts_user_idx on immerse_texts (user_id, language, created_at desc);
 
 -- ------------------------------------------------------------
 -- Row Level Security
 -- ------------------------------------------------------------
 alter table profiles            enable row level security;
+alter table user_languages      enable row level security;
 alter table words               enable row level security;
 alter table user_words          enable row level security;
 alter table decks               enable row level security;
@@ -232,6 +255,7 @@ alter table immerse_texts       enable row level security;
 
 -- Own-row access for user data
 create policy "own profile"  on profiles            for all using (id = auth.uid());
+create policy "own languages" on user_languages     for all using (user_id = auth.uid());
 create policy "own words"    on user_words          for all using (user_id = auth.uid());
 create policy "own decks"    on decks               for all using (user_id = auth.uid());
 -- deck_cards has no user_id column — ownership flows through the deck.

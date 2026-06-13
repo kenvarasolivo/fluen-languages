@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { ChevronRight, MoveRight } from "lucide-react";
+import { useActiveLanguage } from "@/lib/use-active-language";
 import type { Correction } from "@/lib/types";
 
 /**
@@ -9,6 +10,7 @@ import type { Correction } from "@/lib/types";
  * Collapsed: a quiet pill. Expanded: Original → Correction → why.
  */
 export function CorrectionBadge({ correction }: { correction: Correction }) {
+  const language = useActiveLanguage();
   const [open, setOpen] = useState(false);
 
   if (!open) {
@@ -29,7 +31,7 @@ export function CorrectionBadge({ correction }: { correction: Correction }) {
       onClick={() => setOpen(false)}
       className="pop-in max-w-[80%] rounded-lg border border-border bg-surface-raised px-3.5 py-3 text-left text-xs shadow-raised transition-colors duration-150 hover:border-border-strong"
     >
-      <div lang="de" className="flex flex-wrap items-center gap-2 leading-relaxed">
+      <div lang={language.htmlLang} className="flex flex-wrap items-center gap-2 leading-relaxed">
         <s className="text-negative/80 decoration-negative/40">
           {correction.original}
         </s>
