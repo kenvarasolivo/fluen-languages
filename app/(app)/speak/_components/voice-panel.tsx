@@ -5,8 +5,9 @@ import { Mic, Square, X } from "lucide-react";
 import type { VoiceState } from "@/lib/types";
 
 const statusLabel: Record<VoiceState, string> = {
-  idle: "Tap to speak",
+  idle: "Tap to start talking",
   listening: "Listening ...",
+  thinking: "Thinking ...",
   speaking: "Coach is speaking ...",
 };
 
@@ -18,6 +19,11 @@ const statusLabel: Record<VoiceState, string> = {
  *
  * Rendered as a side panel on large screens and as a floating mic
  * button + full-screen overlay on phones, sharing one recognizer.
+ *
+ * Hands-free: starting the mic opens a continuous conversation loop.
+ * Each turn (listen → coach replies → listen again) restarts the
+ * recognizer automatically once the coach stops talking, so you never
+ * have to press to talk between turns. Tapping the orb ends the loop.
  */
 export function VoicePanel({
   state,
@@ -33,6 +39,12 @@ export function VoicePanel({
   const [interim, setInterim] = useState("");
   const [supported, setSupported] = useState(true);
   const [overlayOpen, setOverlayOpen] = useState(false);
+  // True while a hands-free conversation loop is running. Drives the
+  // auto-restart of the recognizer between turns.
+  const [conversing, setConversing] = useState(false);
+  // Set when the current recognizer captured a final transcript, so its
+  // `onend` doesn't drop us back to "idle" while the reply is forming.
+  const submittedRef = useRef(false);
 
   useEffect(() => {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -50,9 +62,10 @@ export function VoicePanel({
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const w = window as any;
     const SR = w.SpeechRecognition || w.webkitSpeechRecognition;
-    if (!SR) return;
+    if (!SR || recRef.current) return;
 
     speechSynthesis.cancel(); // interrupt the coach if it's talking
+    submittedRef.current = false;
 
     const rec = new SR();
     rec.lang = "de-DE";
@@ -69,7 +82,9 @@ export function VoicePanel({
       setInterim(text);
       if (isFinal && text.trim()) {
         setInterim("");
+        submittedRef.current = true;
         onTranscript(text.trim());
+        onStateChange("thinking");
         rec.stop();
       }
     };
@@ -77,8 +92,11 @@ export function VoicePanel({
     rec.onend = () => {
       recRef.current = null;
       setInterim("");
-      // Don't clobber "speaking" if a reply already started.
-      onStateChange("idle");
+      // If we handed off a transcript, the parent now owns the state
+      // ("thinking" → "speaking" → "idle"); don't clobber it. Otherwise
+      // the recognizer ended without input — fall back to idle, and the
+      // conversation loop (if active) will pick listening up again.
+      if (!submittedRef.current) onStateChange("idle");
     };
 
     rec.onerror = () => {
@@ -92,13 +110,40 @@ export function VoicePanel({
     onStateChange("listening");
   };
 
+  // Conversation loop: once the coach has finished a turn (state settles
+  // back to "idle") while a conversation is active, start listening again
+  // automatically so the user can just keep talking. A short delay avoids
+  // a tight restart loop if the recognizer ends immediately.
+  useEffect(() => {
+    if (!conversing || state !== "idle" || recRef.current) return;
+    const t = setTimeout(() => {
+      if (conversing && !recRef.current) startListening();
+    }, 300);
+    return () => clearTimeout(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [conversing, state]);
+
+  const startConversation = () => {
+    setConversing(true);
+    startListening();
+  };
+
+  const stopConversation = () => {
+    setConversing(false);
+    speechSynthesis.cancel();
+    stopListening();
+    onStateChange("idle");
+  };
+
+  // The orb is a single toggle for the whole hands-free session.
+  const active = conversing || state !== "idle";
   const toggle = () => {
-    if (state === "listening") stopListening();
-    else startListening();
+    if (active) stopConversation();
+    else startConversation();
   };
 
   const closeOverlay = () => {
-    if (state === "listening") stopListening();
+    stopConversation();
     setOverlayOpen(false);
   };
 
@@ -107,10 +152,10 @@ export function VoicePanel({
       onClick={toggle}
       disabled={!supported}
       data-state={state}
-      aria-label={state === "listening" ? "Stop listening" : "Start voice mode"}
+      aria-label={active ? "End conversation" : "Start voice conversation"}
       className="orb flex size-44 items-center justify-center rounded-full text-foreground disabled:opacity-40"
     >
-      {state === "listening" ? (
+      {active ? (
         <Square size={28} strokeWidth={1.5} className="text-accent" />
       ) : (
         <Mic size={32} strokeWidth={1.25} />
@@ -134,7 +179,11 @@ export function VoicePanel({
           <p className={`text-sm font-medium ${state !== "idle" ? "text-accent" : ""}`}>
             {statusLabel[state]}
           </p>
-          <p className="text-xs text-muted">Speak freely. No one is judging you.</p>
+          <p className="text-xs text-muted">
+            {active
+              ? "Hands-free — just keep talking. Tap to end."
+              : "Speak freely. No one is judging you."}
+          </p>
         </>
       )}
     </div>

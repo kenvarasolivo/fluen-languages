@@ -97,7 +97,11 @@ export function SpeakView() {
   }, []);
 
   const speakReply = useCallback((text: string) => {
-    if (typeof speechSynthesis === "undefined" || !text) return;
+    // Nothing to speak — release the voice loop so it can listen again.
+    if (typeof speechSynthesis === "undefined" || !text) {
+      setVoiceState("idle");
+      return;
+    }
     speechSynthesis.cancel();
     const u = new SpeechSynthesisUtterance(text);
     u.lang = "de-DE";
@@ -167,6 +171,7 @@ export function SpeakView() {
                   : m,
               ),
             );
+            if (fromVoice) setVoiceState("idle");
             return;
           }
           // Show the server's message (e.g. "KI überlastet") instead of
@@ -177,6 +182,7 @@ export function SpeakView() {
                 m.id === assistantId ? { ...m, content: body.error } : m,
               ),
             );
+            if (fromVoice) setVoiceState("idle");
             return;
           }
           throw new Error(`chat failed: ${res.status}`);
@@ -212,6 +218,7 @@ export function SpeakView() {
               : m,
           ),
         );
+        if (fromVoice) setVoiceState("idle");
       } finally {
         setIsStreaming(false);
       }
