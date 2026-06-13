@@ -159,6 +159,122 @@ body {
 }
 
 /* ============================================================
+   Country banner — a warm, friendly hero backdrop with the
+   German flag's gold/red/charcoal woven into the gradient. The
+   skyline silhouette sits on top via the GermanyBanner component.
+   ============================================================ */
+
+.banner-de {
+  position: relative;
+  isolation: isolate;
+  background:
+    radial-gradient(
+      44rem 24rem at 88% -30%,
+      color-mix(in srgb, var(--amber) 30%, transparent),
+      transparent 58%
+    ),
+    radial-gradient(
+      40rem 26rem at -5% 130%,
+      color-mix(in srgb, var(--coral) 26%, transparent),
+      transparent 60%
+    ),
+    linear-gradient(
+      118deg,
+      color-mix(in srgb, var(--accent) 22%, var(--surface-raised)),
+      var(--surface-raised) 58%,
+      color-mix(in srgb, var(--amber) 12%, var(--surface-raised))
+    );
+}
+
+/* The three German flag bands as a slim accent rule. */
+.flag-rule {
+  background: linear-gradient(
+    90deg,
+    #111 0 33.3%,
+    #d7141a 33.3% 66.6%,
+    #ffce00 66.6% 100%
+  );
+}
+
+/* Soft tile fills used by the stat grid + quick actions, keyed to
+   each accent token. */
+.tile-accent {
+  background: linear-gradient(
+    160deg,
+    color-mix(in srgb, var(--accent) 12%, var(--surface-raised)),
+    var(--surface-raised) 72%
+  );
+}
+.tile-coral {
+  background: linear-gradient(
+    160deg,
+    color-mix(in srgb, var(--coral) 13%, var(--surface-raised)),
+    var(--surface-raised) 72%
+  );
+}
+.tile-teal {
+  background: linear-gradient(
+    160deg,
+    color-mix(in srgb, var(--teal) 13%, var(--surface-raised)),
+    var(--surface-raised) 72%
+  );
+}
+.tile-amber {
+  background: linear-gradient(
+    160deg,
+    color-mix(in srgb, var(--amber) 14%, var(--surface-raised)),
+    var(--surface-raised) 72%
+  );
+}
+
+/* ============================================================
+   Review-card tints — a soft fill keyed to part of speech so a
+   card hints at its grammatical type at a glance. Each accent is
+   mixed heavily into --surface-raised, so the fill stays pale and
+   the dark foreground text remains fully readable; both themes
+   recompute automatically since the mix references the theme's
+   own surface and accent tokens.
+   ============================================================ */
+.tint-default {
+  background: var(--surface-raised);
+}
+.tint-noun {
+  background: linear-gradient(
+    160deg,
+    color-mix(in srgb, var(--accent) 13%, var(--surface-raised)),
+    color-mix(in srgb, var(--accent) 6%, var(--surface-raised))
+  );
+}
+.tint-verb {
+  background: linear-gradient(
+    160deg,
+    color-mix(in srgb, var(--coral) 14%, var(--surface-raised)),
+    color-mix(in srgb, var(--coral) 6%, var(--surface-raised))
+  );
+}
+.tint-adjective {
+  background: linear-gradient(
+    160deg,
+    color-mix(in srgb, var(--teal) 14%, var(--surface-raised)),
+    color-mix(in srgb, var(--teal) 6%, var(--surface-raised))
+  );
+}
+.tint-adverb {
+  background: linear-gradient(
+    160deg,
+    color-mix(in srgb, var(--amber) 15%, var(--surface-raised)),
+    color-mix(in srgb, var(--amber) 6%, var(--surface-raised))
+  );
+}
+.tint-pronoun {
+  background: linear-gradient(
+    160deg,
+    color-mix(in srgb, var(--positive) 14%, var(--surface-raised)),
+    color-mix(in srgb, var(--positive) 6%, var(--surface-raised))
+  );
+}
+
+/* ============================================================
    Micro-motion — entrances for popovers/armed states only.
    ============================================================ */
 

@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import {
+  ArrowLeftRight,
   CheckCircle2,
   Loader2,
   Pencil,
@@ -18,6 +19,31 @@ import type { Deck, DemoWord } from "@/lib/types";
 import { DeckEditor } from "./deck-editor";
 
 type Phase = "loading" | "empty" | "generating" | "review" | "done" | "error";
+
+/** Which language is shown on the prompt side before flipping. */
+type Direction = "en-de" | "de-en";
+
+/**
+ * Soft, part-of-speech-keyed card tints. Each maps to one of the design
+ * accent tokens, mixed heavily into the surface so the foreground text
+ * stays fully legible (see the `.tint-*` classes in globals.css).
+ */
+function posTint(pos: string): string {
+  switch (pos?.toLowerCase()) {
+    case "noun":
+      return "tint-noun";
+    case "verb":
+      return "tint-verb";
+    case "adjective":
+      return "tint-adjective";
+    case "adverb":
+      return "tint-adverb";
+    case "pronoun":
+      return "tint-pronoun";
+    default:
+      return "tint-default";
+  }
+}
 
 interface QueueCard extends SrsFields {
   id: string; // user_words.id
@@ -79,6 +105,8 @@ export function ReviewDemo() {
   const [phase, setPhase] = useState<Phase>("loading");
   const [queue, setQueue] = useState<QueueCard[]>([]);
   const [flipped, setFlipped] = useState(false);
+  // Default to English prompt → German answer; toggleable per session.
+  const [direction, setDirection] = useState<Direction>("en-de");
   const [errorMsg, setErrorMsg] = useState("");
   const [limitMsg, setLimitMsg] = useState<string | null>(null);
   const userIdRef = useRef<string | null>(null);
@@ -394,6 +422,19 @@ export function ReviewDemo() {
       <header className="flex h-14 shrink-0 items-center justify-between border-b border-border bg-surface px-4 sm:px-6">
         <h1 className="text-sm font-semibold tracking-tight">Foundations</h1>
         <div className="flex items-center gap-3">
+          {!editing && phase !== "loading" && phase !== "error" && (
+            <button
+              onClick={() => {
+                setDirection((d) => (d === "en-de" ? "de-en" : "en-de"));
+                setFlipped(false);
+              }}
+              title="Switch which language is shown first"
+              className="flex items-center gap-1.5 rounded-lg border border-border bg-surface-raised px-2.5 py-1.5 text-[11px] font-medium text-muted shadow-xs transition-colors duration-150 hover:border-border-strong hover:text-foreground"
+            >
+              <ArrowLeftRight size={12} strokeWidth={1.75} />
+              {direction === "en-de" ? "EN → DE" : "DE → EN"}
+            </button>
+          )}
           {phase === "review" && !editing && (
             <span className="rounded-full border border-border bg-surface-raised px-2.5 py-0.5 text-[11px] font-medium tabular-nums text-muted shadow-xs">
               {newCount} New | {reviewCount} Review
@@ -616,8 +657,7 @@ export function ReviewDemo() {
                   rotates in 3D, backface-visibility hides the far side. */}
               <button
                 onClick={flip}
-                lang="de"
-                className="group w-full max-w-md rounded-2xl text-center [perspective:1200px]"
+                className="group w-full max-w-lg rounded-2xl text-center [perspective:1200px]"
               >
                 <div
                   key={card.id}
@@ -625,26 +665,32 @@ export function ReviewDemo() {
                     flipped ? "[transform:rotateY(180deg)]" : ""
                   }`}
                 >
-                  {/* Front */}
+                  {/* Front — the prompt; which language depends on direction */}
                   <div
                     inert={flipped}
-                    className="flex min-h-64 flex-col items-center justify-center gap-4 rounded-2xl border border-border bg-surface-raised px-8 py-10 shadow-raised transition-[border-color,box-shadow] duration-150 [backface-visibility:hidden] [grid-area:1/1] group-hover:border-accent/30 group-hover:shadow-pop"
+                    className={`flex min-h-80 flex-col items-center justify-center gap-4 rounded-2xl border border-border ${posTint(card.pos)} px-8 py-12 shadow-raised transition-[border-color,box-shadow] duration-150 [backface-visibility:hidden] [grid-area:1/1] group-hover:border-accent/30 group-hover:shadow-pop`}
                   >
-                    <span className="text-3xl font-semibold tracking-tight">
-                      {withGender(card.gender, card.lemma)}
-                    </span>
-                    <span className="text-[11px] font-medium uppercase tracking-[0.08em] text-muted">
+                    {direction === "de-en" ? (
+                      <span lang="de" className="text-4xl font-semibold tracking-tight sm:text-5xl">
+                        {withGender(card.gender, card.lemma)}
+                      </span>
+                    ) : (
+                      <span className="text-4xl font-semibold tracking-tight sm:text-5xl">
+                        {card.meaning_en}
+                      </span>
+                    )}
+                    <span className="text-xs font-medium uppercase tracking-[0.08em] text-muted">
                       {card.pos}
                     </span>
                   </div>
 
-                  {/* Back — pre-rotated so it reads correctly once the wrapper turns */}
+                  {/* Back — the full reveal, pre-rotated so it reads correctly once the wrapper turns */}
                   <div
                     inert={!flipped}
-                    className="flex min-h-64 flex-col items-center justify-center gap-4 rounded-2xl border border-border bg-surface-raised px-8 py-10 shadow-raised transition-[border-color,box-shadow] duration-150 [backface-visibility:hidden] [grid-area:1/1] [transform:rotateY(180deg)] group-hover:border-accent/30 group-hover:shadow-pop"
+                    className={`flex min-h-80 flex-col items-center justify-center gap-4 rounded-2xl border border-border ${posTint(card.pos)} px-8 py-12 shadow-raised transition-[border-color,box-shadow] duration-150 [backface-visibility:hidden] [grid-area:1/1] [transform:rotateY(180deg)] group-hover:border-accent/30 group-hover:shadow-pop`}
                   >
                     <div className="flex items-center gap-2">
-                      <span className="text-2xl font-semibold tracking-tight">
+                      <span lang="de" className="text-3xl font-semibold tracking-tight">
                         {withGender(card.gender, card.lemma)}
                       </span>
                       <span
@@ -677,7 +723,7 @@ export function ReviewDemo() {
 
               {/* Grade bar / flip hint */}
               {flipped ? (
-                <div className="flex w-full max-w-md justify-center gap-2">
+                <div className="flex w-full max-w-lg justify-center gap-2">
                   <GradeButton label="Again" hint="1" tone="negative" onClick={() => grade(1)} />
                   <GradeButton label="Hard" hint="2" tone="muted" onClick={() => grade(2)} />
                   <GradeButton label="Good" hint="3" tone="accent" onClick={() => grade(3)} />
@@ -748,7 +794,7 @@ function GradeButton({
   return (
     <button
       onClick={onClick}
-      className={`flex min-w-0 flex-1 flex-col items-center gap-0.5 rounded-lg border border-border bg-surface-raised py-2.5 text-sm font-medium shadow-xs transition-all duration-150 active:scale-[0.98] sm:max-w-24 ${tones[tone]}`}
+      className={`flex min-w-0 flex-1 flex-col items-center gap-0.5 rounded-xl border border-border bg-surface-raised py-3 text-sm font-medium shadow-xs transition-all duration-150 active:scale-[0.98] sm:max-w-28 ${tones[tone]}`}
     >
       {label}
       <span className="text-[10px] text-muted">{hint}</span>

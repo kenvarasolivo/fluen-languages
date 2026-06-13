@@ -56,18 +56,18 @@ export function Sidebar() {
   const { account, signOut } = useAccount();
 
   return (
-    <aside className="hidden h-full w-56 shrink-0 flex-col border-r border-border bg-surface md:flex">
-      <div className="flex h-14 shrink-0 items-center border-b border-border px-5">
+    <aside className="hidden h-full w-64 shrink-0 flex-col border-r border-border bg-surface md:flex">
+      <div className="flex h-16 shrink-0 items-center border-b border-border px-5">
         <Link
           href="/dashboard"
-          className="flex items-center gap-2.5 rounded-md text-sm font-semibold tracking-[0.18em]"
+          className="flex items-center gap-2.5 rounded-md text-base font-semibold tracking-[0.18em]"
         >
-          <span aria-hidden className="size-2 rounded-[3px] bg-accent shadow-[0_0_8px] shadow-accent/40" />
+          <span aria-hidden className="size-2.5 rounded-[4px] bg-accent shadow-[0_0_10px] shadow-accent/50" />
           FLUEN
         </Link>
       </div>
 
-      <nav className="flex flex-1 flex-col gap-0.5 px-3 pt-3">
+      <nav className="flex flex-1 flex-col gap-1 px-3 pt-4">
         {nav.map(({ href, label, icon: Icon }) => {
           const active = pathname.startsWith(href);
           return (
@@ -75,14 +75,14 @@ export function Sidebar() {
               key={href}
               href={href}
               aria-current={active ? "page" : undefined}
-              className={`group flex items-center gap-3 rounded-md px-2.5 py-2 text-sm transition-colors duration-150 ${
+              className={`group flex items-center gap-3 rounded-lg px-3 py-2.5 text-[15px] transition-colors duration-150 ${
                 active
                   ? "bg-accent-soft font-medium text-accent"
                   : "text-muted hover:bg-foreground/[0.04] hover:text-foreground"
               }`}
             >
               <Icon
-                size={16}
+                size={19}
                 strokeWidth={active ? 2 : 1.75}
                 className={active ? "text-accent" : "text-muted transition-colors duration-150 group-hover:text-foreground"}
               />
@@ -123,10 +123,11 @@ export function Sidebar() {
         )}
       </div>
 
-      <div className="flex items-center justify-between border-t border-border px-5 py-3">
-        <p className="text-xs font-medium tracking-wide text-muted">
+      <div className="flex items-center justify-between border-t border-border px-4 py-3">
+        <span className="inline-flex items-center gap-1.5 rounded-full border border-border bg-surface-raised px-2.5 py-1 text-xs font-medium tracking-wide text-muted shadow-xs">
+          <span aria-hidden className="text-sm leading-none">🇩🇪</span>
           German · <span className="text-accent">B1</span>
-        </p>
+        </span>
         <ThemeToggle />
       </div>
     </aside>
@@ -149,7 +150,8 @@ export function MobileHeader() {
         FLUEN
       </Link>
       <div className="flex items-center gap-1.5">
-        <p className="mr-1 text-xs font-medium tracking-wide text-muted">
+        <p className="mr-1 flex items-center gap-1 text-xs font-medium tracking-wide text-muted">
+          <span aria-hidden className="text-sm leading-none">🇩🇪</span>
           German · <span className="text-accent">B1</span>
         </p>
         <ThemeToggle />
