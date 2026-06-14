@@ -7,9 +7,10 @@ import { supabase, ensureSession } from "@/lib/supabase";
 import { withGender } from "@/lib/format";
 import { getActiveLanguageCode } from "@/lib/languages";
 import { useActiveLanguage } from "@/lib/use-active-language";
+import { useCefrLevel } from "@/lib/use-cefr-level";
 import type {
+  CefrLevel,
   ImmerseKind,
-  ImmerseLevel,
   SavedText,
   Story,
   StoryLine,
@@ -26,7 +27,7 @@ interface PopoverState {
   added: boolean;
 }
 
-const LEVELS: { id: ImmerseLevel; label: string }[] = [
+const LEVELS: { id: CefrLevel; label: string }[] = [
   { id: "A1", label: "A1" },
   { id: "A2", label: "A2" },
   { id: "B1", label: "B1" },
@@ -41,7 +42,8 @@ const KINDS: { id: ImmerseKind; label: string }[] = [
 
 export function ImmerseDemo() {
   const language = useActiveLanguage();
-  const [level, setLevel] = useState<ImmerseLevel>("A1");
+  // Shared learner level — the single source of truth across screens.
+  const { level, setLevel } = useCefrLevel();
   const [kind, setKind] = useState<ImmerseKind>("story");
   const [showEnglish, setShowEnglish] = useState(false);
   const [story, setStory] = useState<Story | null>(null);
@@ -68,7 +70,8 @@ export function ImmerseDemo() {
       setSaved(texts);
       setStory({ title: texts[0].title, lines: texts[0].lines });
       setCurrentId(texts[0].id);
-      setLevel(texts[0].level);
+      // Note: a saved text's own level never overrides the learner's
+      // shared level — opening old A1 reading shouldn't demote them.
       setKind(texts[0].kind);
     })();
     return () => {
@@ -79,7 +82,6 @@ export function ImmerseDemo() {
   const openSaved = (t: SavedText) => {
     setStory({ title: t.title, lines: t.lines });
     setCurrentId(t.id);
-    setLevel(t.level);
     setKind(t.kind);
     setShowHistory(false);
     setError(null);

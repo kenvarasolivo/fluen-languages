@@ -1,9 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { supabase, ensureSession } from "@/lib/supabase";
-import { getActiveLanguageCode } from "@/lib/languages";
 import { useActiveLanguage } from "@/lib/use-active-language";
+import { useCefrLevel } from "@/lib/use-cefr-level";
 
 function greetingForHour(
   h: number,
@@ -18,29 +17,12 @@ export function Greeting() {
   const language = useActiveLanguage();
   // Rendered client-side only so the server/client hour can't disagree.
   const [greeting, setGreeting] = useState<string | null>(null);
-  const [level, setLevel] = useState<string | null>(null);
+  // Shared, live level — no hardcoded label, stays in sync with the picker.
+  const { level, loaded } = useCefrLevel();
 
   useEffect(() => {
     setGreeting(greetingForHour(new Date().getHours(), language.greetings));
   }, [language.greetings]);
-
-  // Show the learner's real level in this language — no hardcoded label.
-  useEffect(() => {
-    (async () => {
-      try {
-        const session = await ensureSession();
-        const { data } = await supabase
-          .from("user_languages")
-          .select("cefr_level")
-          .eq("user_id", session.user.id)
-          .eq("language", getActiveLanguageCode())
-          .maybeSingle();
-        setLevel(data?.cefr_level ?? "A1");
-      } catch {
-        setLevel("A1");
-      }
-    })();
-  }, []);
 
   return (
     <section className="banner-de fade-up relative w-full overflow-hidden rounded-3xl border border-border shadow-raised">
@@ -48,7 +30,7 @@ export function Greeting() {
         <span className="inline-flex w-fit items-center gap-2 rounded-full border border-border bg-surface-raised/70 px-3 py-1 text-xs font-medium text-muted backdrop-blur-sm">
           <span aria-hidden className="text-sm leading-none">{language.flag}</span>
           {language.nativeName}
-          {level && <> · {level}</>}
+          {loaded && <> · {level}</>}
         </span>
 
         <h1

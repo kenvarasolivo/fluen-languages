@@ -17,6 +17,7 @@ import { gradeCard, isDueSoon, type SrsFields } from "@/lib/srs";
 import { withGender } from "@/lib/format";
 import { getActiveLanguageCode } from "@/lib/languages";
 import { useActiveLanguage } from "@/lib/use-active-language";
+import { useCefrLevel } from "@/lib/use-cefr-level";
 import type { CefrLevel, Deck, DrawResult } from "@/lib/types";
 import { themeOrder } from "@/lib/curriculum";
 import { DeckEditor } from "./deck-editor";
@@ -134,9 +135,10 @@ export function ReviewDemo() {
   const [newDeckOpen, setNewDeckOpen] = useState(false);
   const [newDeckName, setNewDeckName] = useState("");
 
-  // The learner's current level (persisted on profiles) drives which
+  // The learner's current level — shared source of truth (user_languages),
+  // kept in sync with the sidebar, dashboard and Immerse. Drives which
   // curriculum words "New words" draws next.
-  const [level, setLevel] = useState<CefrLevel>("A1");
+  const { level, setLevel } = useCefrLevel();
   // Which theme the next draw pulls from ("auto" = next in curriculum order).
   const [theme, setTheme] = useState<string>(AUTO_THEME);
   // Set when a level is exhausted, offering a one-click bump to the next.
@@ -306,58 +308,40 @@ export function ReviewDemo() {
     load();
   }, [load]);
 
-  // Custom decks (for this language) and the saved level are loaded once
-  // on mount.
+  // Custom decks for this language are loaded once on mount. (The level
+  // is owned by the shared useCefrLevel hook, so it isn't fetched here.)
   useEffect(() => {
     (async () => {
       try {
-        const lang = getActiveLanguageCode();
-        const session = await ensureSession();
-        const [{ data: deckData, error: deckErr }, { data: ul }] =
-          await Promise.all([
-            supabase
-              .from("decks")
-              .select("id, name")
-              .eq("language", lang)
-              .order("created_at"),
-            supabase
-              .from("user_languages")
-              .select("cefr_level")
-              .eq("user_id", session.user.id)
-              .eq("language", lang)
-              .maybeSingle(),
-          ]);
+        await ensureSession();
+        const { data: deckData, error: deckErr } = await supabase
+          .from("decks")
+          .select("id, name")
+          .eq("language", getActiveLanguageCode())
+          .order("created_at");
         if (deckErr) throw deckErr;
         setDecks(deckData ?? []);
-        const saved = ul?.cefr_level;
-        if (saved && LEVELS.some((l) => l.id === saved)) setLevel(saved as CefrLevel);
       } catch (err) {
         console.error("[decks]", err);
       }
     })();
   }, []);
 
-  /** Persist the chosen level for this language; the next draw reads it server-side. */
-  const changeLevel = useCallback(async (next: CefrLevel) => {
-    setLevel(next);
-    // Themes differ per level (core only at A1/A2), so reset the choice.
-    setTheme(AUTO_THEME);
-    setAdvanceTo(null);
-    setNotice(null);
-    try {
-      const lang = getActiveLanguageCode();
-      const session = await ensureSession();
-      const { error } = await supabase
-        .from("user_languages")
-        .upsert(
-          { user_id: session.user.id, language: lang, cefr_level: next },
-          { onConflict: "user_id,language" },
-        );
-      if (error) throw error;
-    } catch (err) {
-      console.error("[level update]", err);
-    }
-  }, []);
+  /**
+   * Change the learner's level. `setLevel` (shared hook) persists it to
+   * user_languages and broadcasts so the sidebar/dashboard/Immerse update
+   * live; the next draw reads it server-side.
+   */
+  const changeLevel = useCallback(
+    (next: CefrLevel) => {
+      // Themes differ per level (core only at A1/A2), so reset the choice.
+      setTheme(AUTO_THEME);
+      setAdvanceTo(null);
+      setNotice(null);
+      setLevel(next);
+    },
+    [setLevel],
+  );
 
   const createDeck = useCallback(async () => {
     const name = newDeckName.trim();

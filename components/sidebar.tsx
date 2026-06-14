@@ -68,6 +68,12 @@ export function Sidebar() {
         </Link>
       </div>
 
+      {/* Language + theme pinned to the top — always visible on every page. */}
+      <div className="flex items-center justify-between gap-2 border-b border-border px-3 py-2.5">
+        <LanguageSwitcher />
+        <ThemeToggle />
+      </div>
+
       <nav className="flex flex-1 flex-col gap-1 px-3 pt-4">
         {nav.map(({ href, label, icon: Icon }) => {
           const active = pathname.startsWith(href);
@@ -122,11 +128,6 @@ export function Sidebar() {
             </button>
           </div>
         )}
-      </div>
-
-      <div className="flex items-center justify-between border-t border-border px-4 py-3">
-        <LanguageSwitcher />
-        <ThemeToggle />
       </div>
     </aside>
   );

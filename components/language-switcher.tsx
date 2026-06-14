@@ -10,6 +10,7 @@ import {
   getLanguage,
   setActiveLanguageCode,
 } from "@/lib/languages";
+import { useCefrLevel } from "@/lib/use-cefr-level";
 
 /**
  * Language switcher — picking a language swaps the whole environment
@@ -25,29 +26,15 @@ export function LanguageSwitcher({
   variant?: "full" | "compact";
 }) {
   const [code, setCode] = useState(getLanguage(null).code);
-  const [level, setLevel] = useState<string | null>(null);
+  // Shared, live level — kept in sync with the Foundations/Immerse pickers.
+  const { level, loaded } = useCefrLevel();
   const [open, setOpen] = useState(false);
   const [switching, setSwitching] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
 
-  // Settle to the learner's real language + read its level once mounted.
+  // Settle to the learner's real active language once mounted.
   useEffect(() => {
-    const active = getActiveLanguageCode();
-    setCode(active);
-    (async () => {
-      try {
-        const session = await ensureSession();
-        const { data } = await supabase
-          .from("user_languages")
-          .select("cefr_level")
-          .eq("user_id", session.user.id)
-          .eq("language", active)
-          .maybeSingle();
-        setLevel(data?.cefr_level ?? "A1");
-      } catch {
-        setLevel("A1");
-      }
-    })();
+    setCode(getActiveLanguageCode());
   }, []);
 
   // Close the menu on any outside click.
@@ -93,7 +80,7 @@ export function LanguageSwitcher({
   const menu = open && (
     <div
       className={`absolute z-50 overflow-hidden rounded-xl border border-border bg-surface-raised p-1 shadow-pop ${
-        variant === "full" ? "bottom-full left-0 mb-2 w-56" : "right-0 top-full mt-2 w-48"
+        variant === "full" ? "left-0 top-full mt-2 w-56" : "right-0 top-full mt-2 w-48"
       }`}
     >
       <p className="px-2.5 py-1.5 text-[10px] font-medium uppercase tracking-[0.08em] text-muted">
@@ -132,7 +119,7 @@ export function LanguageSwitcher({
           className="flex items-center gap-1 rounded-md px-1 py-1 text-xs font-medium tracking-wide text-muted transition-colors duration-150 hover:text-foreground"
         >
           <span aria-hidden className="text-sm leading-none">{active.flag}</span>
-          {level && <span className="text-accent">{level}</span>}
+          {loaded && <span className="text-accent">{level}</span>}
         </button>
         {menu}
       </div>
@@ -149,7 +136,7 @@ export function LanguageSwitcher({
       >
         <span aria-hidden className="text-sm leading-none">{active.flag}</span>
         {active.nativeName}
-        {level && <span className="text-accent">· {level}</span>}
+        {loaded && <span className="text-accent">· {level}</span>}
         <ChevronsUpDown size={12} strokeWidth={1.75} className="text-muted" />
       </button>
       {menu}
