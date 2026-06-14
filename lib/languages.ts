@@ -34,6 +34,8 @@ export interface LanguageDef {
   greetings: { morning: string; afternoon: string; evening: string };
   /** Slim flag-band CSS class used as an accent rule. */
   flagRuleClass: string;
+  /** Country photo shown behind the dashboard greeting (under a dark scrim). */
+  bannerImage: string;
 }
 
 export const LANGUAGES: Record<string, LanguageDef> = {
@@ -54,6 +56,9 @@ export const LANGUAGES: Record<string, LanguageDef> = {
       evening: "Guten Abend",
     },
     flagRuleClass: "flag-rule-de",
+    // Berlin skyline (Fernsehturm + Spree).
+    bannerImage:
+      "https://images.unsplash.com/photo-1599946347371-68eb71b16afc?auto=format&fit=crop&w=1600&q=70",
   },
   es: {
     code: "es",
@@ -72,6 +77,9 @@ export const LANGUAGES: Record<string, LanguageDef> = {
       evening: "Buenas noches",
     },
     flagRuleClass: "flag-rule-es",
+    // Madrid — Gran Vía at sunset.
+    bannerImage:
+      "https://images.unsplash.com/photo-1539037116277-4db20889f2d4?auto=format&fit=crop&w=1600&q=70",
   },
 };
 

@@ -252,6 +252,36 @@ body {
   background: #0b0b0d;
 }
 
+/* The country photo sits behind the greeting; `isolation: isolate` on
+   .banner-de keeps these negative-z layers trapped inside the hero. */
+.banner-photo {
+  position: absolute;
+  inset: 0;
+  z-index: -2;
+  background-size: cover;
+  background-position: center;
+}
+
+/* A gentle dark filter — heavier toward the lower-left where the text
+   lives, lighter on the right so the city still reads clearly. */
+.banner-scrim {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background:
+    linear-gradient(
+      105deg,
+      rgba(11, 11, 13, 0.6) 0%,
+      rgba(11, 11, 13, 0.32) 55%,
+      rgba(11, 11, 13, 0.18) 100%
+    ),
+    linear-gradient(
+      to top,
+      rgba(11, 11, 13, 0.5) 0%,
+      rgba(11, 11, 13, 0) 60%
+    );
+}
+
 /* ============================================================
    App chrome — an always-black top strip shared by the sidebar
    logo header and every view header, so the whole top bar reads as
