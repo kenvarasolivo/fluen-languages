@@ -18,18 +18,18 @@ export default function LoginPage() {
         </Link>
         <Link
           href="/"
-          className="fade-up flex items-center justify-center gap-3 rounded-md text-center text-4xl font-semibold tracking-[0.18em]"
+          className="fade-up flex items-center justify-center gap-3 rounded-md text-center text-5xl font-extrabold tracking-[0.2em]"
         >
           <span
             aria-hidden
-            className="size-3 rounded-[4px] bg-accent shadow-[0_0_16px] shadow-accent/50"
+            className="size-3.5 bg-accent shadow-[0_0_16px] shadow-accent/50"
           />
           FLUEN
         </Link>
-        <p className="fade-up fade-up-1 mt-3 text-center text-sm text-muted">
+        <p className="eyebrow fade-up fade-up-1 mt-4 text-center text-[11px] text-muted">
           Learn languages. Without the noise.
         </p>
-        <div className="fade-up fade-up-2 mt-8 rounded-2xl border border-border bg-surface-raised p-6 shadow-pop">
+        <div className="fade-up fade-up-2 mt-8 rounded-md border-[1.5px] border-border-strong bg-surface-raised p-6 shadow-raised">
           <AuthForm />
         </div>
         <p className="mt-8 text-center text-xs text-muted">

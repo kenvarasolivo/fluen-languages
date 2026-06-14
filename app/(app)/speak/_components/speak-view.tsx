@@ -252,10 +252,10 @@ export function SpeakView() {
     <div className="relative flex h-full">
       {/* Left — chat log */}
       <section className="flex min-w-0 flex-1 flex-col">
-        <header className="flex h-14 shrink-0 items-center justify-between border-b border-border bg-surface px-4 sm:px-6">
-          <h1 className="text-sm font-semibold tracking-tight">Speak</h1>
+        <header className="app-header flex h-16 shrink-0 items-center justify-between border-b px-4 sm:px-6">
+          <h1 className="eyebrow text-sm text-white">Speak</h1>
           <div className="flex items-center gap-3">
-            <span className="hidden text-xs font-medium tracking-wide text-muted sm:inline">
+            <span className="hidden text-xs font-medium tracking-wide text-white/60 sm:inline">
               Conversation · {language.nativeName}
             </span>
             {hasSession && (
@@ -263,7 +263,7 @@ export function SpeakView() {
                 onClick={deleteConversation}
                 aria-label="Delete conversation"
                 title="Delete conversation"
-                className="rounded-md p-1.5 text-muted transition-colors duration-150 hover:bg-negative/10 hover:text-negative"
+                className="rounded-md p-1.5 text-white/60 transition-colors duration-150 hover:bg-white/10 hover:text-white"
               >
                 <Trash2 size={14} strokeWidth={2} />
               </button>

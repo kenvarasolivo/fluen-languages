@@ -21,25 +21,25 @@ const features = [
     icon: Layers,
     title: "Foundations",
     text: "Build your vocabulary with smart repetition - right when you need it.",
-    chip: "bg-accent-soft text-accent",
+    chip: "bg-accent text-white",
   },
   {
     icon: Clapperboard,
     title: "Immerse",
     text: "Dive into real texts and collect new words straight from context.",
-    chip: "bg-coral-soft text-coral",
+    chip: "bg-coral text-white",
   },
   {
     icon: MessageCircle,
     title: "Speak",
     text: "Have real conversations and get gentle corrections as you write and speak.",
-    chip: "bg-teal-soft text-teal",
+    chip: "bg-teal text-white",
   },
   {
     icon: Library,
     title: "Cards",
     text: "Your personal collection grows with you - every word with an example and context.",
-    chip: "bg-amber-soft text-amber",
+    chip: "bg-amber text-white",
   },
 ];
 
@@ -68,11 +68,11 @@ export default function LandingPage() {
       <header className="mx-auto flex w-full max-w-5xl items-center justify-between px-6 py-5">
         <Link
           href="/"
-          className="flex items-center gap-2.5 rounded-md text-sm font-semibold tracking-[0.18em]"
+          className="flex items-center gap-2.5 rounded-md text-base font-extrabold tracking-[0.2em]"
         >
           <span
             aria-hidden
-            className="size-2 rounded-[3px] bg-accent shadow-[0_0_8px] shadow-accent/40"
+            className="size-2.5 bg-accent shadow-[0_0_10px] shadow-accent/50"
           />
           FLUEN
         </Link>
@@ -80,7 +80,7 @@ export default function LandingPage() {
           <ThemeToggle />
           <Link
             href="/login"
-            className="rounded-xl bg-accent px-4 py-2 text-sm font-medium text-white shadow-xs transition-all duration-150 hover:bg-accent/90 active:scale-[0.99]"
+            className="btn-primary rounded-md px-5 py-2 text-xs"
           >
             Sign in
           </Link>
@@ -88,30 +88,31 @@ export default function LandingPage() {
       </header>
 
       {/* Hero */}
-      <section className="mx-auto flex w-full max-w-3xl flex-col items-center px-6 pb-20 pt-16 text-center md:pt-24">
-        <p className="fade-up flex items-center gap-1.5 rounded-full border border-border bg-surface-raised px-3 py-1 text-xs font-medium text-muted shadow-xs">
+      <section className="mx-auto flex w-full max-w-3xl flex-col items-center px-6 pb-24 pt-10 text-center md:pt-14">
+        <p className="eyebrow fade-up flex items-center gap-1.5 border-[1.5px] border-border-strong bg-surface-raised px-3 py-1 text-[11px]">
           <Sparkles size={12} className="text-amber" aria-hidden />
-          Available now: German &amp; Spanish - more languages coming
+          German &amp; Spanish — more coming
         </p>
-        <h1 className="fade-up fade-up-1 mt-6 text-4xl font-semibold leading-tight tracking-[-0.02em] md:text-6xl">
-          Languages that{" "}
-          <span className="text-gradient-warm">stick.</span>
+        <h1 className="display fade-up fade-up-1 mt-7 text-5xl uppercase md:text-7xl">
+          Languages
+          <br />
+          that <span className="text-gradient-warm">stick.</span>
         </h1>
-        <p className="fade-up fade-up-2 mt-5 max-w-xl text-base leading-relaxed text-muted md:text-lg">
-          Flashcards, real texts and conversations - all in one place. Calm,
-          focused and at your own pace. Start with German or Spanish today.
+        <p className="fade-up fade-up-2 mt-6 max-w-xl text-base leading-relaxed text-muted md:text-lg">
+          Flashcards, real texts and conversations — all in one place. Focused
+          and at your own pace. Start with German or Spanish today.
         </p>
-        <div className="fade-up fade-up-3 mt-8 flex flex-col items-center gap-3 sm:flex-row">
+        <div className="fade-up fade-up-3 mt-9 flex w-full flex-col items-stretch gap-3 sm:w-auto sm:flex-row sm:items-center">
           <Link
             href="/login"
-            className="flex items-center gap-2 rounded-xl bg-accent px-6 py-3 text-sm font-medium text-white shadow-raised transition-all duration-150 hover:-translate-y-0.5 hover:bg-accent/90 hover:shadow-pop active:scale-[0.99]"
+            className="btn-primary flex items-center justify-center gap-2 rounded-md px-7 py-3.5 text-sm"
           >
             Start for free
             <ArrowRight size={16} aria-hidden />
           </Link>
           <Link
             href="/login"
-            className="rounded-xl border border-border bg-surface-raised px-6 py-3 text-sm font-medium text-muted shadow-xs transition-all duration-150 hover:border-border-strong hover:text-foreground"
+            className="btn-outline flex items-center justify-center rounded-md px-7 py-3.5 text-sm"
           >
             Try as guest
           </Link>
@@ -119,22 +120,22 @@ export default function LandingPage() {
       </section>
 
       {/* Features */}
-      <section className="mx-auto w-full max-w-5xl px-6 pb-20">
-        <h2 className="text-center text-sm font-medium uppercase tracking-[0.14em] text-muted">
+      <section className="mx-auto w-full max-w-5xl px-6 pb-24">
+        <h2 className="eyebrow text-center text-xs text-muted">
           Four ways to get there
         </h2>
         <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           {features.map(({ icon: Icon, title, text, chip }) => (
             <div
               key={title}
-              className="rounded-2xl border border-border bg-surface-raised p-5 shadow-raised transition-all duration-150 hover:-translate-y-0.5 hover:shadow-pop"
+              className="rounded-md border-[1.5px] border-border-strong bg-surface-raised p-5 transition-transform duration-150 hover:-translate-y-1 hover:shadow-pop"
             >
               <span
-                className={`flex size-10 items-center justify-center rounded-xl ${chip}`}
+                className={`flex size-11 items-center justify-center rounded-md ${chip}`}
               >
-                <Icon size={18} strokeWidth={1.75} aria-hidden />
+                <Icon size={20} strokeWidth={2} aria-hidden />
               </span>
-              <h3 className="mt-4 text-sm font-semibold">{title}</h3>
+              <h3 className="mt-4 text-base font-bold tracking-tight">{title}</h3>
               <p className="mt-1.5 text-sm leading-relaxed text-muted">
                 {text}
               </p>
@@ -143,27 +144,27 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* How it works */}
-      <section className="mx-auto w-full max-w-5xl px-6 pb-20">
-        <div className="rounded-2xl border border-border bg-surface-raised px-6 py-10 shadow-raised md:px-10">
-          <h2 className="text-center text-sm font-medium uppercase tracking-[0.14em] text-muted">
+      {/* How it works — inverted, full-bleed block (white-on-black) */}
+      <section className="bg-foreground text-background">
+        <div className="mx-auto w-full max-w-5xl px-6 py-16 md:py-20">
+          <h2 className="eyebrow text-center text-xs text-background/60">
             How it works
           </h2>
-          <div className="mt-8 grid gap-8 text-center md:grid-cols-3">
+          <div className="mt-10 grid gap-10 text-center md:grid-cols-3">
             {steps.map((s) => (
-              <div key={s.n} className="flex flex-col items-center gap-2">
-                <span className="flex size-9 items-center justify-center rounded-full bg-accent-soft text-sm font-semibold text-accent">
+              <div key={s.n} className="flex flex-col items-center gap-3">
+                <span className="flex size-12 items-center justify-center rounded-md bg-accent text-lg font-extrabold text-white">
                   {s.n}
                 </span>
-                <h3 className="mt-1 text-sm font-semibold">{s.title}</h3>
-                <p className="text-sm text-muted">{s.text}</p>
+                <h3 className="mt-1 text-lg font-bold tracking-tight">{s.title}</h3>
+                <p className="max-w-xs text-sm text-background/70">{s.text}</p>
               </div>
             ))}
           </div>
-          <div className="mt-10 flex justify-center">
+          <div className="mt-12 flex justify-center">
             <Link
               href="/login"
-              className="flex items-center gap-2 rounded-xl bg-accent px-6 py-3 text-sm font-medium text-white shadow-raised transition-all duration-150 hover:-translate-y-0.5 hover:bg-accent/90 hover:shadow-pop active:scale-[0.99]"
+              className="flex items-center gap-2 rounded-md bg-background px-7 py-3.5 text-sm font-semibold uppercase tracking-[0.06em] text-foreground transition-transform duration-150 hover:-translate-y-1 active:translate-y-0"
             >
               Get started
               <ArrowRight size={16} aria-hidden />

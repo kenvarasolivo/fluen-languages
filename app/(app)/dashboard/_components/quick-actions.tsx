@@ -8,7 +8,7 @@ const actions = [
     desc: "Drill vocabulary with smart flashcards.",
     icon: Layers,
     tile: "tile-accent",
-    chip: "bg-accent-soft text-accent",
+    chip: "bg-accent text-white",
   },
   {
     href: "/immerse",
@@ -16,7 +16,7 @@ const actions = [
     desc: "Read real texts and tap to save new words.",
     icon: Clapperboard,
     tile: "tile-coral",
-    chip: "bg-coral-soft text-coral",
+    chip: "bg-coral text-white",
   },
   {
     href: "/speak",
@@ -24,14 +24,14 @@ const actions = [
     desc: "Chat out loud and get gentle corrections.",
     icon: MessageCircle,
     tile: "tile-teal",
-    chip: "bg-teal-soft text-teal",
+    chip: "bg-teal text-white",
   },
 ];
 
 export function QuickActions() {
   return (
     <div className="fade-up fade-up-2 w-full max-w-4xl">
-      <h2 className="mb-3 px-1 text-xs font-semibold uppercase tracking-[0.1em] text-muted">
+      <h2 className="eyebrow mb-3 px-1 text-xs text-muted">
         Jump back in
       </h2>
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
@@ -39,13 +39,13 @@ export function QuickActions() {
           <Link
             key={href}
             href={href}
-            className={`group relative flex flex-col gap-3 overflow-hidden rounded-2xl border border-border ${tile} p-5 shadow-raised transition-all duration-150 hover:-translate-y-0.5 hover:shadow-pop`}
+            className={`group relative flex flex-col gap-3 overflow-hidden rounded-md border-[1.5px] border-border-strong ${tile} p-5 transition-transform duration-150 hover:-translate-y-1 hover:shadow-pop`}
           >
-            <span className={`flex size-10 items-center justify-center rounded-xl ${chip}`}>
-              <Icon size={18} strokeWidth={1.75} aria-hidden />
+            <span className={`flex size-11 items-center justify-center rounded-md ${chip}`}>
+              <Icon size={20} strokeWidth={2} aria-hidden />
             </span>
             <div>
-              <p className="flex items-center gap-1 text-sm font-semibold">
+              <p className="flex items-center gap-1 text-base font-bold tracking-tight">
                 {label}
                 <ArrowUpRight
                   size={14}

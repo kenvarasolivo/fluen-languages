@@ -25,9 +25,9 @@ export function Greeting() {
   }, [language.greetings]);
 
   return (
-    <section className="banner-de fade-up relative w-full overflow-hidden rounded-3xl border border-border shadow-raised">
-      <div className="relative flex flex-col gap-5 px-6 py-10 sm:px-10 sm:py-12">
-        <span className="inline-flex w-fit items-center gap-2 rounded-full border border-border bg-surface-raised/70 px-3 py-1 text-xs font-medium text-muted backdrop-blur-sm">
+    <section className="banner-de fade-up relative w-full overflow-hidden">
+      <div className="relative mx-auto flex w-full max-w-4xl flex-col gap-5 px-4 py-14 sm:px-8 sm:py-20">
+        <span className="eyebrow inline-flex w-fit items-center gap-2 rounded-full border border-white/25 bg-white/10 px-3 py-1 text-[11px] text-white backdrop-blur-sm">
           <span aria-hidden className="text-sm leading-none">{language.flag}</span>
           {language.nativeName}
           {loaded && <> · {level}</>}
@@ -35,17 +35,17 @@ export function Greeting() {
 
         <h1
           lang={language.htmlLang}
-          className="text-gradient-warm pb-1 text-4xl font-semibold tracking-[-0.02em] sm:text-5xl md:text-6xl"
+          className="display pb-1 text-5xl uppercase text-white sm:text-6xl md:text-7xl"
         >
           {greeting ?? " "}
         </h1>
-        <p className="-mt-2 max-w-md text-base text-muted sm:text-lg">
+        <p className="-mt-2 max-w-md text-base text-white/70 sm:text-lg">
           Ready for a bit of {language.name}? Pick up where you left off.
         </p>
       </div>
 
       {/* Flag accent rule along the very bottom */}
-      <span aria-hidden className={`${language.flagRuleClass} absolute inset-x-0 bottom-0 h-1.5`} />
+      <span aria-hidden className={`${language.flagRuleClass} absolute inset-x-0 bottom-0 h-2`} />
     </section>
   );
 }

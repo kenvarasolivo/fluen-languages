@@ -7,10 +7,10 @@ export default function ImpressumPage() {
   return (
     <div className="flex min-h-dvh items-center justify-center px-6 py-16">
       <div className="w-full max-w-sm">
-        <h1 className="text-center text-4xl font-semibold tracking-[0.18em]">
+        <h1 className="text-center text-5xl font-extrabold tracking-[0.2em]">
           FLUEN
         </h1>
-        <p className="mt-2 text-center text-sm text-muted">
+        <p className="eyebrow mt-3 text-center text-[11px] text-muted">
           Impressum (Legal Notice)
         </p>
 

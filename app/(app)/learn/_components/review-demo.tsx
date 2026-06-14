@@ -455,8 +455,8 @@ export function ReviewDemo() {
 
   return (
     <div className="flex h-full flex-col">
-      <header className="flex h-14 shrink-0 items-center justify-between border-b border-border bg-surface px-4 sm:px-6">
-        <h1 className="text-sm font-semibold tracking-tight">Foundations</h1>
+      <header className="app-header flex h-16 shrink-0 items-center justify-between border-b px-4 sm:px-6">
+        <h1 className="eyebrow text-sm text-white">Foundations</h1>
         <div className="flex items-center gap-3">
           {!editing && phase !== "loading" && phase !== "error" && (
             <button
@@ -465,7 +465,7 @@ export function ReviewDemo() {
                 setFlipped(false);
               }}
               title="Switch which language is shown first"
-              className="flex items-center gap-1.5 rounded-lg border border-border bg-surface-raised px-2.5 py-1.5 text-[11px] font-medium text-muted shadow-xs transition-colors duration-150 hover:border-border-strong hover:text-foreground"
+              className="hdr-chip flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-[11px] font-medium"
             >
               <ArrowLeftRight size={12} strokeWidth={1.75} />
               {direction === "en-target"
@@ -474,7 +474,7 @@ export function ReviewDemo() {
             </button>
           )}
           {phase === "review" && !editing && (
-            <span className="rounded-full border border-border bg-surface-raised px-2.5 py-0.5 text-[11px] font-medium tabular-nums text-muted shadow-xs">
+            <span className="hdr-chip rounded-full px-2.5 py-0.5 text-[11px] font-medium tabular-nums">
               {newCount} New | {reviewCount} Review
             </span>
           )}

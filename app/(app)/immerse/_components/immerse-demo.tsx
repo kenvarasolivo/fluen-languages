@@ -272,16 +272,14 @@ export function ImmerseDemo() {
 
   return (
     <div className="flex h-full flex-col" onClick={() => setPopover(null)}>
-      <header className="flex h-14 shrink-0 items-center justify-between border-b border-border bg-surface px-4 sm:px-6">
-        <h1 className="text-sm font-semibold tracking-tight">Immerse</h1>
+      <header className="app-header flex h-16 shrink-0 items-center justify-between border-b px-4 sm:px-6">
+        <h1 className="eyebrow text-sm text-white">Immerse</h1>
         <div className="flex items-center gap-2">
           <button
             onClick={() => setShowHistory((v) => !v)}
             aria-pressed={showHistory}
-            className={`flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-medium transition-colors duration-150 ${
-              showHistory
-                ? "border-accent/40 bg-accent-soft text-accent"
-                : "border-border text-muted hover:border-border-strong hover:text-foreground"
+            className={`flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium ${
+              showHistory ? "hdr-chip hdr-chip-active" : "hdr-chip"
             }`}
           >
             <History size={12} strokeWidth={2} />
@@ -290,10 +288,8 @@ export function ImmerseDemo() {
           <button
             onClick={() => setShowEnglish((v) => !v)}
             aria-pressed={showEnglish}
-            className={`rounded-full border px-2.5 py-1 text-xs font-medium transition-colors duration-150 ${
-              showEnglish
-                ? "border-accent/40 bg-accent-soft text-accent"
-                : "border-border text-muted hover:border-border-strong hover:text-foreground"
+            className={`rounded-full px-2.5 py-1 text-xs font-medium ${
+              showEnglish ? "hdr-chip hdr-chip-active" : "hdr-chip"
             }`}
           >
             Translation

@@ -1,77 +1,83 @@
 @import "tailwindcss";
 
 /* ============================================================
-   FLUEN design tokens — warm neutral base, indigo primary plus
-   a small set of friendly secondary accents (coral/amber/teal).
-   Light by default; dark theme via <html class="dark">.
+   FLUEN design tokens — BOLD edition.
+
+   A high-contrast, editorial system: near-pure white and near-pure
+   black do the structural heavy lifting (bold black-on-white in
+   light, bold white-on-black in dark), with one electric accent and
+   a few saturated secondaries that are allowed to actually POP.
+
+   Voice: the wordmark's confident, uppercase, tightly-set type is the
+   house style — see `.eyebrow`, `.display` and the uppercase buttons.
 
    Elevation model:
      --background      app canvas (lowest)
      --surface         panels, sidebars, cards at rest
      --surface-raised  interactive / lifted elements (+ shadow)
 
-   Accent rules: secondary accents are for soft tints, icon chips
-   and gradients — never large flat fills.
+   Accent rules: the electric accent and secondaries are for solid
+   pops — chips, active states, category bars, key highlights — not
+   timid 9% washes. The pale `*-soft` tints stay pale on purpose so
+   dark text on them is always readable.
    ============================================================ */
 
 :root {
-  --background: #f7f5f2;
-  --surface: #fbfaf8;
+  --background: #ffffff;
+  --surface: #ffffff;
   --surface-raised: #ffffff;
-  --border: #e9e5e0;
-  --border-strong: #d9d3cc;
-  --foreground: #1c1916;
-  --muted: #6e675f;
-  --accent: #5e6ad2;
-  --accent-soft: rgba(94, 106, 210, 0.09);
-  --coral: #cf5b41;
-  --coral-soft: rgba(207, 91, 65, 0.1);
-  --amber: #b8821f;
-  --amber-soft: rgba(184, 130, 31, 0.11);
-  --teal: #1f8a78;
-  --teal-soft: rgba(31, 138, 120, 0.1);
-  --positive: #3d8a5f;
-  --negative: #b45454;
-  --ring: rgba(94, 106, 210, 0.55);
+  --border: #e4e0d8;
+  --border-strong: #100f0e;
+  --foreground: #100f0e;
+  --muted: #6a635b;
+  --accent: #4536f2;
+  --accent-soft: rgba(69, 54, 242, 0.1);
+  --coral: #e63b2a;
+  --coral-soft: rgba(230, 59, 42, 0.1);
+  --amber: #c2790f;
+  --amber-soft: rgba(194, 121, 15, 0.12);
+  --teal: #0d8c79;
+  --teal-soft: rgba(13, 140, 121, 0.11);
+  --positive: #1f9d57;
+  --negative: #db2b2b;
+  --ring: rgba(69, 54, 242, 0.55);
 
-  --shadow-xs: 0 1px 2px rgba(20, 20, 26, 0.05);
+  --shadow-xs: 0 1px 1px rgba(16, 15, 14, 0.06);
   --shadow-raised:
-    0 1px 2px rgba(20, 20, 26, 0.04),
-    0 2px 8px -2px rgba(20, 20, 26, 0.07);
+    0 1px 0 rgba(16, 15, 14, 0.04),
+    0 2px 6px -2px rgba(16, 15, 14, 0.1);
   --shadow-pop:
-    0 0 0 1px rgba(20, 20, 26, 0.04),
-    0 4px 12px -2px rgba(20, 20, 26, 0.08),
-    0 16px 40px -12px rgba(20, 20, 26, 0.18);
+    0 0 0 1.5px var(--foreground),
+    6px 6px 0 -1px var(--foreground);
 }
 
 :root.dark {
-  --background: #0c0b0a;
-  --surface: #131110;
-  --surface-raised: #1c1917;
-  --border: #262320;
-  --border-strong: #34302b;
-  --foreground: #f7f5f2;
-  --muted: #8e8880;
-  --accent: #5e6ad2;
-  --accent-soft: rgba(94, 106, 210, 0.14);
-  --coral: #ef8a6f;
-  --coral-soft: rgba(239, 138, 111, 0.14);
-  --amber: #e0aa4e;
-  --amber-soft: rgba(224, 170, 78, 0.13);
-  --teal: #4cbfab;
-  --teal-soft: rgba(76, 191, 171, 0.13);
-  --positive: #4f9e70;
-  --negative: #b45454;
-  --ring: rgba(122, 133, 224, 0.6);
+  --background: #0a0a0b;
+  --surface: #0a0a0b;
+  --surface-raised: #161617;
+  --border: #2a2a2c;
+  --border-strong: #f5f4f2;
+  --foreground: #f7f6f4;
+  --muted: #9a948c;
+  --accent: #6f60ff;
+  --accent-soft: rgba(111, 96, 255, 0.16);
+  --coral: #ff6a55;
+  --coral-soft: rgba(255, 106, 85, 0.16);
+  --amber: #e8a93a;
+  --amber-soft: rgba(232, 169, 58, 0.14);
+  --teal: #2bc1aa;
+  --teal-soft: rgba(43, 193, 170, 0.15);
+  --positive: #34c46e;
+  --negative: #ff5a5a;
+  --ring: rgba(140, 128, 255, 0.65);
 
-  --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.45);
+  --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.5);
   --shadow-raised:
-    0 1px 2px rgba(0, 0, 0, 0.4),
-    0 2px 10px -2px rgba(0, 0, 0, 0.5);
+    0 1px 0 rgba(0, 0, 0, 0.5),
+    0 2px 10px -2px rgba(0, 0, 0, 0.6);
   --shadow-pop:
-    0 0 0 1px rgba(255, 255, 255, 0.04),
-    0 4px 12px -2px rgba(0, 0, 0, 0.5),
-    0 16px 48px -12px rgba(0, 0, 0, 0.7);
+    0 0 0 1.5px var(--foreground),
+    6px 6px 0 -1px var(--foreground);
 }
 
 @theme inline {
@@ -98,6 +104,15 @@
   --shadow-raised: var(--shadow-raised);
   --shadow-pop: var(--shadow-pop);
 
+  /* Sharper radius scale — crisp, confident corners instead of pillowy
+     ones. Every rounded-* utility tightens app-wide from this. */
+  --radius-sm: 0.125rem;
+  --radius-md: 0.25rem;
+  --radius-lg: 0.3125rem;
+  --radius-xl: 0.375rem;
+  --radius-2xl: 0.5rem;
+  --radius-3xl: 0.75rem;
+
   --font-sans: var(--font-inter), ui-sans-serif, system-ui, -apple-system,
     "Segoe UI", sans-serif;
 }
@@ -111,7 +126,8 @@ body {
 }
 
 ::selection {
-  background: rgba(94, 106, 210, 0.25);
+  background: var(--accent);
+  color: #fff;
 }
 
 /* One consistent, visible keyboard focus everywhere. */
@@ -127,66 +143,149 @@ body {
 }
 
 /* ============================================================
-   Warm surfaces — soft multi-stop mesh backdrop and gradient
-   headline text. Built from accent tokens so both themes work.
+   House voice — the wordmark's uppercase, tightly-tracked type
+   applied beyond the logo: eyebrow labels, display headlines and
+   the bold primary action.
+   ============================================================ */
+
+/* Small, all-caps, wide-tracked labels (section kickers, meta). */
+.eyebrow {
+  text-transform: uppercase;
+  letter-spacing: 0.16em;
+  font-weight: 600;
+}
+
+/* Big, heavy, tight display headlines. */
+.display {
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  line-height: 0.95;
+}
+
+/* Primary action — solid foreground on background, so it reads
+   black-on-white in light mode and white-on-black in dark. Uppercase
+   and tracked, like the wordmark. */
+.btn-primary {
+  background: var(--foreground);
+  color: var(--background);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  font-weight: 600;
+  border: 1.5px solid var(--foreground);
+  transition:
+    transform 150ms ease,
+    box-shadow 150ms ease,
+    background 150ms ease,
+    color 150ms ease;
+}
+.btn-primary:hover {
+  transform: translateY(-1px);
+}
+.btn-primary:active {
+  transform: translateY(0) scale(0.99);
+}
+.btn-primary:disabled {
+  opacity: 0.4;
+  transform: none;
+}
+
+/* Outline counterpart — bold border, transparent fill; inverts on hover. */
+.btn-outline {
+  background: transparent;
+  color: var(--foreground);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  font-weight: 600;
+  border: 1.5px solid var(--border-strong);
+  transition:
+    transform 150ms ease,
+    background 150ms ease,
+    color 150ms ease;
+}
+.btn-outline:hover {
+  background: var(--foreground);
+  color: var(--background);
+  transform: translateY(-1px);
+}
+.btn-outline:active {
+  transform: translateY(0) scale(0.99);
+}
+
+/* ============================================================
+   Surfaces — a crisp near-flat backdrop and a vivid headline.
    ============================================================ */
 
 .bg-mesh {
   background:
     radial-gradient(
-      40rem 26rem at 12% -10%,
-      color-mix(in srgb, var(--accent) 9%, transparent),
-      transparent 65%
-    ),
-    radial-gradient(
-      32rem 24rem at 90% 0%,
-      color-mix(in srgb, var(--coral) 8%, transparent),
+      42rem 26rem at 10% -12%,
+      color-mix(in srgb, var(--accent) 12%, transparent),
       transparent 60%
     ),
     radial-gradient(
-      38rem 28rem at 50% 115%,
-      color-mix(in srgb, var(--teal) 7%, transparent),
-      transparent 62%
+      34rem 24rem at 92% 0%,
+      color-mix(in srgb, var(--coral) 9%, transparent),
+      transparent 58%
     ),
     var(--background);
 }
 
+/* Vivid, high-energy headline fill. */
 .text-gradient-warm {
-  background: linear-gradient(95deg, var(--accent), var(--coral) 90%);
+  background: linear-gradient(96deg, var(--accent), var(--coral) 92%);
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
 }
 
 /* ============================================================
-   Country banner — a warm, friendly hero backdrop with the
-   German flag's gold/red/charcoal woven into the gradient. The
-   skyline silhouette sits on top via the GermanyBanner component.
+   Country banner — a bold, near-black hero block with the active
+   language's accent glow woven in. White text sits on top (set by
+   the GermanyBanner / Greeting component), giving an explicit
+   white-on-black moment inside the app.
    ============================================================ */
 
 .banner-de {
   position: relative;
   isolation: isolate;
-  background:
-    radial-gradient(
-      44rem 24rem at 88% -30%,
-      color-mix(in srgb, var(--amber) 30%, transparent),
-      transparent 58%
-    ),
-    radial-gradient(
-      40rem 26rem at -5% 130%,
-      color-mix(in srgb, var(--coral) 26%, transparent),
-      transparent 60%
-    ),
-    linear-gradient(
-      118deg,
-      color-mix(in srgb, var(--accent) 22%, var(--surface-raised)),
-      var(--surface-raised) 58%,
-      color-mix(in srgb, var(--amber) 12%, var(--surface-raised))
-    );
+  color: #fff;
+  background: #0b0b0d;
 }
 
-/* The three German flag bands as a slim accent rule. */
+/* ============================================================
+   App chrome — an always-black top strip shared by the sidebar
+   logo header and every view header, so the whole top bar reads as
+   one bold black band that aligns left-to-right.
+   ============================================================ */
+
+.app-header {
+  background: #0b0b0d;
+  color: #fff;
+  border-color: rgba(255, 255, 255, 0.12);
+}
+
+/* Secondary controls (toggles, counters) that sit on the black
+   header — quiet outline by default, solid white when active. */
+.hdr-chip {
+  border: 1.5px solid rgba(255, 255, 255, 0.25);
+  background: transparent;
+  color: rgba(255, 255, 255, 0.85);
+  transition:
+    background 150ms ease,
+    color 150ms ease,
+    border-color 150ms ease;
+}
+.hdr-chip:hover {
+  background: rgba(255, 255, 255, 0.12);
+  color: #fff;
+}
+.hdr-chip-active {
+  border-color: #fff;
+  background: #fff;
+  color: #0b0b0d;
+}
+
+/* The three German flag bands as a bold accent rule. */
 .flag-rule-de {
   background: linear-gradient(
     90deg,
@@ -196,7 +295,7 @@ body {
   );
 }
 
-/* Spanish flag bands (red / gold / red) as a slim accent rule. */
+/* Spanish flag bands (red / gold / red) as a bold accent rule. */
 .flag-rule-es {
   background: linear-gradient(
     90deg,
@@ -206,44 +305,44 @@ body {
   );
 }
 
-/* Soft tile fills used by the stat grid + quick actions, keyed to
-   each accent token. */
+/* Solid-tinted tiles for the stat grid + quick actions — keyed to
+   each accent, mixed firmly so the colour reads but dark text stays
+   legible. */
 .tile-accent {
   background: linear-gradient(
     160deg,
-    color-mix(in srgb, var(--accent) 12%, var(--surface-raised)),
-    var(--surface-raised) 72%
+    color-mix(in srgb, var(--accent) 18%, var(--surface-raised)),
+    var(--surface-raised) 78%
   );
 }
 .tile-coral {
   background: linear-gradient(
     160deg,
-    color-mix(in srgb, var(--coral) 13%, var(--surface-raised)),
-    var(--surface-raised) 72%
+    color-mix(in srgb, var(--coral) 18%, var(--surface-raised)),
+    var(--surface-raised) 78%
   );
 }
 .tile-teal {
   background: linear-gradient(
     160deg,
-    color-mix(in srgb, var(--teal) 13%, var(--surface-raised)),
-    var(--surface-raised) 72%
+    color-mix(in srgb, var(--teal) 18%, var(--surface-raised)),
+    var(--surface-raised) 78%
   );
 }
 .tile-amber {
   background: linear-gradient(
     160deg,
-    color-mix(in srgb, var(--amber) 14%, var(--surface-raised)),
-    var(--surface-raised) 72%
+    color-mix(in srgb, var(--amber) 20%, var(--surface-raised)),
+    var(--surface-raised) 78%
   );
 }
 
 /* ============================================================
-   Review-card tints — a soft fill keyed to part of speech so a
-   card hints at its grammatical type at a glance. Each accent is
-   mixed heavily into --surface-raised, so the fill stays pale and
-   the dark foreground text remains fully readable; both themes
-   recompute automatically since the mix references the theme's
-   own surface and accent tokens.
+   Review-card tints — a fill keyed to part of speech so a card
+   hints at its grammatical type at a glance. Each accent is mixed
+   into --surface-raised; the fill stays light enough that the dark
+   foreground text remains fully readable, and both themes recompute
+   automatically.
    ============================================================ */
 .tint-default {
   background: var(--surface-raised);
@@ -251,36 +350,36 @@ body {
 .tint-noun {
   background: linear-gradient(
     160deg,
-    color-mix(in srgb, var(--accent) 13%, var(--surface-raised)),
-    color-mix(in srgb, var(--accent) 6%, var(--surface-raised))
+    color-mix(in srgb, var(--accent) 16%, var(--surface-raised)),
+    color-mix(in srgb, var(--accent) 7%, var(--surface-raised))
   );
 }
 .tint-verb {
   background: linear-gradient(
     160deg,
-    color-mix(in srgb, var(--coral) 14%, var(--surface-raised)),
-    color-mix(in srgb, var(--coral) 6%, var(--surface-raised))
+    color-mix(in srgb, var(--coral) 17%, var(--surface-raised)),
+    color-mix(in srgb, var(--coral) 7%, var(--surface-raised))
   );
 }
 .tint-adjective {
   background: linear-gradient(
     160deg,
-    color-mix(in srgb, var(--teal) 14%, var(--surface-raised)),
-    color-mix(in srgb, var(--teal) 6%, var(--surface-raised))
+    color-mix(in srgb, var(--teal) 17%, var(--surface-raised)),
+    color-mix(in srgb, var(--teal) 7%, var(--surface-raised))
   );
 }
 .tint-adverb {
   background: linear-gradient(
     160deg,
-    color-mix(in srgb, var(--amber) 15%, var(--surface-raised)),
-    color-mix(in srgb, var(--amber) 6%, var(--surface-raised))
+    color-mix(in srgb, var(--amber) 18%, var(--surface-raised)),
+    color-mix(in srgb, var(--amber) 7%, var(--surface-raised))
   );
 }
 .tint-pronoun {
   background: linear-gradient(
     160deg,
-    color-mix(in srgb, var(--positive) 14%, var(--surface-raised)),
-    color-mix(in srgb, var(--positive) 6%, var(--surface-raised))
+    color-mix(in srgb, var(--positive) 17%, var(--surface-raised)),
+    color-mix(in srgb, var(--positive) 7%, var(--surface-raised))
   );
 }
 
@@ -338,13 +437,13 @@ body {
   background:
     radial-gradient(
       circle at 32% 26%,
-      color-mix(in srgb, var(--accent) 14%, transparent),
+      color-mix(in srgb, var(--accent) 18%, transparent),
       transparent 62%
     ),
     var(--surface-raised);
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.07),
-    0 0 0 1px var(--border-strong),
+    0 0 0 1.5px var(--border-strong),
     0 0 90px -24px var(--accent);
   transition:
     box-shadow 200ms ease,
@@ -355,7 +454,7 @@ body {
   transform: scale(1.015);
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.07),
-    0 0 0 1px color-mix(in srgb, var(--accent) 45%, var(--border-strong)),
+    0 0 0 1.5px var(--accent),
     0 0 120px -20px var(--accent);
 }
 
@@ -366,7 +465,7 @@ body {
 .orb[data-state="listening"] {
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.07),
-    0 0 0 1px var(--accent),
+    0 0 0 2px var(--accent),
     0 0 0 8px var(--accent-soft),
     0 0 150px -12px var(--accent);
   animation: orb-breathe 2.4s ease-in-out infinite;
@@ -375,7 +474,7 @@ body {
 .orb[data-state="thinking"] {
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.07),
-    0 0 0 1px var(--accent),
+    0 0 0 2px var(--accent),
     0 0 0 4px var(--accent-soft),
     0 0 120px -18px var(--accent);
   animation: orb-breathe 1.6s ease-in-out infinite;
@@ -384,7 +483,7 @@ body {
 .orb[data-state="speaking"] {
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.07),
-    0 0 0 1px var(--accent),
+    0 0 0 2px var(--accent),
     0 0 0 5px var(--accent-soft),
     0 0 130px -16px var(--accent);
   animation: orb-speak 1.4s ease-in-out infinite;
@@ -405,14 +504,14 @@ body {
   100% {
     box-shadow:
       inset 0 1px 0 rgba(255, 255, 255, 0.07),
-      0 0 0 1px var(--accent),
+      0 0 0 2px var(--accent),
       0 0 0 4px var(--accent-soft),
       0 0 110px -18px var(--accent);
   }
   50% {
     box-shadow:
       inset 0 1px 0 rgba(255, 255, 255, 0.07),
-      0 0 0 1px var(--accent),
+      0 0 0 2px var(--accent),
       0 0 0 7px var(--accent-soft),
       0 0 150px -12px var(--accent);
   }

@@ -128,10 +128,10 @@ export function CardCatalog() {
 
   return (
     <div className="flex h-full flex-col">
-      <header className="flex h-14 shrink-0 items-center justify-between border-b border-border bg-surface px-4 sm:px-6">
-        <h1 className="text-sm font-semibold tracking-tight">Cards</h1>
+      <header className="app-header flex h-16 shrink-0 items-center justify-between border-b px-4 sm:px-6">
+        <h1 className="eyebrow text-sm text-white">Cards</h1>
         {phase === "ready" && (
-          <span className="rounded-full border border-border bg-surface-raised px-2.5 py-0.5 text-[11px] font-medium tabular-nums text-muted shadow-xs">
+          <span className="hdr-chip rounded-full px-2.5 py-0.5 text-[11px] font-medium tabular-nums">
             {cards.length} {cards.length === 1 ? "card" : "cards"}
           </span>
         )}

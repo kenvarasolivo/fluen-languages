@@ -61,32 +61,28 @@ export function StatsGrid() {
       label: "Due now",
       value: stats?.due,
       icon: AlarmClock,
-      tile: "tile-coral",
-      chip: "bg-coral-soft text-coral",
+      chip: "bg-coral text-white",
       number: "text-coral",
     },
     {
       label: "New cards",
       value: stats?.fresh,
       icon: Sparkles,
-      tile: "tile-accent",
-      chip: "bg-accent-soft text-accent",
+      chip: "bg-accent text-white",
       number: "text-accent",
     },
     {
       label: "Words collected",
       value: stats?.total,
       icon: Library,
-      tile: "tile-teal",
-      chip: "bg-teal-soft text-teal",
+      chip: "bg-teal text-white",
       number: "text-teal",
     },
     {
       label: "Reviews today",
       value: stats?.reviewsToday,
       icon: CheckCircle2,
-      tile: "tile-amber",
-      chip: "bg-amber-soft text-amber",
+      chip: "bg-amber text-white",
       number: "text-amber",
     },
   ];
@@ -94,16 +90,16 @@ export function StatsGrid() {
   return (
     <div className="fade-up fade-up-1 flex w-full max-w-4xl flex-col items-center gap-6">
       <div className="grid w-full grid-cols-2 gap-4 md:grid-cols-4">
-        {tiles.map(({ label, value, icon: Icon, tile, chip, number }) => (
+        {tiles.map(({ label, value, icon: Icon, chip, number }) => (
           <div
             key={label}
-            className={`flex flex-col items-center gap-3 rounded-2xl border border-border ${tile} px-4 pb-6 pt-6 text-center shadow-raised transition-all duration-150 hover:-translate-y-0.5 hover:shadow-pop`}
+            className="flex flex-col items-center gap-3 rounded-md border-[1.5px] border-border-strong bg-surface-raised px-4 pb-6 pt-6 text-center transition-transform duration-150 hover:-translate-y-1 hover:shadow-pop"
           >
-            <span className={`flex size-11 items-center justify-center rounded-xl ${chip}`}>
-              <Icon size={19} strokeWidth={1.75} aria-hidden />
+            <span className={`flex size-11 items-center justify-center rounded-md ${chip}`}>
+              <Icon size={20} strokeWidth={2} aria-hidden />
             </span>
             <p
-              className={`text-4xl font-semibold tabular-nums tracking-tight ${
+              className={`text-5xl font-extrabold tabular-nums tracking-tight ${
                 value === undefined
                   ? "text-muted"
                   : (value ?? 0) > 0
@@ -113,7 +109,7 @@ export function StatsGrid() {
             >
               {value ?? "-"}
             </p>
-            <p className="text-[11px] font-medium uppercase tracking-[0.08em] text-muted">
+            <p className="eyebrow text-[11px] text-muted">
               {label}
             </p>
           </div>

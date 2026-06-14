@@ -93,7 +93,7 @@ export function AuthForm() {
   return (
     <div>
       {/* Mode toggle */}
-      <div className="flex rounded-lg border border-border bg-foreground/[0.03] p-1">
+      <div className="flex rounded-md border-[1.5px] border-border-strong p-1">
         {(
           [
             { id: "signin", label: "Sign in" },
@@ -108,9 +108,9 @@ export function AuthForm() {
               setError(null);
               setNotice(null);
             }}
-            className={`flex-1 rounded-md py-1.5 text-xs transition-all duration-150 ${
+            className={`flex-1 rounded-sm py-1.5 text-xs uppercase tracking-[0.06em] transition-all duration-150 ${
               mode === o.id
-                ? "bg-surface-raised font-medium text-foreground shadow-xs"
+                ? "bg-foreground font-semibold text-background"
                 : "text-muted hover:text-foreground"
             }`}
           >
@@ -146,7 +146,7 @@ export function AuthForm() {
         <button
           type="submit"
           disabled={pending !== null}
-          className="mt-1 rounded-xl bg-accent py-2.5 text-sm font-medium text-white shadow-xs transition-all duration-150 hover:bg-accent/90 active:scale-[0.99] disabled:opacity-50 disabled:hover:bg-accent"
+          className="btn-primary mt-1 rounded-md py-2.5 text-sm"
         >
           {pending === "form"
             ? "One moment ..."
@@ -166,7 +166,7 @@ export function AuthForm() {
         type="button"
         onClick={continueAsGuest}
         disabled={pending !== null}
-        className="mt-6 w-full rounded-xl border border-border bg-surface py-2.5 text-sm text-muted shadow-xs transition-all duration-150 hover:border-border-strong hover:text-foreground active:scale-[0.99] disabled:opacity-50"
+        className="btn-outline mt-6 w-full rounded-md py-2.5 text-sm disabled:opacity-50"
       >
         {pending === "guest" ? "One moment ..." : "Continue as guest"}
       </button>
