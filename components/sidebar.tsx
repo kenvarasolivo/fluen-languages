@@ -9,10 +9,12 @@ import {
   Clapperboard,
   MessageCircle,
   Library,
+  Trophy,
   LogIn,
   LogOut,
 } from "lucide-react";
 import { supabase } from "@/lib/supabase";
+import { onProfileUpdate } from "@/lib/profile-events";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { LanguageSwitcher } from "@/components/language-switcher";
 
@@ -22,25 +24,47 @@ const nav = [
   { href: "/immerse", label: "Immerse", icon: Clapperboard },
   { href: "/speak", label: "Speak", icon: MessageCircle },
   { href: "/cards", label: "Cards", icon: Library },
+  { href: "/ranking", label: "Ranking", icon: Trophy },
 ];
 
 type Account =
   | { kind: "guest" }
-  | { kind: "user"; email: string };
+  | { kind: "user"; email: string; username: string | null; avatarUrl: string | null };
 
 function useAccount() {
   const [account, setAccount] = useState<Account | null>(null);
 
   useEffect(() => {
-    supabase.auth.getUser().then(({ data: { user } }) => {
+    supabase.auth.getUser().then(async ({ data: { user } }) => {
       if (!user) return;
-      setAccount(
-        user.is_anonymous
-          ? { kind: "guest" }
-          : { kind: "user", email: user.email ?? "Account" },
-      );
+      if (user.is_anonymous) {
+        setAccount({ kind: "guest" });
+        return;
+      }
+      const { data } = await supabase
+        .from("profiles")
+        .select("username, avatar_url")
+        .eq("id", user.id)
+        .single();
+      setAccount({
+        kind: "user",
+        email: user.email ?? "Account",
+        username: data?.username ?? null,
+        avatarUrl: data?.avatar_url ?? null,
+      });
     });
   }, []);
+
+  // Live-update when the profile is edited on the /profile page.
+  useEffect(
+    () =>
+      onProfileUpdate(({ username, avatarUrl }) =>
+        setAccount((a) =>
+          a?.kind === "user" ? { ...a, username, avatarUrl } : a,
+        ),
+      ),
+    [],
+  );
 
   const signOut = async () => {
     await supabase.auth.signOut();
@@ -48,6 +72,36 @@ function useAccount() {
   };
 
   return { account, signOut };
+}
+
+/** Small round avatar — photo if set, otherwise a bold initial. */
+function AccountAvatar({
+  username,
+  email,
+  avatarUrl,
+  size,
+}: {
+  username: string | null;
+  email: string;
+  avatarUrl: string | null;
+  size: number;
+}) {
+  const initial = (username?.[0] ?? email[0] ?? "?").toUpperCase();
+  return (
+    <span
+      className="flex shrink-0 items-center justify-center overflow-hidden rounded-full bg-accent text-white"
+      style={{ width: size, height: size }}
+    >
+      {avatarUrl ? (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img src={avatarUrl} alt="" className="size-full object-cover" />
+      ) : (
+        <span className="font-bold" style={{ fontSize: size * 0.42 }}>
+          {initial}
+        </span>
+      )}
+    </span>
+  );
 }
 
 /** Desktop sidebar — hidden on small screens in favour of the
@@ -114,15 +168,32 @@ export function Sidebar() {
           </Link>
         )}
         {account?.kind === "user" && (
-          <div className="flex items-center gap-2 px-2.5 py-1">
-            <p className="min-w-0 flex-1 truncate text-xs text-muted" title={account.email}>
-              {account.email}
-            </p>
+          <div className="flex items-center gap-1">
+            <Link
+              href="/profile"
+              title="Edit profile"
+              className="flex min-w-0 flex-1 items-center gap-2.5 rounded-md px-2 py-1.5 transition-colors duration-150 hover:bg-foreground/[0.04]"
+            >
+              <AccountAvatar
+                username={account.username}
+                email={account.email}
+                avatarUrl={account.avatarUrl}
+                size={28}
+              />
+              <span className="min-w-0 flex-1">
+                <span className="block truncate text-sm font-semibold tracking-tight">
+                  {account.username ?? "Set username"}
+                </span>
+                <span className="block truncate text-[11px] text-muted">
+                  {account.email}
+                </span>
+              </span>
+            </Link>
             <button
               onClick={signOut}
               aria-label="Sign out"
               title="Sign out"
-              className="rounded-md p-1.5 text-muted transition-colors duration-150 hover:bg-foreground/[0.04] hover:text-foreground"
+              className="shrink-0 rounded-md p-1.5 text-muted transition-colors duration-150 hover:bg-foreground/[0.04] hover:text-foreground"
             >
               <LogOut size={14} strokeWidth={1.75} />
             </button>
@@ -161,14 +232,24 @@ export function MobileHeader() {
           </Link>
         )}
         {account?.kind === "user" && (
-          <button
-            onClick={signOut}
-            aria-label="Sign out"
-            title="Sign out"
-            className="rounded-md p-2 text-muted transition-colors duration-150 hover:bg-foreground/[0.04] hover:text-foreground"
-          >
-            <LogOut size={16} strokeWidth={1.75} />
-          </button>
+          <>
+            <Link href="/profile" aria-label="Edit profile" className="rounded-full">
+              <AccountAvatar
+                username={account.username}
+                email={account.email}
+                avatarUrl={account.avatarUrl}
+                size={26}
+              />
+            </Link>
+            <button
+              onClick={signOut}
+              aria-label="Sign out"
+              title="Sign out"
+              className="rounded-md p-2 text-muted transition-colors duration-150 hover:bg-foreground/[0.04] hover:text-foreground"
+            >
+              <LogOut size={16} strokeWidth={1.75} />
+            </button>
+          </>
         )}
       </div>
     </header>

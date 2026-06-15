@@ -2,12 +2,14 @@
 
 import { useState } from "react";
 import { supabase } from "@/lib/supabase";
+import { validateUsername } from "@/lib/username";
 
 type Mode = "signin" | "register";
 
 export function AuthForm() {
   const [mode, setMode] = useState<Mode>("signin");
   const [email, setEmail] = useState("");
+  const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [pending, setPending] = useState<"form" | "guest" | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -36,15 +38,37 @@ export function AuthForm() {
         return;
       }
 
-      // Registration. If the visitor is currently a guest (anonymous
-      // session), upgrade that user in place — their cards survive.
+      // Registration — validate the chosen handle and make sure it's free.
+      const handle = username.trim();
+      const usernameError = validateUsername(handle);
+      if (usernameError) throw new Error(usernameError);
+
+      const { data: available, error: checkError } = await supabase.rpc(
+        "check_username_available",
+        { candidate: handle },
+      );
+      if (checkError) throw checkError;
+      if (!available) throw new Error("That username is already taken.");
+
+      // If the visitor is currently a guest (anonymous session), upgrade
+      // that user in place — their cards survive.
       const {
         data: { session },
       } = await supabase.auth.getSession();
 
       if (session?.user.is_anonymous) {
-        const { error } = await supabase.auth.updateUser({ email, password });
+        const { error } = await supabase.auth.updateUser({
+          email,
+          password,
+          data: { username: handle },
+        });
         if (error) throw error;
+        // The trigger only fires for brand-new users, so set the handle
+        // on the existing profile row directly (RLS allows own-row).
+        await supabase
+          .from("profiles")
+          .update({ username: handle })
+          .eq("id", session.user.id);
         setNotice(
           "Account created. If a confirmation email arrives, confirm it - your cards will be kept.",
         );
@@ -52,9 +76,19 @@ export function AuthForm() {
         return;
       }
 
-      const { data, error } = await supabase.auth.signUp({ email, password });
+      const { data, error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: { data: { username: handle } },
+      });
       if (error) throw error;
       if (data.session) {
+        // Belt-and-braces: ensure the handle landed even if metadata
+        // timing differs from the trigger.
+        await supabase
+          .from("profiles")
+          .update({ username: handle })
+          .eq("id", data.session.user.id);
         goToApp();
       } else {
         // Email confirmation is enabled in Supabase.
@@ -120,6 +154,19 @@ export function AuthForm() {
       </div>
 
       <form onSubmit={submit} className="mt-6 flex flex-col gap-3">
+        {mode === "register" && (
+          <input
+            type="text"
+            required
+            autoComplete="username"
+            value={username}
+            onChange={(e) => setUsername(e.target.value)}
+            placeholder="Username"
+            minLength={3}
+            maxLength={20}
+            className="rounded-xl border border-border bg-surface px-3.5 py-2.5 text-base shadow-xs outline-none transition-all duration-150 placeholder:text-muted focus:border-accent/50 focus:ring-[3px] focus:ring-accent/15 sm:text-sm"
+          />
+        )}
         <input
           type="email"
           required
