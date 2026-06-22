@@ -41,11 +41,25 @@ function formatDue(due: string) {
   return d.toLocaleDateString("en-GB", { day: "numeric", month: "short" });
 }
 
+// First letter used by the A–Z filter. Falls back to pinyin for scripts
+// without a Latin alphabet (e.g. Mandarin), then to "#" for anything else.
+function firstLetter(card: { lemma: string; pinyin: string | null }) {
+  const src = (card.pinyin ?? card.lemma).trim();
+  const ch = src.charAt(0).toUpperCase();
+  return /[A-Z]/.test(ch) ? ch : "#";
+}
+
+const cap = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
+const NO_POS = "—";
+const ALL = "all";
+
 export function CardCatalog() {
   const language = useActiveLanguage();
   const [phase, setPhase] = useState<Phase>("loading");
   const [cards, setCards] = useState<CatalogCard[]>([]);
   const [tab, setTab] = useState<string>("all");
+  const [posFilter, setPosFilter] = useState<string>(ALL);
+  const [letterFilter, setLetterFilter] = useState<string>(ALL);
   // Two-step delete: first click arms the row, second click deletes.
   const [confirmId, setConfirmId] = useState<string | null>(null);
 
@@ -119,12 +133,41 @@ export function CardCatalog() {
     return t;
   }, [cards.length, counts]);
 
-  const visible = useMemo(
+  // Part-of-speech options, most common first. Built from the CEFR-filtered
+  // set so the chips track whatever level tab is active.
+  const levelScoped = useMemo(
     () =>
       tab === "all"
         ? cards
         : cards.filter((c) => (c.cefr_level ?? NO_LEVEL) === tab),
     [cards, tab],
+  );
+
+  const posOptions = useMemo(() => {
+    const m = new Map<string, number>();
+    for (const c of levelScoped) {
+      const p = c.pos?.trim() || NO_POS;
+      m.set(p, (m.get(p) ?? 0) + 1);
+    }
+    return [...m.entries()].sort((a, b) => b[1] - a[1]);
+  }, [levelScoped]);
+
+  const letterOptions = useMemo(() => {
+    const s = new Set<string>();
+    for (const c of levelScoped) s.add(firstLetter(c));
+    return [...s].sort();
+  }, [levelScoped]);
+
+  const visible = useMemo(
+    () =>
+      levelScoped.filter((c) => {
+        if (posFilter !== ALL && (c.pos?.trim() || NO_POS) !== posFilter)
+          return false;
+        if (letterFilter !== ALL && firstLetter(c) !== letterFilter)
+          return false;
+        return true;
+      }),
+    [levelScoped, posFilter, letterFilter],
   );
 
   return (
@@ -204,33 +247,151 @@ export function CardCatalog() {
             ))}
           </div>
 
+          {/* Type + A–Z filters */}
+          <div className="flex shrink-0 flex-col gap-2.5 border-b border-border bg-surface px-4 py-3 sm:px-6">
+            {/* Part of speech */}
+            <div className="flex flex-wrap items-center gap-1.5">
+              <span className="eyebrow mr-1 text-[10px] text-muted">Type</span>
+              <button
+                onClick={() => setPosFilter(ALL)}
+                aria-pressed={posFilter === ALL}
+                className={`rounded-md px-2.5 py-1 text-xs transition-colors duration-150 ${
+                  posFilter === ALL
+                    ? "bg-foreground font-medium text-background"
+                    : "text-muted hover:bg-foreground/[0.06] hover:text-foreground"
+                }`}
+              >
+                All
+              </button>
+              {posOptions.map(([p, n]) => (
+                <button
+                  key={p}
+                  onClick={() => setPosFilter(p)}
+                  aria-pressed={posFilter === p}
+                  className={`rounded-md px-2.5 py-1 text-xs transition-colors duration-150 ${
+                    posFilter === p
+                      ? "bg-foreground font-medium text-background"
+                      : "text-muted hover:bg-foreground/[0.06] hover:text-foreground"
+                  }`}
+                >
+                  {cap(p)}
+                  <span
+                    className={`ml-1.5 tabular-nums ${
+                      posFilter === p ? "opacity-70" : "opacity-60"
+                    }`}
+                  >
+                    {n}
+                  </span>
+                </button>
+              ))}
+            </div>
+
+            {/* Alphabet */}
+            <div className="flex flex-wrap items-center gap-1">
+              <span className="eyebrow mr-1 text-[10px] text-muted">A–Z</span>
+              <button
+                onClick={() => setLetterFilter(ALL)}
+                aria-pressed={letterFilter === ALL}
+                className={`rounded-md px-2 py-1 text-xs transition-colors duration-150 ${
+                  letterFilter === ALL
+                    ? "bg-accent font-medium text-white"
+                    : "text-muted hover:bg-foreground/[0.06] hover:text-foreground"
+                }`}
+              >
+                All
+              </button>
+              {letterOptions.map((l) => (
+                <button
+                  key={l}
+                  onClick={() => setLetterFilter(l)}
+                  aria-pressed={letterFilter === l}
+                  className={`min-w-[1.75rem] rounded-md px-1.5 py-1 text-xs tabular-nums transition-colors duration-150 ${
+                    letterFilter === l
+                      ? "bg-accent font-medium text-white"
+                      : "text-muted hover:bg-foreground/[0.06] hover:text-foreground"
+                  }`}
+                >
+                  {l}
+                </button>
+              ))}
+            </div>
+          </div>
+
           <div className="flex-1 overflow-y-auto">
-            <div className="mx-auto max-w-3xl px-4 py-6 sm:px-6">
+            <div className="mx-auto max-w-5xl px-4 py-6 sm:px-6">
               {visible.length === 0 ? (
                 <div className="flex flex-col items-center gap-3 pt-16 text-center">
                   <span className="flex size-11 items-center justify-center rounded-xl border border-border bg-surface-raised shadow-xs">
                     <Inbox size={20} strokeWidth={1.5} className="text-muted" />
                   </span>
-                  <p className="max-w-xs text-sm leading-relaxed text-muted">
-                    No cards yet. Generate some in Foundations or collect
-                    words in Immerse.
-                  </p>
+                  {cards.length > 0 ? (
+                    <>
+                      <p className="max-w-xs text-sm leading-relaxed text-muted">
+                        No cards match these filters.
+                      </p>
+                      <button
+                        onClick={() => {
+                          setTab("all");
+                          setPosFilter(ALL);
+                          setLetterFilter(ALL);
+                        }}
+                        className="rounded-md px-3 py-1.5 text-xs font-medium text-accent transition-colors duration-150 hover:bg-accent-soft"
+                      >
+                        Clear filters
+                      </button>
+                    </>
+                  ) : (
+                    <p className="max-w-xs text-sm leading-relaxed text-muted">
+                      No cards yet. Generate some in Foundations or collect
+                      words in Immerse.
+                    </p>
+                  )}
                 </div>
               ) : (
-                <ul className="flex flex-col divide-y divide-border">
+                <ul className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
                   {visible.map((c) => {
                     const due = formatDue(c.due);
+                    const dueNow = due === "due now";
                     const armed = confirmId === c.id;
                     return (
                       <li
                         key={c.id}
-                        className="group relative -mx-3 flex items-baseline gap-3 px-3 py-3.5 transition-colors duration-150 first:rounded-t-lg last:rounded-b-lg hover:bg-foreground/[0.025] sm:gap-4"
+                        className="group relative flex aspect-[3/2] flex-col rounded-xl border-[1.5px] border-border-strong bg-surface-raised p-4 shadow-xs transition-all duration-150 hover:-translate-y-0.5 hover:shadow-pop"
                         onMouseLeave={() =>
                           setConfirmId((id) => (id === c.id ? null : id))
                         }
                       >
-                        <div className="min-w-0 flex-1">
-                          <p className="text-sm font-medium tracking-tight">
+                        {/* Top row: CEFR badge + delete */}
+                        <div className="flex items-start justify-between">
+                          <span
+                            className={`rounded-md px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide ${
+                              c.cefr_level
+                                ? "bg-accent text-white"
+                                : "border border-border text-muted"
+                            }`}
+                          >
+                            {c.cefr_level ?? "–"}
+                          </span>
+                          <button
+                            onClick={() => deleteCard(c.id)}
+                            aria-label={armed ? "Confirm delete" : "Delete card"}
+                            className={`-mr-1 -mt-1 shrink-0 rounded-md transition-colors duration-150 ${
+                              armed
+                                ? "pop-in bg-negative/10 px-2 py-1 text-negative"
+                                : "p-1.5 text-muted hover:bg-negative/10 hover:text-negative sm:opacity-0 sm:focus-visible:opacity-100 sm:group-hover:opacity-100"
+                            }`}
+                          >
+                            {armed ? (
+                              <span className="text-xs font-medium">Delete?</span>
+                            ) : (
+                              <Trash2 size={14} strokeWidth={1.75} />
+                            )}
+                          </button>
+                        </div>
+
+                        {/* Word + meaning */}
+                        <div className="mt-2 flex min-h-0 flex-1 flex-col justify-center">
+                          <p className="text-xl font-semibold leading-tight tracking-tight">
                             <Lemma
                               language={language}
                               lemma={c.lemma}
@@ -238,62 +399,28 @@ export function CardCatalog() {
                               gender={c.gender}
                               lang={language.htmlLang}
                             />
-                            <span className="ml-2 text-xs font-normal text-muted">
-                              {c.pos}
-                            </span>
                           </p>
-                          <p className="mt-0.5 truncate text-sm text-muted">
+                          <p className="mt-0.5 text-[11px] uppercase tracking-wide text-muted">
+                            {c.pos}
+                          </p>
+                          <p className="mt-1.5 line-clamp-2 text-sm text-muted">
                             {c.meaning_en}
                           </p>
-                          {/* On phones the state/due columns collapse into
-                              this secondary line. */}
-                          <p className="mt-1 text-[11px] text-muted sm:hidden">
-                            {STATE_LABELS[c.state] ?? "-"} ·{" "}
-                            <span
-                              className={
-                                due === "due now" ? "font-medium text-accent" : ""
-                              }
-                            >
-                              {due}
-                            </span>
-                          </p>
                         </div>
-                        <span
-                          className={`shrink-0 rounded-md px-1.5 py-0.5 text-[10px] font-medium tracking-wide ${
-                            c.cefr_level
-                              ? "border border-accent/20 bg-accent-soft text-accent"
-                              : "border border-border text-muted"
-                          }`}
-                        >
-                          {c.cefr_level ?? "-"}
-                        </span>
-                        <span className="hidden w-24 shrink-0 text-right text-xs text-muted sm:block">
-                          {STATE_LABELS[c.state] ?? "-"}
-                        </span>
-                        <span
-                          className={`hidden w-20 shrink-0 text-right text-xs tabular-nums sm:block ${
-                            due === "due now" ? "font-medium text-accent" : "text-muted"
-                          }`}
-                        >
-                          {due}
-                        </span>
-                        <button
-                          onClick={() => deleteCard(c.id)}
-                          aria-label={
-                            armed ? "Confirm delete" : "Delete card"
-                          }
-                          className={`shrink-0 self-center rounded-md transition-colors duration-150 ${
-                            armed
-                              ? "pop-in bg-negative/10 px-2 py-1 text-negative"
-                              : "p-1.5 text-muted hover:bg-negative/10 hover:text-negative sm:p-1 sm:opacity-0 sm:focus-visible:opacity-100 sm:group-hover:opacity-100"
-                          }`}
-                        >
-                          {armed ? (
-                            <span className="text-xs font-medium">Delete?</span>
-                          ) : (
-                            <Trash2 size={14} strokeWidth={1.75} />
-                          )}
-                        </button>
+
+                        {/* Footer: state + due */}
+                        <div className="mt-2 flex items-center justify-between border-t border-border pt-2 text-xs">
+                          <span className="text-muted">
+                            {STATE_LABELS[c.state] ?? "-"}
+                          </span>
+                          <span
+                            className={`tabular-nums ${
+                              dueNow ? "font-medium text-accent" : "text-muted"
+                            }`}
+                          >
+                            {due}
+                          </span>
+                        </div>
                       </li>
                     );
                   })}
