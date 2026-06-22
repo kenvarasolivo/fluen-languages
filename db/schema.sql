@@ -94,7 +94,8 @@ create table user_languages (
 create table words (
   id          uuid primary key default gen_random_uuid(),
   language    text not null default 'de',
-  lemma       text not null,                  -- "Haus", "laufen", "casa"
+  lemma       text not null,                  -- "Haus", "laufen", "casa", "你好"
+  pinyin      text,                           -- romanization for non-Latin scripts (Mandarin Pinyin: "nǐ hǎo")
   pos         text not null,                  -- noun / verb / adjective / ...
   gender      text,                           -- nouns only: der/die/das, el/la, ...
   plural      text,                           -- "Häuser"

@@ -13,7 +13,7 @@ import { ThemeToggle } from "@/components/theme-toggle";
 export const metadata: Metadata = {
   title: "FLUEN - Languages that stick",
   description:
-    "Learn languages with flashcards, real texts and conversations - calm, focused and without the noise. German and Spanish available now, more languages coming.",
+    "Learn languages with flashcards, real texts and conversations - calm, focused and without the noise. German, Spanish and Mandarin Chinese available now, more languages coming.",
 };
 
 const features = [
@@ -91,7 +91,7 @@ export default function LandingPage() {
       <section className="mx-auto flex w-full max-w-3xl flex-col items-center px-6 pb-24 pt-10 text-center md:pt-14">
         <p className="eyebrow fade-up flex items-center gap-1.5 border-[1.5px] border-border-strong bg-surface-raised px-3 py-1 text-[11px]">
           <Sparkles size={12} className="text-amber" aria-hidden />
-          German &amp; Spanish — more coming
+          German, Spanish &amp; Mandarin — more coming
         </p>
         <h1 className="display fade-up fade-up-1 mt-7 text-5xl uppercase md:text-7xl">
           Languages
@@ -100,7 +100,7 @@ export default function LandingPage() {
         </h1>
         <p className="fade-up fade-up-2 mt-6 max-w-xl text-base leading-relaxed text-muted md:text-lg">
           Flashcards, real texts and conversations — all in one place. Focused
-          and at your own pace. Start with German or Spanish today.
+          and at your own pace. Start with German, Spanish or Mandarin today.
         </p>
         <div className="fade-up fade-up-3 mt-9 flex w-full flex-col items-stretch gap-3 sm:w-auto sm:flex-row sm:items-center">
           <Link

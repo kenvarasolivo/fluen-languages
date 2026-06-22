@@ -65,6 +65,8 @@ export interface SavedText {
 /** Result of clicking a word in Immerse (the Bridge). */
 export interface WordDefinition {
   lemma: string;
+  /** Romanization for non-Latin scripts (Mandarin Pinyin); null otherwise. */
+  pinyin?: string | null;
   gender: "der" | "die" | "das" | null;
   pos: string;
   meaning_en: string;

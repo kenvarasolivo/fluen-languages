@@ -15,6 +15,7 @@ import {
 import { supabase, ensureSession } from "@/lib/supabase";
 import { gradeCard, isDueSoon, type SrsFields } from "@/lib/srs";
 import { withGender } from "@/lib/format";
+import { Lemma } from "@/components/lemma";
 import { getActiveLanguageCode } from "@/lib/languages";
 import { useActiveLanguage } from "@/lib/use-active-language";
 import { useCefrLevel } from "@/lib/use-cefr-level";
@@ -73,6 +74,7 @@ function posTint(pos: string): string {
 interface QueueCard extends SrsFields {
   id: string; // user_words.id
   lemma: string;
+  pinyin: string | null;
   gender: string | null;
   pos: string;
   meaning_en: string;
@@ -153,7 +155,7 @@ export function ReviewDemo() {
     // Inner-join + filter so a queue only ever holds cards from the
     // active language environment.
     const lang = getActiveLanguageCode();
-    const wordsJoin = "words!inner(lemma, gender, pos, meaning_en, language)";
+    const wordsJoin = "words!inner(lemma, pinyin, gender, pos, meaning_en, language)";
 
     if (deck === "random") {
       // Supabase has no random ordering from the client — pull a window
@@ -764,9 +766,14 @@ export function ReviewDemo() {
                     className={`flex min-h-80 flex-col items-center justify-center gap-4 rounded-2xl border border-border ${posTint(card.pos)} px-8 py-12 shadow-raised transition-[border-color,box-shadow] duration-150 [backface-visibility:hidden] [grid-area:1/1] group-hover:border-accent/30 group-hover:shadow-pop`}
                   >
                     {direction === "target-en" ? (
-                      <span lang={language.htmlLang} className="text-4xl font-semibold tracking-tight sm:text-5xl">
-                        {withGender(card.gender, card.lemma)}
-                      </span>
+                      <Lemma
+                        language={language}
+                        lemma={card.lemma}
+                        pinyin={card.pinyin}
+                        gender={card.gender}
+                        lang={language.htmlLang}
+                        className="text-4xl font-semibold tracking-tight sm:text-5xl"
+                      />
                     ) : (
                       <span className="text-4xl font-semibold tracking-tight sm:text-5xl">
                         {card.meaning_en}
@@ -783,9 +790,14 @@ export function ReviewDemo() {
                     className={`flex min-h-80 flex-col items-center justify-center gap-4 rounded-2xl border border-border ${posTint(card.pos)} px-8 py-12 shadow-raised transition-[border-color,box-shadow] duration-150 [backface-visibility:hidden] [grid-area:1/1] [transform:rotateY(180deg)] group-hover:border-accent/30 group-hover:shadow-pop`}
                   >
                     <div className="flex items-center gap-2">
-                      <span lang={language.htmlLang} className="text-3xl font-semibold tracking-tight">
-                        {withGender(card.gender, card.lemma)}
-                      </span>
+                      <Lemma
+                        language={language}
+                        lemma={card.lemma}
+                        pinyin={card.pinyin}
+                        gender={card.gender}
+                        lang={language.htmlLang}
+                        className="text-3xl font-semibold tracking-tight"
+                      />
                       <span
                         role="button"
                         tabIndex={0}

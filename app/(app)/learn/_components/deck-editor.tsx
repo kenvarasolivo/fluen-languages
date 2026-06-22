@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Check, Loader2, Plus, Search, Trash2 } from "lucide-react";
 import { supabase } from "@/lib/supabase";
-import { withGender } from "@/lib/format";
+import { Lemma } from "@/components/lemma";
 import { getActiveLanguageCode } from "@/lib/languages";
 import { useActiveLanguage } from "@/lib/use-active-language";
 import type { Deck } from "@/lib/types";
@@ -11,6 +11,7 @@ import type { Deck } from "@/lib/types";
 interface PickableWord {
   id: string; // user_words.id
   lemma: string;
+  pinyin: string | null;
   gender: string | null;
   pos: string;
   meaning_en: string;
@@ -45,7 +46,7 @@ export function DeckEditor({
           await Promise.all([
             supabase
               .from("user_words")
-              .select("id, words!inner(lemma, gender, pos, meaning_en, language)")
+              .select("id, words!inner(lemma, pinyin, gender, pos, meaning_en, language)")
               .eq("words.language", lang)
               .order("created_at", { ascending: false }),
             supabase
@@ -129,6 +130,7 @@ export function DeckEditor({
     return words.filter(
       (w) =>
         w.lemma.toLowerCase().includes(q) ||
+        (w.pinyin?.toLowerCase().includes(q) ?? false) ||
         w.meaning_en.toLowerCase().includes(q),
     );
   }, [words, query]);
@@ -212,8 +214,14 @@ export function DeckEditor({
                         <Plus size={12} strokeWidth={2} className="text-muted" />
                       )}
                     </span>
-                    <span lang={language.htmlLang} className="min-w-0 flex-1 truncate text-sm font-medium">
-                      {withGender(w.gender, w.lemma)}
+                    <span className="min-w-0 flex-1 truncate text-sm font-medium">
+                      <Lemma
+                        language={language}
+                        lemma={w.lemma}
+                        pinyin={w.pinyin}
+                        gender={w.gender}
+                        lang={language.htmlLang}
+                      />
                       <span className="ml-2 text-xs font-normal text-muted">{w.pos}</span>
                     </span>
                     <span className="max-w-[40%] truncate text-sm text-muted">

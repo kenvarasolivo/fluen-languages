@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { Plus, Check, Sparkles, History, Trash2 } from "lucide-react";
 import { supabase, ensureSession } from "@/lib/supabase";
-import { withGender } from "@/lib/format";
+import { Lemma } from "@/components/lemma";
 import { getActiveLanguageCode } from "@/lib/languages";
 import { useActiveLanguage } from "@/lib/use-active-language";
 import { useCefrLevel } from "@/lib/use-cefr-level";
@@ -215,6 +215,7 @@ export function ImmerseDemo() {
           {
             language: lang,
             lemma: d.lemma,
+            pinyin: language.romanization ? d.pinyin?.trim() || null : null,
             pos,
             gender,
             meaning_en: d.meaning_en,
@@ -470,8 +471,14 @@ export function ImmerseDemo() {
             <p className="text-xs text-muted">Looking it up ...</p>
           ) : popover.definition ? (
             <>
-              <p lang={language.htmlLang} className="text-sm font-medium">
-                {withGender(popover.definition.gender, popover.definition.lemma)}
+              <p className="text-sm font-medium">
+                <Lemma
+                  language={language}
+                  lemma={popover.definition.lemma}
+                  pinyin={popover.definition.pinyin}
+                  gender={popover.definition.gender}
+                  lang={language.htmlLang}
+                />
                 <span className="ml-2 text-xs font-normal text-muted">
                   {popover.definition.pos}
                 </span>

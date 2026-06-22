@@ -1,8 +1,9 @@
 # FLUEN — Architecture & Product Design
 
-> Multi-language learning (German & Spanish today). Each language is its own
-> environment — separate cards, decks, conversations, immerse texts and CEFR
-> level — switchable from the sidebar, Duolingo-style. Three methodologies,
+> Multi-language learning (German, Spanish & Mandarin Chinese today). Each
+> language is its own environment — separate cards, decks, conversations,
+> immerse texts and CEFR level — switchable from the sidebar, Duolingo-style.
+> Three methodologies,
 > one dashboard, zero gamified bloat.
 > SRS for foundations · Comprehensible Input for immersion · AI Coach for output.
 
@@ -15,6 +16,14 @@ is keyed by language so nothing bleeds across environments. The shared
 language registry is `lib/languages.ts`; server routes resolve the active
 environment via `lib/learning-context.ts`. The Speak coach replies at native
 (C2) level regardless of the learner's level.
+
+Non-Latin scripts are taught romanization-first: Mandarin is studied in Hanyu
+Pinyin (the typeable, readable form), with the Hanzi shown as a `<ruby>`
+annotation on top via the shared `<Lemma>` component. The dictionary stores the
+characters in `words.lemma` (canonical/dedup key, used for TTS) and the
+tone-marked Pinyin in `words.pinyin`; a language opts into this behaviour through
+the `romanization` field in `lib/languages.ts`, which also injects the right
+instructions into the word, definition, Immerse, coach and correction prompts.
 
 ---
 

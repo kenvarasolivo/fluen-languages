@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { AlertCircle, Inbox, Library, Loader2, Trash2 } from "lucide-react";
 import { supabase, ensureSession } from "@/lib/supabase";
-import { withGender } from "@/lib/format";
+import { Lemma } from "@/components/lemma";
 import { getActiveLanguageCode } from "@/lib/languages";
 import { useActiveLanguage } from "@/lib/use-active-language";
 
@@ -16,6 +16,7 @@ interface CatalogCard {
   source: string;
   context_sentence: string | null;
   lemma: string;
+  pinyin: string | null;
   gender: string | null;
   pos: string;
   meaning_en: string;
@@ -77,7 +78,7 @@ export function CardCatalog() {
         const { data, error } = await supabase
           .from("user_words")
           .select(
-            "id, state, due, created_at, source, context_sentence, words!inner(lemma, gender, pos, meaning_en, cefr_level, language)",
+            "id, state, due, created_at, source, context_sentence, words!inner(lemma, pinyin, gender, pos, meaning_en, cefr_level, language)",
           )
           .eq("words.language", getActiveLanguageCode())
           .order("created_at", { ascending: false });
@@ -229,8 +230,14 @@ export function CardCatalog() {
                         }
                       >
                         <div className="min-w-0 flex-1">
-                          <p lang={language.htmlLang} className="text-sm font-medium tracking-tight">
-                            {withGender(c.gender, c.lemma)}
+                          <p className="text-sm font-medium tracking-tight">
+                            <Lemma
+                              language={language}
+                              lemma={c.lemma}
+                              pinyin={c.pinyin}
+                              gender={c.gender}
+                              lang={language.htmlLang}
+                            />
                             <span className="ml-2 text-xs font-normal text-muted">
                               {c.pos}
                             </span>

@@ -10,7 +10,11 @@ function correctionSystem(language: LanguageDef): string {
 (grammar, gender, agreement, word order, idiomatic usage). Judge only
 genuinely wrong usage — informal register and minor punctuation are fine. If
 there are multiple errors, correct the full sentence once and explain the most
-important error in one short English sentence.`;
+important error in one short English sentence.${
+    language.romanization
+      ? ` The learner writes in ${language.romanization.name}; keep both "original" and "corrected" in ${language.romanization.name} with tone marks.`
+      : ""
+  }`;
 }
 
 const CORRECTION_SCHEMA = {

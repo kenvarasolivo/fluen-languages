@@ -335,6 +335,15 @@ body {
   );
 }
 
+/* Chinese flag colours (red field + golden star band) as a bold accent rule. */
+.flag-rule-zh {
+  background: linear-gradient(
+    90deg,
+    #de2910 0 70%,
+    #ffde00 70% 100%
+  );
+}
+
 /* Solid-tinted tiles for the stat grid + quick actions — keyed to
    each accent, mixed firmly so the colour reads but dark text stays
    legible. */

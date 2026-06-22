@@ -36,6 +36,29 @@ export interface LanguageDef {
   flagRuleClass: string;
   /** Country photo shown behind the dashboard greeting (under a dark scrim). */
   bannerImage: string;
+  /**
+   * Non-Latin-script languages that learners read through a typeable
+   * romanization (Mandarin → Pinyin). When set, words carry both the
+   * native script (stored in `lemma`) and the romanization (in the
+   * `pinyin` column), the UI shows the script on top of the romanization,
+   * and the AI generators are told to produce both. Absent for
+   * Latin-script languages.
+   */
+  romanization?: {
+    /** Human label, e.g. "Pinyin". */
+    name: string;
+    /**
+     * Instruction appended to free-text generation prompts (Immerse,
+     * Speak coach, corrections) so the learner-facing text comes back in
+     * the typeable romanization rather than the native script.
+     */
+    textNote: string;
+    /**
+     * Instruction appended to word / definition prompts so the model
+     * fills both the native-script `lemma` and the `pinyin` field.
+     */
+    wordNote: string;
+  };
 }
 
 export const LANGUAGES: Record<string, LanguageDef> = {
@@ -81,10 +104,39 @@ export const LANGUAGES: Record<string, LanguageDef> = {
     bannerImage:
       "https://images.unsplash.com/photo-1539037116277-4db20889f2d4?auto=format&fit=crop&w=1600&q=70",
   },
+  zh: {
+    code: "zh",
+    name: "Mandarin Chinese",
+    nativeName: "中文 Zhōngwén",
+    flag: "🇨🇳",
+    speechLang: "zh-CN",
+    htmlLang: "zh",
+    // Mandarin has no articles or grammatical gender.
+    articles: [],
+    coreBrief:
+      "the grammatical backbone: pronouns, the most common measure words, structural particles (的, 了, 吗, 呢, 吧), coverbs/prepositions, the most frequent conjunctions and the highest-frequency verbs — function words that are grammatical glue and don't belong to any topic",
+    welcome: "Nǐ hǎo! Jīntiān xiǎng liáo diǎnr shénme?",
+    greetings: {
+      morning: "Zǎoshang hǎo",
+      afternoon: "Xiàwǔ hǎo",
+      evening: "Wǎnshàng hǎo",
+    },
+    flagRuleClass: "flag-rule-zh",
+    // The Great Wall at Mutianyu.
+    bannerImage:
+      "https://images.unsplash.com/photo-1508804185872-d7badad00f7d?auto=format&fit=crop&w=1600&q=70",
+    romanization: {
+      name: "Pinyin",
+      textNote:
+        'Write ALL Mandarin text in Hanyu Pinyin WITH tone marks (e.g. "Nǐ hǎo, nǐ jīntiān zěnme yàng?"), NOT in Chinese characters. Put a space between every word so the text stays readable and typeable on a standard keyboard.',
+      wordNote:
+        'This is Mandarin Chinese. Put the SIMPLIFIED Chinese characters (Hanzi) in the "lemma" field and ALWAYS fill "pinyin" with the matching Hanyu Pinyin WITH tone marks (example: lemma "你好", pinyin "nǐ hǎo"). Mandarin has no articles, so always set "gender" to null.',
+    },
+  },
 };
 
 /** Languages offered in the switcher, in display order. */
-export const SUPPORTED_LANGUAGES: readonly string[] = ["de", "es"];
+export const SUPPORTED_LANGUAGES: readonly string[] = ["de", "es", "zh"];
 
 /** The language a brand-new learner starts in. */
 export const DEFAULT_LANGUAGE = "de";

@@ -93,7 +93,9 @@ export async function POST(req: Request) {
 The "text_de" field holds the ${language.name} text; "text_en" is its English translation.
 Language difficulty: ${guide}.
 Comprehensible-input style: engaging, concrete, lightly repetitive so
-learners can infer meaning from context.`,
+learners can infer meaning from context.${
+        language.romanization ? `\n${language.romanization.textNote}` : ""
+      }`,
     });
 
     const story = parseJsonLoose(response.text);

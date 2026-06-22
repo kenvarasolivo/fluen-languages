@@ -27,7 +27,13 @@ const CELL_SCHEMA = {
     properties: {
       lemma: {
         type: Type.STRING,
-        description: "Base form WITHOUT the article, e.g. 'Haus', 'laufen', 'casa'",
+        description: "Base form WITHOUT the article, e.g. 'Haus', 'laufen', 'casa', '你好'",
+      },
+      pinyin: {
+        type: Type.STRING,
+        nullable: true,
+        description:
+          "Romanization for non-Latin scripts (Mandarin: Hanyu Pinyin with tone marks, e.g. 'nǐ hǎo'); null for Latin-script languages",
       },
       gender: {
         type: Type.STRING,
@@ -43,7 +49,7 @@ const CELL_SCHEMA = {
       },
       example_en: { type: Type.STRING },
     },
-    required: ["lemma", "gender", "pos", "meaning_en", "example_de", "example_en"],
+    required: ["lemma", "pinyin", "gender", "pos", "meaning_en", "example_de", "example_en"],
   },
 };
 
@@ -243,13 +249,18 @@ async function extendCell(
 (${LEVEL_GUIDE[level]}) covering ${themeBrief}.
 Order them from most to least useful/frequent.
 Pick genuinely common words appropriate to ${level} — not obscure ones.
-For nouns, set "gender" to the correct article (${language.articles.join("/")}); null otherwise.
-The "example_de" field holds a short, natural ${language.name} sentence using the word; "example_en" is its English translation.
+For nouns, set "gender" to the correct article (${language.articles.join("/") || "none — this language has no articles, so use null"}); null otherwise.
+The "example_de" field holds a short, natural ${language.name} sentence using the word; "example_en" is its English translation.${
+      language.romanization
+        ? `\n${language.romanization.wordNote} Also write "example_de" in ${language.romanization.name}.`
+        : ""
+    }
 ${avoid ? `Do NOT include any of these already-covered words: ${avoid}.` : ""}`,
   });
 
   const words = response.text ? (JSON.parse(response.text) as Array<{
     lemma: string;
+    pinyin: string | null;
     gender: string | null;
     pos: string;
     meaning_en: string;
@@ -262,6 +273,7 @@ ${avoid ? `Do NOT include any of these already-covered words: ${avoid}.` : ""}`,
     .map((w, i) => ({
       language: language.code,
       lemma: w.lemma,
+      pinyin: language.romanization ? w.pinyin?.trim() || null : null,
       pos: w.pos || "phrase",
       gender: sanitizeGender(w.gender, language),
       meaning_en: w.meaning_en,

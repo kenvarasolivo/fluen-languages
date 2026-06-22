@@ -8,7 +8,13 @@ const DEFINITION_SCHEMA = {
   properties: {
     lemma: {
       type: Type.STRING,
-      description: "Dictionary base form without article",
+      description: "Dictionary base form without article (native script)",
+    },
+    pinyin: {
+      type: Type.STRING,
+      nullable: true,
+      description:
+        "Romanization for non-Latin scripts (Mandarin: Hanyu Pinyin with tone marks); null otherwise",
     },
     gender: {
       type: Type.STRING,
@@ -26,7 +32,7 @@ const DEFINITION_SCHEMA = {
       description: "CEFR difficulty of the word: A1 | A2 | B1 | B2 | C1 | C2",
     },
   },
-  required: ["lemma", "gender", "pos", "meaning_en", "cefr_level"],
+  required: ["lemma", "pinyin", "gender", "pos", "meaning_en", "cefr_level"],
 };
 
 export async function POST(req: Request) {
@@ -52,7 +58,7 @@ export async function POST(req: Request) {
         responseSchema: DEFINITION_SCHEMA,
       },
       contents: `Define the ${language.name} word "${word}" as it is used in this sentence:
-"${sentence}"`,
+"${sentence}"${language.romanization ? `\n${language.romanization.wordNote}` : ""}`,
     });
 
     const definition = response.text ? JSON.parse(response.text) : null;

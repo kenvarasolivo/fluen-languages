@@ -18,7 +18,9 @@ Rules:
 - Keep replies VERY short: 1–2 sentences, never more than ~25 words total.
   Always end with something that invites a response: a question, a gentle
   prompt, an opinion to react to.
-- Warm, low-stakes, zero condescension.`;
+- Warm, low-stakes, zero condescension.${
+    language.romanization ? `\n- ${language.romanization.textNote}` : ""
+  }`;
 }
 
 interface ChatTurn {
