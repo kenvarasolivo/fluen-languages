@@ -3,8 +3,7 @@
 > Multi-language learning (German, Spanish & Mandarin Chinese today). Each
 > language is its own environment — separate cards, decks, conversations,
 > immerse texts and CEFR level — switchable from the sidebar, Duolingo-style.
-> Three methodologies,
-> one dashboard, zero gamified bloat.
+> Three methodologies, one dashboard, zero gamified bloat.
 > SRS for foundations · Comprehensible Input for immersion · AI Coach for output.
 
 **Language model:** the active language lives on `profiles.target_language`
@@ -34,15 +33,19 @@ instructions into the word, definition, Immerse, coach and correction prompts.
 | Framework | **Next.js 15 (App Router, RSC)** | Server components keep the SRS/feed pages near-zero JS; API routes colocate the AI proxy layer; streaming-first primitives. |
 | Language | **TypeScript** (strict) | End-to-end types from DB row → component prop. |
 | Styling | **Tailwind CSS v4** | Token-based design system in CSS variables; no runtime CSS-in-JS cost. |
-| Database / Auth / Storage | **Supabase** (Postgres + RLS + Auth + Storage) | Relational SRS state needs real SQL; RLS gives per-user isolation for free; Storage hosts cached TTS audio for flashcards. |
-| SRS algorithm | **`ts-fsrs`** (FSRS-5) | Modern successor to SM-2 — fewer reviews for the same retention. Runs client-side at review time; state persisted to Postgres. |
-| LLM (chat, corrections, example sentences) | **Gemini 3.5 Flash** (`gemini-3.5-flash`) via `@google/genai` | Free-tier eligible (key from AI Studio); streaming responses for the coach; `responseSchema` structured output for deterministic grammar-correction JSON. Fallback to `gemini-2.5-flash` if free-tier rate limits bite. |
-| STT (voice mode) | **Deepgram Nova-3 streaming** (WebSocket) | ~300 ms partial transcripts; native German model. |
-| TTS (voice mode + card audio) | **ElevenLabs Flash v2.5** (or Cartesia Sonic) | Sub-150 ms time-to-first-byte; card audio is generated once and cached in Supabase Storage. |
-| Media | **Mux** (video) / native `<audio>` (podcasts) + WebVTT cues stored in Postgres | Cue-level rows enable the click-word → SRS bridge. |
-| Hosting | **Vercel** | Edge streaming for the chat route; same region as Supabase project to keep RTT down. |
+| Database / Auth | **Supabase** (Postgres + RLS + Auth) | Relational SRS state needs real SQL; RLS gives per-user isolation for free. Runs fully without a DB for guests via `localStorage`. |
+| SRS algorithm | **`ts-fsrs`** (FSRS) | Modern successor to SM-2 — fewer reviews for the same retention. Runs client-side at review time; state persisted to Postgres (`lib/srs.ts`). |
+| LLM (chat, corrections, generation) | **Gemini** via `@google/genai` | Free-tier eligible (key from AI Studio); streaming responses for the coach; `responseSchema` structured output for deterministic grammar-correction and word-list JSON. Two models split for quota — see §5. |
+| Voice (STT + TTS) | **Browser Web Speech API** (`SpeechRecognition` + `speechSynthesis`) | Zero-dependency, zero-cost voice mode that ships today; built-in language models in Chrome/Edge. The production swap is Deepgram streaming STT + ElevenLabs Flash TTS — see *Planned* below. |
+| Hosting | **Vercel** | Edge streaming for the chat route; same region as the Supabase project to keep RTT down. |
 
-### Latency budget for voice-to-voice
+**Planned (not yet implemented):** Deepgram Nova-3 for sub-300 ms streaming STT,
+ElevenLabs Flash v2.5 (or Cartesia Sonic) for sub-150 ms TTS with cached card
+audio in Supabase Storage, and Mux for video-based Immerse with WebVTT cue rows.
+The current build deliberately uses browser-native voice and AI-generated text
+Immerse so it runs end-to-end on a single free Gemini key.
+
+### Latency budget — target voice-to-voice (production stack)
 
 ```
 user stops speaking
@@ -54,31 +57,46 @@ user stops speaking
 
 The trick: stream the model's text, split on sentence boundaries, and pipe each
 sentence to TTS as soon as it completes rather than waiting for the full reply.
+Today's browser-native path follows the same shape with `SpeechRecognition`
+final transcripts and `speechSynthesis` playback.
 
 ---
 
 ## 2. Core User Flows
 
 ### Flow A — Daily SRS session (`/learn`)
-1. Server component fetches due cards (`user_words WHERE due <= now()` + new-card quota).
-2. Card front: German word (with article for nouns — gender is half the battle in German).
-3. `Space` flips → meaning, AI-generated example sentence, cached audio autoplays.
-4. `1–4` keys or buttons (Again / Hard / Good / Easy) → `ts-fsrs.repeat()` computes next state → single `UPDATE` + `INSERT` into `review_logs`.
-5. Counter at top ("14 New | 22 Review") decrements. Session ends with a plain "Done." — no confetti.
+1. The deck view loads the learner's cards; the curriculum endpoint
+   (`/api/curriculum/next`) draws unseen words for the active language at the
+   learner's CEFR level, generating more lazily only when the pool runs dry.
+2. Card front: the word (with article for nouns — gender is half the battle in
+   German; Pinyin + Hanzi ruby for Mandarin).
+3. `Space` flips → meaning + AI-generated example sentence.
+4. `1–4` keys or buttons (Again / Hard / Good / Easy) → `ts-fsrs` computes the
+   next state → persisted to `user_words` (`review_logs` for history).
+5. Counter at top decrements. Session ends with a plain "Done." — no confetti.
 
-### Flow B — Immersion with the Bridge (`/immerse`)
-1. Curated feed grouped by CEFR level (A1–C1), each item tagged Beginner / Intermediate / Advanced.
-2. Player view: media on top, current subtitle cue rendered as **individually clickable word spans** below.
-3. Click a word → player pauses → minimal popover anchored to the word: lemma, gender/plural (nouns), meaning, one-tap **"Add to SRS"**.
-4. "Add to SRS" inserts a `user_words` row (state = new) linked to the dictionary `words` row, with the subtitle sentence captured as the card's context sentence. Popover closes, media resumes.
+### Flow B — Immersion (`/immerse`)
+1. The learner generates a short story or dialog at their level via
+   `/api/immerse`; texts persist to `immerse_texts` so they're never regenerated.
+2. The text renders as **individually clickable word spans** (the `<Lemma>`
+   component handles Pinyin/Hanzi for Mandarin).
+3. Click a word → minimal popover with lemma, meaning, and one-tap **"Add to
+   SRS"** (`/api/define` supplies the definition).
+4. "Add to SRS" creates a `user_words` row (state = new) linked to the dictionary
+   `words` row, with the surrounding sentence captured as the card's context.
 
 ### Flow C — AI Coach (`/speak`)
-1. Split screen: chat log left, voice orb right.
-2. **Text mode:** user sends a German message. Two parallel requests fire:
-   - `/api/chat` — streaming conversational reply (the coach responds *in German*, naturally, never lecturing).
-   - `/api/correct` — structured-output check of the user's message. If a mistake is found, a small expandable badge appears under the user's bubble: *Original → Correction → one-line explanation*.
-   The conversation never stops for corrections — they're ambient, low-stakes.
-3. **Voice mode:** hold/toggle the orb → Deepgram streams STT → transcript enters the same chat pipeline → reply is sentence-streamed to TTS.
+1. Chat log with a voice panel (the orb) for hands-free mode.
+2. **Text mode:** the user sends a message. Two parallel requests fire:
+   - `/api/chat` — streaming conversational reply (the coach responds *in the
+     target language*, naturally, never lecturing).
+   - `/api/correct` — structured-output check of the user's message. If a mistake
+     is found, a small expandable badge appears under the user's bubble:
+     *Original → Correction → one-line explanation*.
+   The conversation never stops for corrections — they're ambient and low-stakes;
+   any failure (rate limit, malformed JSON) degrades to "no correction".
+3. **Voice mode:** toggle the orb → `SpeechRecognition` streams the transcript
+   into the same chat pipeline → the reply is read back via `speechSynthesis`.
 
 ---
 
@@ -86,88 +104,109 @@ sentence to TTS as soon as it completes rather than waiting for the full reply.
 
 ```
 app/
-├── layout.tsx                     # Root: fonts, theme class, <html>
-├── globals.css                    # Design tokens (dark default + light theme)
+├── layout.tsx                       # Root: fonts, theme class, <html>
+├── globals.css                      # Design tokens (light default + dark theme)
+├── page.tsx                         # Landing page
+├── login/                           # Auth (Supabase email + username)
+├── impressum/                       # Legal notice (portfolio disclaimer)
 ├── (app)/
-│   ├── layout.tsx                 # Persistent sidebar shell
-│   ├── dashboard/page.tsx         # Due counts, minutes immersed, last session — numbers only
-│   ├── learn/
-│   │   ├── page.tsx               # RSC: fetch due queue
-│   │   └── _components/
-│   │       ├── review-session.tsx # Client: keyboard handling, FSRS scheduling
-│   │       ├── flashcard.tsx      # Flip state, audio playback
-│   │       └── grade-bar.tsx      # Again / Hard / Good / Easy
-│   ├── immerse/
-│   │   ├── page.tsx               # RSC: curated feed by level
-│   │   ├── [mediaId]/page.tsx     # Player view
-│   │   └── _components/
-│   │       ├── media-player.tsx   # Video/audio + cue sync (timeupdate → active cue)
-│   │       ├── subtitle-track.tsx # Clickable word spans
-│   │       └── word-popover.tsx   # Definition + "Add to SRS" (the Bridge)
-│   └── speak/
-│       ├── page.tsx               # RSC shell
-│       └── _components/
-│           ├── speak-view.tsx     # Client: state machine, streaming fetch
-│           ├── chat-log.tsx       # Scroll anchoring, message list
-│           ├── chat-message.tsx   # Bubbles + correction badge slot
-│           ├── correction-badge.tsx
-│           ├── composer.tsx       # Input + send
-│           └── voice-panel.tsx    # The orb; STT/TTS lifecycle hooks
+│   ├── layout.tsx                   # Persistent sidebar shell
+│   ├── dashboard/                   # greeting · quick-actions · stats (numbers only)
+│   ├── cards/_components/
+│   │   └── card-catalog.tsx         # Browse the dictionary / owned words
+│   ├── learn/_components/
+│   │   ├── review-demo.tsx          # Client: keyboard handling, FSRS scheduling
+│   │   └── deck-editor.tsx          # Deck create / word management
+│   ├── immerse/_components/
+│   │   └── immerse-demo.tsx         # Generated text + clickable word → SRS bridge
+│   ├── speak/_components/
+│   │   ├── speak-view.tsx           # Client: state machine, streaming fetch
+│   │   ├── chat-log.tsx             # Scroll anchoring, message list
+│   │   ├── chat-message.tsx         # Bubbles + correction badge slot
+│   │   ├── correction-badge.tsx
+│   │   ├── composer.tsx             # Input + send
+│   │   └── voice-panel.tsx          # The orb; STT/TTS lifecycle hooks
+│   ├── profile/_components/
+│   │   └── profile-editor.tsx       # Username, avatar, target language
+│   └── ranking/_components/
+│       └── leaderboard.tsx
 ├── api/
-│   ├── chat/route.ts              # Claude streaming proxy (system prompt server-side)
-│   ├── correct/route.ts           # Claude structured-output grammar check
-│   ├── srs/review/route.ts        # Persist FSRS transitions
-│   └── words/add/route.ts         # The Bridge endpoint
+│   ├── chat/route.ts                # Gemini streaming proxy (system prompt server-side)
+│   ├── correct/route.ts             # Gemini structured-output grammar check
+│   ├── curriculum/next/route.ts     # Draw / lazily generate next words by level
+│   ├── define/route.ts              # Word definition for the Immerse bridge
+│   └── immerse/route.ts             # Generate a story / dialog at level
 ├── components/
-│   ├── sidebar.tsx                # Persistent nav
-│   └── ui/                        # button, popover, badge primitives
+│   ├── sidebar.tsx                  # Persistent nav
+│   ├── language-switcher.tsx        # Switch active language environment
+│   ├── lemma.tsx                    # Hanzi-over-Pinyin <ruby> rendering
+│   └── theme-toggle.tsx             # Light/dark (localStorage)
 └── lib/
-    ├── types.ts                   # Shared domain types
-    ├── fsrs.ts                    # ts-fsrs wrapper
-    ├── supabase/{client,server}.ts
-    └── anthropic.ts               # Shared client + system prompts
+    ├── ai.ts                        # Shared Gemini client + model constants
+    ├── ai-errors.ts                 # Rate-limit / parse error handling
+    ├── languages.ts                 # Language registry + active-language state
+    ├── learning-context.ts          # Resolve active environment server-side
+    ├── curriculum.ts                # Theme ordering by CEFR level
+    ├── srs.ts                       # ts-fsrs wrapper
+    ├── guest-limits.ts              # Per-day quota for guests
+    ├── supabase.ts / supabase-server.ts
+    └── types.ts                     # Shared domain types
 ```
 
 **Principles**
-- Server components by default; `"use client"` only at interaction leaves (review session, player, chat).
-- All Anthropic/Deepgram/ElevenLabs keys live server-side; the browser only ever talks to `/api/*`.
-- One accent color (`--accent: #5E6AD2`). Status colors are muted, never saturated. No animation except functional state feedback (orb pulse, card flip ≤150 ms).
+- Server components by default; `"use client"` only at interaction leaves
+  (review session, immerse, chat).
+- All Gemini keys live server-side; the browser only ever talks to `/api/*`.
+- One accent color (`--accent`). Status colors are muted, never saturated.
+  Animation is functional only (orb pulse, card flip).
 
 ---
 
 ## 4. Design System Tokens
 
-| Token | Dark (default) | Light |
-|---|---|---|
-| `--background` | `#0A0A0A` | `#FAFAFA` |
-| `--surface` | `#101011` | `#FFFFFF` |
-| `--surface-raised` | `#161618` | `#FFFFFF` |
-| `--border` | `#1F1F1F` | `#E7E7E4` |
-| `--foreground` | `#FAFAFA` | `#141415` |
-| `--muted` | `#7E7E85` | `#6F6F76` |
-| `--accent` | `#5E6AD2` | `#5E6AD2` |
-| `--positive` | `#4F9E70` (muted) | `#3D8A5F` |
-| `--negative` | `#B45454` (muted) | `#B45454` |
+Light is the default (`:root`); dark is opt-in (`:root.dark`, persisted to
+`localStorage` via the sidebar toggle). The look is high-contrast and
+near-monochrome — a black/white canvas with a single electric-indigo accent and
+a hard offset shadow (`--border-strong` + `6px 6px 0`) for a bold, tactile feel.
 
-Typography: Inter (or Geist Sans), `leading-relaxed` body, strict scale
-(12 / 14 / 16 / 20 / 28). German text in learning contexts gets `lang="de"`
-for correct hyphenation and screen-reader pronunciation.
+| Token | Light (default) | Dark |
+|---|---|---|
+| `--background` | `#ffffff` | `#0a0a0b` |
+| `--surface` | `#ffffff` | `#0a0a0b` |
+| `--surface-raised` | `#ffffff` | `#161617` |
+| `--border` | `#e4e0d8` | `#2a2a2c` |
+| `--border-strong` | `#100f0e` | `#f5f4f2` |
+| `--foreground` | `#100f0e` | `#f7f6f4` |
+| `--muted` | `#6a635b` | `#9a948c` |
+| `--accent` | `#4536f2` | `#6f60ff` |
+| `--positive` | `#1f9d57` | `#34c46e` |
+| `--negative` | `#db2b2b` | `#ff5a5a` |
+
+Learning text gets `lang="…"` (e.g. `lang="de"`) for correct hyphenation and
+screen-reader pronunciation.
 
 ---
 
 ## 5. AI Integration Notes
 
-- **Coach chat** (`/api/chat`): `gemini-3.5-flash`, streaming
-  (`generateContentStream`), German-tutor system prompt pinned server-side via
-  `systemInstruction` (Gemini applies implicit caching to repeated prefixes
-  automatically).
-- **Corrections** (`/api/correct`): same model, non-streaming,
-  `responseMimeType: "application/json"` + `responseSchema` → `{ has_error,
-  original, corrected, explanation }`. Fires in parallel with chat so it never
-  adds latency to the reply.
-- **Free tier:** `gemini-3.5-flash` and `gemini-2.5-flash` are both free-tier
-  eligible with an AI Studio key — rate-limited, but plenty for development
-  and personal use. Paid tier: $1.50/$9.00 per 1M tokens (3.5 Flash) vs
-  $0.30/$2.50 (2.5 Flash).
-- **Example sentences for cards**: generated lazily on first card creation,
-  persisted to `user_words.context_sentence` so they're never regenerated.
+Two Gemini models are configured in `lib/ai.ts`. Free-tier quotas are **per
+model per day**, so splitting the high-frequency lightweight calls onto a
+separate model effectively doubles the daily budget:
+
+- **`CHAT_MODEL` = `gemini-2.5-flash`** — conversation and content generation
+  (coach chat, Immerse stories, vocab sets).
+  - **Coach chat** (`/api/chat`): streaming (`generateContentStream`), tutor
+    system prompt pinned server-side via `systemInstruction`; thinking is
+    disabled so it doesn't eat the small output budget before any text streams.
+- **`LITE_MODEL` = `gemini-3.1-flash-lite`** — high-frequency lightweight calls
+  (corrections, word definitions, word-list generation).
+  - **Corrections** (`/api/correct`): non-streaming,
+    `responseMimeType: "application/json"` + `responseSchema` →
+    `{ has_error, original, corrected, explanation }`. Fires in parallel with
+    chat so it never adds latency to the reply.
+
+- **Guest quota:** AI actions are metered per day for signed-out users
+  (`lib/guest-limits.ts`); already-seeded words are always served for free, and
+  the quota is only charged when an actual generation call is made.
+- **Example sentences for cards** are generated lazily on first creation and
+  persisted, so they're never regenerated.

@@ -27,8 +27,8 @@ mode), AI-generated flashcards (**Foundations**), and AI-generated
 stories/dialogs with click-to-learn words (**Immerse**).
 
 Models are configured in `lib/ai.ts` — `gemini-2.5-flash` for generation,
-`gemini-2.5-flash-lite` for corrections/definitions (much higher free-tier
-limits than `gemini-3.5-flash`, which only allows ~20 requests/day free).
+`gemini-3.1-flash-lite` for corrections/definitions. Free-tier quotas are
+per-model per day, so splitting calls across two models doubles the budget.
 
 ## Theme
 
