@@ -8,7 +8,8 @@ const DEFINITION_SCHEMA = {
   properties: {
     lemma: {
       type: Type.STRING,
-      description: "Dictionary base form without article (native script)",
+      description:
+        "Dictionary base form of the lexical unit (infinitive for verbs), without article. For separable or reflexive verbs, the full form (e.g. 'umziehen', 'sich freuen') — not just the tapped fragment.",
     },
     pinyin: {
       type: Type.STRING,
@@ -25,7 +26,8 @@ const DEFINITION_SCHEMA = {
     pos: { type: Type.STRING },
     meaning_en: {
       type: Type.STRING,
-      description: "Short English meaning as used in the given sentence",
+      description:
+        "Short English meaning of the lexical unit as used in the given sentence",
     },
     cefr_level: {
       type: Type.STRING,
@@ -57,8 +59,13 @@ export async function POST(req: Request) {
         responseMimeType: "application/json",
         responseSchema: DEFINITION_SCHEMA,
       },
-      contents: `Define the ${language.name} word "${word}" as it is used in this sentence:
-"${sentence}"${language.romanization ? `\n${language.romanization.wordNote}` : ""}`,
+      contents: `A learner tapped "${word}" while reading this ${language.name} sentence:
+"${sentence}"
+
+Read the whole sentence. Identify the lexical unit the learner is trying to learn — the word or phrase "${word}" belongs to in this context (separable verb, reflexive verb, fixed expression, etc.). Return the dictionary base form of THAT unit as "lemma" and its English meaning as used here.
+
+If "${word}" is truly standalone in this sentence (noun, article, adjective, ordinary preposition, etc.), define it normally.
+${language.defineNote ? `\n${language.defineNote}` : ""}${language.romanization ? `\n${language.romanization.wordNote}` : ""}`,
     });
 
     const definition = response.text ? JSON.parse(response.text) : null;

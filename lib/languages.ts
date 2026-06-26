@@ -59,6 +59,11 @@ export interface LanguageDef {
      */
     wordNote: string;
   };
+  /**
+   * Extra instructions for the Immerse word-definition prompt (e.g.
+   * separable verbs in German). Appended by `/api/define`.
+   */
+  defineNote?: string;
 }
 
 export const LANGUAGES: Record<string, LanguageDef> = {
@@ -82,6 +87,8 @@ export const LANGUAGES: Record<string, LanguageDef> = {
     // Berlin skyline (Fernsehturm + Spree).
     bannerImage:
       "https://images.unsplash.com/photo-1599946347371-68eb71b16afc?auto=format&fit=crop&w=1600&q=70",
+    defineNote:
+      "German separable verbs (trennbare Verben) split in main clauses — e.g. 'zieht … um' is umziehen, 'steht … auf' is aufstehen. If the tapped token is the verb stem OR the detached prefix/particle, return the full infinitive (umziehen, not um or ziehen). Reflexive verbs likewise: 'freut sich' → sich freuen. Only return a fragment when the token is truly standalone (a noun, article, plain preposition, etc.).",
   },
   es: {
     code: "es",
@@ -103,6 +110,8 @@ export const LANGUAGES: Record<string, LanguageDef> = {
     // Madrid — Gran Vía at sunset.
     bannerImage:
       "https://images.unsplash.com/photo-1539037116277-4db20889f2d4?auto=format&fit=crop&w=1600&q=70",
+    defineNote:
+      "Reflexive and pronominal verbs: if the tapped token is the verb or its clitic (me, se, lo, …), return the full infinitive with pronoun(s) where idiomatic (e.g. 'se levanta' → levantarse). Fixed expressions spanning several words → return the natural dictionary phrase.",
   },
   zh: {
     code: "zh",
