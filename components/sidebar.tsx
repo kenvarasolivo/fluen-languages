@@ -14,8 +14,10 @@ import {
 } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { onProfileUpdate } from "@/lib/profile-events";
+import { usePurpose } from "@/lib/use-purpose";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { LanguageSwitcher } from "@/components/language-switcher";
+import { PurposeFocusButton } from "@/components/purpose-focus";
 
 const nav = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutGrid },
@@ -107,6 +109,7 @@ function AccountAvatar({
 export function Sidebar() {
   const pathname = usePathname();
   const { account, signOut } = useAccount();
+  const { purpose, setPurpose } = usePurpose();
 
   return (
     <aside className="hidden h-full w-64 shrink-0 flex-col border-r border-border bg-surface md:flex">
@@ -150,6 +153,11 @@ export function Sidebar() {
           );
         })}
       </nav>
+
+      {/* Learning focus — always visible, steers modules, Speak & Immerse. */}
+      <div className="border-t border-border px-3 py-2">
+        <PurposeFocusButton purpose={purpose} onChange={setPurpose} />
+      </div>
 
       {/* Account */}
       <div className="border-t border-border px-3 py-3">

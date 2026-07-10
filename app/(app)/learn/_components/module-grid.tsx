@@ -5,9 +5,10 @@ import { ArrowRight, CheckCircle2, Loader2, Sparkles } from "lucide-react";
 import { supabase, ensureSession } from "@/lib/supabase";
 import { getActiveLanguageCode } from "@/lib/languages";
 import { CORE, cellTarget, nextLevel, themeOrder } from "@/lib/curriculum";
-import { PURPOSES, sanitizePurpose, type Purpose } from "@/lib/purposes";
+import { PURPOSES } from "@/lib/purposes";
+import { usePurpose } from "@/lib/use-purpose";
 import type { CefrLevel } from "@/lib/types";
-import { PurposeBanner } from "./purpose-banner";
+import { PurposeBanner } from "@/components/purpose-focus";
 
 /** One curriculum module = one (level, theme) cell of the shared catalog. */
 export interface ModuleStat {
@@ -45,39 +46,26 @@ export function ModuleGrid({
   onStart: (stat: ModuleStat) => void;
   onAdvance: (next: CefrLevel) => void;
 }) {
-  const [purpose, setPurpose] = useState<Purpose | null>(null);
-  const [lang, setLang] = useState(getActiveLanguageCode());
+  const { purpose, setPurpose } = usePurpose();
   const [stats, setStats] = useState<ModuleStat[] | null>(null);
   const [failed, setFailed] = useState(false);
-  // Bumped after the learner switches their purpose, so the effect
-  // re-reads it and re-orders the modules from the source of truth.
-  const [reload, setReload] = useState(0);
 
   useEffect(() => {
     let cancelled = false;
     (async () => {
       try {
-        const session = await ensureSession();
+        await ensureSession();
         const lang = getActiveLanguageCode();
-        setLang(lang);
 
-        const [{ data: ul }, { data: owned, error }] = await Promise.all([
-          supabase
-            .from("user_languages")
-            .select("purpose")
-            .eq("user_id", session.user.id)
-            .eq("language", lang)
-            .maybeSingle(),
-          // Curriculum cards the learner owns at this level, with their
-          // module; freq_rank filters out loose Immerse pickups.
-          supabase
-            .from("user_words")
-            .select("state, words!inner(theme, language, cefr_level, freq_rank)")
-            .eq("words.language", lang)
-            .eq("words.cefr_level", level)
-            .not("words.freq_rank", "is", null)
-            .limit(2000),
-        ]);
+        // Curriculum cards the learner owns at this level, with their
+        // module; freq_rank filters out loose Immerse pickups.
+        const { data: owned, error } = await supabase
+          .from("user_words")
+          .select("state, words!inner(theme, language, cefr_level, freq_rank)")
+          .eq("words.language", lang)
+          .eq("words.cefr_level", level)
+          .not("words.freq_rank", "is", null)
+          .limit(2000);
         if (error) throw error;
         if (cancelled) return;
 
@@ -92,9 +80,10 @@ export function ModuleGrid({
           counts.set(theme, c);
         }
 
-        const p = sanitizePurpose(ul?.purpose);
-        const order = themeOrder(level, p ? PURPOSES[p].boostThemes : []);
-        setPurpose(p);
+        const order = themeOrder(
+          level,
+          purpose ? PURPOSES[purpose].boostThemes : [],
+        );
         setStats(
           order.map((theme) => ({
             theme,
@@ -111,7 +100,7 @@ export function ModuleGrid({
     return () => {
       cancelled = true;
     };
-  }, [level, refreshKey, reload]);
+  }, [level, refreshKey, purpose]);
 
   if (failed) {
     return (
@@ -135,11 +124,7 @@ export function ModuleGrid({
 
   return (
     <div className="mx-auto w-full max-w-4xl px-4 py-6 sm:px-6 sm:py-8">
-      <PurposeBanner
-        purpose={purpose}
-        languageCode={lang}
-        onChanged={() => setReload((n) => n + 1)}
-      />
+      <PurposeBanner purpose={purpose} onChange={setPurpose} />
 
       <p className="eyebrow mt-5 text-[11px] text-muted">
         {level} modules{purpose ? " · ordered for your focus" : ""} · learn 10
