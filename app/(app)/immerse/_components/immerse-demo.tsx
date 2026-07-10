@@ -5,11 +5,11 @@ import Link from "next/link";
 import { Plus, Check, Sparkles, History, Trash2 } from "lucide-react";
 import { supabase, ensureSession } from "@/lib/supabase";
 import { Lemma } from "@/components/lemma";
+import { LevelSelect } from "@/components/level-select";
 import { getActiveLanguageCode } from "@/lib/languages";
 import { useActiveLanguage } from "@/lib/use-active-language";
 import { useCefrLevel } from "@/lib/use-cefr-level";
 import type {
-  CefrLevel,
   ImmerseKind,
   SavedText,
   Story,
@@ -26,14 +26,6 @@ interface PopoverState {
   loading: boolean;
   added: boolean;
 }
-
-const LEVELS: { id: CefrLevel; label: string }[] = [
-  { id: "A1", label: "A1" },
-  { id: "A2", label: "A2" },
-  { id: "B1", label: "B1" },
-  { id: "B2", label: "B2" },
-  { id: "C1", label: "C1" },
-];
 
 const KINDS: { id: ImmerseKind; label: string }[] = [
   { id: "story", label: "Story" },
@@ -300,7 +292,7 @@ export function ImmerseDemo() {
 
       {/* Controls — switching only sets options; generation is the button. */}
       <div className="flex shrink-0 flex-wrap items-center gap-2 border-b border-border bg-surface px-4 py-3 sm:px-6">
-        <Segmented options={LEVELS} value={level} onChange={setLevel} />
+        <LevelSelect value={level} onChange={setLevel} />
         <Segmented options={KINDS} value={kind} onChange={setKind} />
         <button
           onClick={generate}

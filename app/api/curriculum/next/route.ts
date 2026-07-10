@@ -94,7 +94,14 @@ export async function POST(req: Request) {
 
     // Auto-draw order: the learner's purpose front-loads its themes
     // (travel unlocks "travel & transport" before "daily life", etc.).
-    const order = themeOrder(level, purpose ? PURPOSES[purpose].boostThemes : []);
+    const boost = purpose ? PURPOSES[purpose].boostThemes : [];
+    const order = themeOrder(level, boost);
+
+    // With a purpose at A1/A2, interleave the grammatical core with the
+    // first purpose theme — otherwise the first ~3 draws would be pure
+    // function words and the purpose would feel ignored.
+    const pair: readonly string[] | null =
+      boost.length > 0 && order[0] === CORE ? [CORE, order[1]] : null;
 
     // An explicit theme pins the draw to one cell; otherwise we auto-pick
     // in curriculum order. Ignore a theme that isn't valid for this level.
@@ -119,16 +126,20 @@ export async function POST(req: Request) {
       return (data ?? []) as CurriculumWord[];
     };
 
+    // Draw sort key: interleaved pair cells alternate word for word;
+    // everything else follows the (purpose-boosted) curriculum order.
+    const drawKey = (w: CurriculumWord): number => {
+      const pairIdx = pair ? pair.indexOf(w.theme) : -1;
+      if (pairIdx !== -1) return w.freq_rank * 2 + pairIdx;
+      return 1_000_000 + curriculumOrder(w.theme, w.freq_rank, order);
+    };
+
     // The unseen draw pool — restricted to the chosen theme when pinned,
     // otherwise the whole level in curriculum order.
     const poolOf = (all: CurriculumWord[]) =>
       all
         .filter((w) => !ownedIds.has(w.id) && (!targetTheme || w.theme === targetTheme))
-        .sort(
-          (a, b) =>
-            curriculumOrder(a.theme, a.freq_rank, order) -
-            curriculumOrder(b.theme, b.freq_rank, order),
-        );
+        .sort((a, b) => drawKey(a) - drawKey(b));
 
     // First theme cell that hasn't reached its target size yet, in draw
     // order. `core` is only in the order for A1/A2 — higher levels skip it.
@@ -136,19 +147,32 @@ export async function POST(req: Request) {
       const counts = new Map<string, number>();
       for (const w of all) counts.set(w.theme, (counts.get(w.theme) ?? 0) + 1);
       for (const theme of order) {
-        if ((counts.get(theme) ?? 0) < cellTarget(theme)) return theme;
+        if ((counts.get(theme) ?? 0) < cellTarget(theme, level)) return theme;
       }
       return null;
     };
 
-    // The cell to grow when the pool runs dry: the pinned theme (if it has
-    // room), else the next incomplete cell in order.
-    const cellToExtend = (all: CurriculumWord[]): string | null => {
+    // The cell to grow before drawing: the pinned theme when it runs dry,
+    // else an interleaved pair cell with no unseen words left (both halves
+    // of the mix must be stocked), else the next incomplete cell when the
+    // pool can't fill the batch.
+    const cellToExtend = (
+      all: CurriculumWord[],
+      pool: CurriculumWord[],
+    ): string | null => {
       if (targetTheme) {
+        if (pool.length >= count) return null;
         const have = all.filter((w) => w.theme === targetTheme).length;
-        return have < cellTarget(targetTheme) ? targetTheme : null;
+        return have < cellTarget(targetTheme, level) ? targetTheme : null;
       }
-      return firstIncompleteCell(all);
+      if (pair) {
+        for (const cell of pair) {
+          if (pool.some((w) => w.theme === cell)) continue;
+          const have = all.filter((w) => w.theme === cell).length;
+          if (have < cellTarget(cell, level)) return cell;
+        }
+      }
+      return pool.length < count ? firstIncompleteCell(all) : null;
     };
 
     let curriculum = await fetchCurriculum();
@@ -160,8 +184,8 @@ export async function POST(req: Request) {
     let gate: Awaited<ReturnType<typeof gateAiRequest>> | null = null;
     let generated = false;
 
-    for (let i = 0; i < MAX_EXTENDS && pool.length < count; i++) {
-      const cell = cellToExtend(curriculum);
+    for (let i = 0; i < MAX_EXTENDS; i++) {
+      const cell = cellToExtend(curriculum, pool);
       if (!cell) break; // nothing left to generate for this draw
 
       if (!gate) {
@@ -232,7 +256,7 @@ async function extendCell(
   const inLevel = new Set(curriculum.map((w) => w.lemma.toLowerCase()));
   const inCell = curriculum.filter((w) => w.theme === theme);
   const startRank = inCell.reduce((max, w) => Math.max(max, w.freq_rank), 0);
-  const need = Math.min(cellTarget(theme) - inCell.length, EXTEND_BATCH);
+  const need = Math.min(cellTarget(theme, level) - inCell.length, EXTEND_BATCH);
   if (need <= 0) return;
 
   const themeBrief = theme === CORE ? language.coreBrief : `the topic "${theme}"`;

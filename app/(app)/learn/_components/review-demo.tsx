@@ -3,8 +3,10 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import {
+  ArrowLeft,
   ArrowLeftRight,
   CheckCircle2,
+  LayoutGrid,
   Loader2,
   Pencil,
   Plus,
@@ -16,32 +18,18 @@ import { supabase, ensureSession } from "@/lib/supabase";
 import { gradeCard, isDueSoon, type SrsFields } from "@/lib/srs";
 import { withGender } from "@/lib/format";
 import { Lemma } from "@/components/lemma";
+import { LevelSelect } from "@/components/level-select";
 import { getActiveLanguageCode } from "@/lib/languages";
 import { useActiveLanguage } from "@/lib/use-active-language";
 import { useCefrLevel } from "@/lib/use-cefr-level";
 import type { CefrLevel, Deck, DrawResult } from "@/lib/types";
-import { themeOrder } from "@/lib/curriculum";
 import { DeckEditor } from "./deck-editor";
-
-/** "Auto" lets the server pick the next theme in curriculum order. */
-const AUTO_THEME = "auto";
-
-/** Title-case a theme id for display ("food & drink" → "Food & drink"). */
-function themeLabel(theme: string) {
-  if (theme === AUTO_THEME) return "Auto (next up)";
-  return theme.charAt(0).toUpperCase() + theme.slice(1);
-}
-
-/** Levels a learner can draw from (matches the curriculum). */
-const LEVELS: { id: CefrLevel; label: string }[] = [
-  { id: "A1", label: "A1" },
-  { id: "A2", label: "A2" },
-  { id: "B1", label: "B1" },
-  { id: "B2", label: "B2" },
-  { id: "C1", label: "C1" },
-];
+import { ModuleGrid, moduleLabel, type ModuleStat } from "./module-grid";
 
 type Phase = "loading" | "empty" | "generating" | "review" | "done" | "error";
+
+/** Foundations has two homes: the module grid and the review decks. */
+type Mode = "learn" | "review";
 
 /**
  * Which side is shown as the prompt before flipping: the learner's
@@ -100,6 +88,9 @@ type BuiltinDeckId = (typeof BUILTIN_DECKS)[number]["id"];
 
 const RANDOM_DECK_SIZE = 15;
 
+/** Words drawn per module batch — learn these, then unlock the next 10. */
+const MODULE_BATCH = 10;
+
 class GuestLimitError extends Error {}
 
 function speak(text: string, speechLang: string) {
@@ -131,6 +122,13 @@ export function ReviewDemo() {
   const [limitMsg, setLimitMsg] = useState<string | null>(null);
   const userIdRef = useRef<string | null>(null);
 
+  // "learn" = the module grid (and module sessions); "review" = decks.
+  const [mode, setMode] = useState<Mode>("learn");
+  // Set while learning a module's batch; null shows the grid.
+  const [moduleTheme, setModuleTheme] = useState<string | null>(null);
+  // Bumped after a session so the grid refetches its progress bars.
+  const [moduleRefresh, setModuleRefresh] = useState(0);
+
   const [deckId, setDeckId] = useState<string>("learning");
   const [decks, setDecks] = useState<Deck[]>([]);
   const [editing, setEditing] = useState<Deck | null>(null);
@@ -138,100 +136,121 @@ export function ReviewDemo() {
   const [newDeckName, setNewDeckName] = useState("");
 
   // The learner's current level — shared source of truth (user_languages),
-  // kept in sync with the sidebar, dashboard and Immerse. Drives which
-  // curriculum words "New words" draws next.
+  // kept in sync with the sidebar, dashboard and Immerse. Decides which
+  // modules the grid shows and which words a batch draws.
   const { level, setLevel } = useCefrLevel();
-  // Which theme the next draw pulls from ("auto" = next in curriculum order).
-  const [theme, setTheme] = useState<string>(AUTO_THEME);
-  // Set when a level is exhausted, offering a one-click bump to the next.
-  const [advanceTo, setAdvanceTo] = useState<CefrLevel | null>(null);
-  // Brief feedback when a draw added nothing (e.g. theme already learned).
+  // Brief feedback when a draw added nothing (e.g. module already learned).
   const [notice, setNotice] = useState<string | null>(null);
 
   const isBuiltin = (id: string): id is BuiltinDeckId =>
     BUILTIN_DECKS.some((d) => d.id === id);
 
-  const fetchQueue = useCallback(async (deck: string): Promise<QueueCard[]> => {
-    // Inner-join + filter so a queue only ever holds cards from the
-    // active language environment.
-    const lang = getActiveLanguageCode();
-    const wordsJoin = "words!inner(lemma, pinyin, gender, pos, meaning_en, language)";
+  /**
+   * A queue source is either a review deck id or a module theme
+   * (prefixed) — one loader serves both.
+   */
+  const moduleKey = (theme: string) => `module:${theme}`;
 
-    if (deck === "random") {
-      // Supabase has no random ordering from the client — pull a window
-      // of cards and shuffle locally instead.
+  const fetchQueue = useCallback(
+    async (source: string): Promise<QueueCard[]> => {
+      // Inner-join + filter so a queue only ever holds cards from the
+      // active language environment.
+      const lang = getActiveLanguageCode();
+      const wordsJoin = "words!inner(lemma, pinyin, gender, pos, meaning_en, language)";
+
+      if (source.startsWith("module:")) {
+        // One module's in-progress batch: cards from this (level, theme)
+        // cell that haven't graduated yet.
+        const theme = source.slice("module:".length);
+        const { data, error } = await supabase
+          .from("user_words")
+          .select(
+            `${SRS_COLUMNS}, words!inner(lemma, pinyin, gender, pos, meaning_en, language, theme, cefr_level)`,
+          )
+          .eq("words.language", lang)
+          .eq("words.cefr_level", level)
+          .eq("words.theme", theme)
+          .in("state", [0, 1, 3])
+          .order("due")
+          .limit(30);
+        if (error) throw error;
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        return (data as any[]).map(({ words, ...srs }) => ({ ...srs, ...words }));
+      }
+
+      if (source === "random") {
+        // Supabase has no random ordering from the client — pull a window
+        // of cards and shuffle locally instead.
+        const { data, error } = await supabase
+          .from("user_words")
+          .select(`${SRS_COLUMNS}, ${wordsJoin}`)
+          .eq("words.language", lang)
+          .limit(200);
+        if (error) throw error;
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const rows = (data as any[]).map(({ words, ...srs }) => ({ ...srs, ...words }));
+        return shuffle(rows).slice(0, RANDOM_DECK_SIZE);
+      }
+
+      if (source === "learning") {
+        // Everything still in progress (new / learning / relearning),
+        // regardless of when it's due.
+        const { data, error } = await supabase
+          .from("user_words")
+          .select(`${SRS_COLUMNS}, ${wordsJoin}`)
+          .eq("words.language", lang)
+          .in("state", [0, 1, 3])
+          .order("due")
+          .limit(30);
+        if (error) throw error;
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        return (data as any[]).map(({ words, ...srs }) => ({ ...srs, ...words }));
+      }
+
+      if (source === "due") {
+        // Only graduated cards (state 2) that are due again — cards still
+        // being learned live exclusively in the Lernen deck.
+        const { data, error } = await supabase
+          .from("user_words")
+          .select(`${SRS_COLUMNS}, ${wordsJoin}`)
+          .eq("words.language", lang)
+          .eq("state", 2)
+          .lte("due", new Date().toISOString())
+          .order("due")
+          .limit(30);
+        if (error) throw error;
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        return (data as any[]).map(({ words, ...srs }) => ({ ...srs, ...words }));
+      }
+
+      // Custom deck — membership lives in deck_cards. Decks are already
+      // language-scoped, so every member card is in the active language.
       const { data, error } = await supabase
-        .from("user_words")
-        .select(`${SRS_COLUMNS}, ${wordsJoin}`)
-        .eq("words.language", lang)
-        .limit(200);
+        .from("deck_cards")
+        .select(`user_words(${SRS_COLUMNS}, ${wordsJoin})`)
+        .eq("deck_id", source)
+        .order("added_at");
       if (error) throw error;
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const rows = (data as any[]).map(({ words, ...srs }) => ({ ...srs, ...words }));
-      return shuffle(rows).slice(0, RANDOM_DECK_SIZE);
-    }
-
-    if (deck === "learning") {
-      // Everything still in progress (new / learning / relearning),
-      // regardless of when it's due.
-      const { data, error } = await supabase
-        .from("user_words")
-        .select(`${SRS_COLUMNS}, ${wordsJoin}`)
-        .eq("words.language", lang)
-        .in("state", [0, 1, 3])
-        .order("due")
-        .limit(30);
-      if (error) throw error;
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      return (data as any[]).map(({ words, ...srs }) => ({ ...srs, ...words }));
-    }
-
-    if (deck === "due") {
-      // Only graduated cards (state 2) that are due again — cards still
-      // being learned live exclusively in the Lernen deck.
-      const { data, error } = await supabase
-        .from("user_words")
-        .select(`${SRS_COLUMNS}, ${wordsJoin}`)
-        .eq("words.language", lang)
-        .eq("state", 2)
-        .lte("due", new Date().toISOString())
-        .order("due")
-        .limit(30);
-      if (error) throw error;
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      return (data as any[]).map(({ words, ...srs }) => ({ ...srs, ...words }));
-    }
-
-    // Custom deck — membership lives in deck_cards. Decks are already
-    // language-scoped, so every member card is in the active language.
-    const { data, error } = await supabase
-      .from("deck_cards")
-      .select(`user_words(${SRS_COLUMNS}, ${wordsJoin})`)
-      .eq("deck_id", deck)
-      .order("added_at");
-    if (error) throw error;
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    return (data as any[]).flatMap(({ user_words: uw }) => {
-      if (!uw) return [];
-      const { words, ...srs } = uw;
-      return [{ ...srs, ...words }];
-    });
-  }, []);
+      return (data as any[]).flatMap(({ user_words: uw }) => {
+        if (!uw) return [];
+        const { words, ...srs } = uw;
+        return [{ ...srs, ...words }];
+      });
+    },
+    [level],
+  );
 
   /**
-   * Draw the next ordered batch from the A1–C1 curriculum. The server
-   * picks the words (core grammar first, then one theme at a time),
-   * lazily generating them only when a cell runs low, and inserts the
-   * new cards itself — so here we just relay the result.
+   * Draw the next ordered batch of a module from the shared catalog. The
+   * server serves pre-seeded words and only falls back to generating
+   * when a cell hasn't been seeded yet.
    */
-  const drawCards = useCallback(async (): Promise<DrawResult> => {
+  const drawCards = useCallback(async (theme: string): Promise<DrawResult> => {
     const res = await fetch("/api/curriculum/next", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        count: 10,
-        theme: theme === AUTO_THEME ? undefined : theme,
-      }),
+      body: JSON.stringify({ count: MODULE_BATCH, theme }),
     });
     if (!res.ok) {
       const body = await res.json().catch(() => null);
@@ -239,76 +258,78 @@ export function ReviewDemo() {
       throw new Error(body?.error ?? "generation failed");
     }
     return (await res.json()) as DrawResult;
-  }, [theme]);
+  }, []);
 
-  /** Load the selected deck's queue. Never generates — that's a deliberate click. */
-  const load = useCallback(async () => {
-    setPhase("loading");
-    setFlipped(false);
-    try {
-      const session = await ensureSession();
-      userIdRef.current = session.user.id;
+  /** Load a queue. Never generates — that's a deliberate click. */
+  const load = useCallback(
+    async (source: string) => {
+      setPhase("loading");
+      setFlipped(false);
+      try {
+        const session = await ensureSession();
+        userIdRef.current = session.user.id;
 
-      const cards = await fetchQueue(deckId);
-      setQueue(cards);
-      setPhase(cards.length > 0 ? "review" : "empty");
-    } catch (err) {
-      console.error("[foundations]", err);
-      const msg = err instanceof Error ? err.message : "";
-      setErrorMsg(
-        msg && msg !== "not signed in"
-          ? msg
-          : "Loading failed - check the Supabase keys and the Vercel logs.",
-      );
-      setPhase("error");
-    }
-  }, [fetchQueue, deckId]);
+        const cards = await fetchQueue(source);
+        setQueue(cards);
+        setPhase(cards.length > 0 ? "review" : "empty");
+      } catch (err) {
+        console.error("[foundations]", err);
+        const msg = err instanceof Error ? err.message : "";
+        setErrorMsg(
+          msg && msg !== "not signed in"
+            ? msg
+            : "Loading failed - check the Supabase keys and the Vercel logs.",
+        );
+        setPhase("error");
+      }
+    },
+    [fetchQueue],
+  );
 
   /** Explicit, token-conscious draw — only ever runs on click. */
-  const generate = useCallback(async () => {
-    setPhase("generating");
-    setFlipped(false);
-    setLimitMsg(null);
-    setAdvanceTo(null);
-    setNotice(null);
-    try {
-      const session = await ensureSession();
-      userIdRef.current = session.user.id;
+  const generate = useCallback(
+    async (theme: string) => {
+      setPhase("generating");
+      setFlipped(false);
+      setLimitMsg(null);
+      setNotice(null);
+      try {
+        const session = await ensureSession();
+        userIdRef.current = session.user.id;
 
-      const result = await drawCards();
-      // Level exhausted — offer a one-click bump to the next level.
-      if (result.levelComplete && result.nextLevel) setAdvanceTo(result.nextLevel);
-      else if (result.added === 0) {
-        setNotice(
-          theme === AUTO_THEME
-            ? `No new ${level} words available right now.`
-            : `You've already learned every "${themeLabel(theme)}" word at ${level}.`,
+        const result = await drawCards(theme);
+        if (result.added === 0) {
+          setNotice(
+            `You've already learned every "${moduleLabel(theme)}" word at ${level}.`,
+          );
+        }
+
+        const cards = await fetchQueue(moduleKey(theme));
+        setQueue(cards);
+        setPhase(cards.length > 0 ? "review" : "empty");
+      } catch (err) {
+        console.error("[foundations generate]", err);
+        if (err instanceof GuestLimitError) {
+          setLimitMsg(err.message);
+          setPhase("empty");
+          return;
+        }
+        const msg = err instanceof Error ? err.message : "";
+        setErrorMsg(
+          msg && msg !== "generation failed"
+            ? msg
+            : "Generation failed - please try again.",
         );
+        setPhase("error");
       }
+    },
+    [fetchQueue, drawCards, level],
+  );
 
-      const cards = await fetchQueue(deckId);
-      setQueue(cards);
-      setPhase(cards.length > 0 ? "review" : "empty");
-    } catch (err) {
-      console.error("[foundations generate]", err);
-      if (err instanceof GuestLimitError) {
-        setLimitMsg(err.message);
-        setPhase("empty");
-        return;
-      }
-      const msg = err instanceof Error ? err.message : "";
-      setErrorMsg(
-        msg && msg !== "generation failed"
-          ? msg
-          : "Generation failed - please try again.",
-      );
-      setPhase("error");
-    }
-  }, [fetchQueue, drawCards, deckId, theme, level]);
-
+  // Review mode loads its selected deck; the learn grid fetches its own.
   useEffect(() => {
-    load();
-  }, [load]);
+    if (mode === "review" && !editing) load(deckId);
+  }, [mode, deckId, editing, load]);
 
   // Custom decks for this language are loaded once on mount. (The level
   // is owned by the shared useCefrLevel hook, so it isn't fetched here.)
@@ -329,17 +350,37 @@ export function ReviewDemo() {
     })();
   }, []);
 
+  /** From the grid: continue an unfinished batch, or draw the next one. */
+  const openModule = useCallback(
+    (stat: ModuleStat) => {
+      setEditing(null);
+      setNotice(null);
+      setModuleTheme(stat.theme);
+      // The next batch only unlocks once every drawn word has been seen.
+      if (stat.unseen > 0) load(moduleKey(stat.theme));
+      else generate(stat.theme);
+    },
+    [load, generate],
+  );
+
+  /** Leave a module session and land back on the (refreshed) grid. */
+  const backToModules = useCallback(() => {
+    setModuleTheme(null);
+    setNotice(null);
+    setLimitMsg(null);
+    setModuleRefresh((n) => n + 1);
+  }, []);
+
   /**
    * Change the learner's level. `setLevel` (shared hook) persists it to
    * user_languages and broadcasts so the sidebar/dashboard/Immerse update
-   * live; the next draw reads it server-side.
+   * live; the module grid and draws follow it.
    */
   const changeLevel = useCallback(
     (next: CefrLevel) => {
-      // Themes differ per level (core only at A1/A2), so reset the choice.
-      setTheme(AUTO_THEME);
-      setAdvanceTo(null);
+      setModuleTheme(null);
       setNotice(null);
+      setModuleRefresh((n) => n + 1);
       setLevel(next);
     },
     [setLevel],
@@ -408,14 +449,15 @@ export function ReviewDemo() {
         // FSRS may schedule the card again within minutes (learning steps) —
         // keep those in this session's queue. Random and custom decks are a
         // fixed stack instead: each card appears exactly once per run.
-        const requeue = deckId === "due" || deckId === "learning";
+        const requeue =
+          moduleTheme !== null || deckId === "due" || deckId === "learning";
         const next =
           requeue && isDueSoon(updated.due) ? [...rest, { ...card, ...updated }] : rest;
         if (next.length === 0) setPhase("done");
         return next;
       });
     },
-    [card, flipped, deckId],
+    [card, flipped, deckId, moduleTheme],
   );
 
   // Space flips, 1–4 grades — keyboard-first review.
@@ -439,28 +481,36 @@ export function ReviewDemo() {
   const reviewCount = queue.length - newCount;
   const activeDeck = decks.find((d) => d.id === deckId) ?? null;
 
-  const emptyMessage = isBuiltin(deckId)
-    ? {
-        due: "No reviews due.",
-        learning: "Nothing in progress right now.",
-        random: "No cards to shuffle yet.",
-      }[deckId]
-    : "This deck is still empty.";
+  // Learn mode shows the grid unless a module session is running.
+  const showGrid = mode === "learn" && moduleTheme === null;
+  const inSession = !showGrid && !editing;
 
-  const doneMessage = isBuiltin(deckId)
-    ? {
-        due: "Done. All reviews finished.",
-        learning: "Done. Everything is learned.",
-        random: "Round finished.",
-      }[deckId]
-    : "Deck completed.";
+  const emptyMessage = moduleTheme
+    ? "Nothing to learn here right now."
+    : isBuiltin(deckId)
+      ? {
+          due: "No reviews due.",
+          learning: "Nothing in progress right now.",
+          random: "No cards to shuffle yet.",
+        }[deckId]
+      : "This deck is still empty.";
+
+  const doneMessage = moduleTheme
+    ? "Batch finished - every word seen."
+    : isBuiltin(deckId)
+      ? {
+          due: "Done. All reviews finished.",
+          learning: "Done. Everything is learned.",
+          random: "Round finished.",
+        }[deckId]
+      : "Deck completed.";
 
   return (
     <div className="flex h-full flex-col">
       <header className="app-header flex h-16 shrink-0 items-center justify-between border-b px-4 sm:px-6">
         <h1 className="eyebrow text-sm text-white">Foundations</h1>
         <div className="flex items-center gap-3">
-          {!editing && phase !== "loading" && phase !== "error" && (
+          {inSession && phase !== "loading" && phase !== "error" && (
             <button
               onClick={() => {
                 setDirection((d) => (d === "en-target" ? "target-en" : "en-target"));
@@ -475,128 +525,139 @@ export function ReviewDemo() {
                 : `${language.htmlLang.toUpperCase()} → EN`}
             </button>
           )}
-          {phase === "review" && !editing && (
+          {inSession && phase === "review" && (
             <span className="hdr-chip rounded-full px-2.5 py-0.5 text-[11px] font-medium tabular-nums">
               {newCount} New | {reviewCount} Review
             </span>
           )}
-          {/* Always reachable — generating new words shouldn't require an
-              empty queue. */}
-          {!editing && phase !== "loading" && phase !== "error" && (
-            <button
-              onClick={generate}
-              disabled={phase === "generating"}
-              className="flex items-center gap-1.5 rounded-lg bg-accent px-3 py-1.5 text-xs font-medium text-white shadow-xs transition-all duration-150 hover:bg-accent/90 active:scale-[0.99] disabled:opacity-60"
-            >
-              {phase === "generating" ? (
-                <Loader2 size={13} strokeWidth={1.75} className="animate-spin" />
-              ) : (
-                <Sparkles size={13} strokeWidth={1.75} />
-              )}
-              New words
-            </button>
-          )}
         </div>
       </header>
 
-      {/* Deck switcher — built-in decks plus the user's custom decks */}
+      {/* Mode bar — Learn new (modules) vs Review (decks), or the module
+          session breadcrumb while a batch is being learned. */}
       <div className="flex shrink-0 flex-wrap items-center gap-1.5 border-b border-border bg-surface px-4 py-3 sm:px-6">
-        {BUILTIN_DECKS.map((d) => (
-          <DeckTab
-            key={d.id}
-            label={d.label}
-            active={deckId === d.id && !editing}
-            onClick={() => {
-              setEditing(null);
-              setDeckId(d.id);
-            }}
-          />
-        ))}
-        {decks.length > 0 && <span className="mx-1.5 h-4 w-px bg-border" />}
-        {decks.map((d) => (
-          <span key={d.id} className="flex items-center">
-            <DeckTab
-              label={d.name}
-              active={deckId === d.id && !editing}
-              onClick={() => {
-                setEditing(null);
-                setDeckId(d.id);
-              }}
-            />
-            {deckId === d.id && (
-              <button
-                onClick={() => setEditing(d)}
-                aria-label={`Edit deck "${d.name}"`}
-                className={`ml-0.5 rounded-md p-1.5 transition-colors duration-150 ${
-                  editing?.id === d.id
-                    ? "bg-accent-soft text-accent"
-                    : "text-muted hover:bg-foreground/[0.04] hover:text-foreground"
-                }`}
-              >
-                <Pencil size={14} strokeWidth={1.75} />
-              </button>
-            )}
-          </span>
-        ))}
-        {newDeckOpen ? (
-          <form
-            onSubmit={(e) => {
-              e.preventDefault();
-              createDeck();
-            }}
-            className="flex items-center gap-1"
-          >
-            <input
-              autoFocus
-              value={newDeckName}
-              onChange={(e) => setNewDeckName(e.target.value)}
-              onKeyDown={(e) => e.key === "Escape" && setNewDeckOpen(false)}
-              onBlur={() => !newDeckName.trim() && setNewDeckOpen(false)}
-              placeholder="Deck name ..."
-              className="w-36 rounded-md border border-accent/40 bg-surface-raised px-2.5 py-1.5 text-base outline-none placeholder:text-muted sm:w-32 sm:text-sm"
-            />
+        {mode === "learn" && moduleTheme !== null ? (
+          <>
             <button
-              type="submit"
-              className="rounded-md bg-accent px-3 py-1.5 text-sm font-medium text-white transition-colors duration-150 hover:bg-accent/90"
+              onClick={backToModules}
+              className="flex items-center gap-1.5 rounded-md px-3 py-1.5 text-sm text-muted transition-colors duration-150 hover:bg-foreground/[0.04] hover:text-foreground"
             >
-              OK
+              <ArrowLeft size={14} strokeWidth={2} />
+              Modules
             </button>
-          </form>
-        ) : (
-          <button
-            onClick={() => setNewDeckOpen(true)}
-            className="flex items-center gap-1 rounded-md px-3 py-1.5 text-sm text-muted transition-colors duration-150 hover:bg-foreground/[0.04] hover:text-foreground"
-          >
-            <Plus size={14} strokeWidth={2} />
-            New deck
-          </button>
-        )}
-
-        {/* Level + theme pickers — decide which curriculum words "New words"
-            draws and from which topic. */}
-        <div className="ml-auto flex items-center gap-2">
-          <select
-            value={theme}
-            onChange={(e) => {
-              setTheme(e.target.value);
-              setNotice(null);
-            }}
-            aria-label="Theme to draw from"
-            className="rounded-md border border-border bg-surface-raised px-2.5 py-1.5 text-sm text-foreground shadow-xs outline-none transition-colors duration-150 hover:border-border-strong focus:border-accent/40"
-          >
-            {[AUTO_THEME, ...themeOrder(level)].map((t) => (
-              <option key={t} value={t}>
-                {themeLabel(t)}
-              </option>
-            ))}
-          </select>
-          <div className="flex items-center gap-2">
-            <span className="hidden text-xs font-medium text-muted sm:inline">
-              Level
+            <span className="rounded-md bg-accent-soft px-3 py-1.5 text-sm font-medium text-accent">
+              {moduleLabel(moduleTheme)}
             </span>
-            <LevelPicker value={level} onChange={changeLevel} />
-          </div>
-        </div>
+          </>
+        ) : (
+          <>
+            <div className="flex rounded-md border border-border bg-foreground/[0.03] p-0.5">
+              <ModeTab
+                label="Learn new"
+                icon={LayoutGrid}
+                active={mode === "learn"}
+                onClick={() => {
+                  setEditing(null);
+                  setModuleTheme(null);
+                  setMode("learn");
+                }}
+              />
+              <ModeTab
+                label="Review"
+                icon={Shuffle}
+                active={mode === "review"}
+                onClick={() => {
+                  setEditing(null);
+                  setModuleTheme(null);
+                  setMode("review");
+                }}
+              />
+            </div>
+
+            {mode === "review" && (
+              <>
+                <span className="mx-1.5 h-4 w-px bg-border" />
+                {BUILTIN_DECKS.map((d) => (
+                  <DeckTab
+                    key={d.id}
+                    label={d.label}
+                    active={deckId === d.id && !editing}
+                    onClick={() => {
+                      setEditing(null);
+                      setDeckId(d.id);
+                    }}
+                  />
+                ))}
+                {decks.length > 0 && <span className="mx-1.5 h-4 w-px bg-border" />}
+                {decks.map((d) => (
+                  <span key={d.id} className="flex items-center">
+                    <DeckTab
+                      label={d.name}
+                      active={deckId === d.id && !editing}
+                      onClick={() => {
+                        setEditing(null);
+                        setDeckId(d.id);
+                      }}
+                    />
+                    {deckId === d.id && (
+                      <button
+                        onClick={() => setEditing(d)}
+                        aria-label={`Edit deck "${d.name}"`}
+                        className={`ml-0.5 rounded-md p-1.5 transition-colors duration-150 ${
+                          editing?.id === d.id
+                            ? "bg-accent-soft text-accent"
+                            : "text-muted hover:bg-foreground/[0.04] hover:text-foreground"
+                        }`}
+                      >
+                        <Pencil size={14} strokeWidth={1.75} />
+                      </button>
+                    )}
+                  </span>
+                ))}
+                {newDeckOpen ? (
+                  <form
+                    onSubmit={(e) => {
+                      e.preventDefault();
+                      createDeck();
+                    }}
+                    className="flex items-center gap-1"
+                  >
+                    <input
+                      autoFocus
+                      value={newDeckName}
+                      onChange={(e) => setNewDeckName(e.target.value)}
+                      onKeyDown={(e) => e.key === "Escape" && setNewDeckOpen(false)}
+                      onBlur={() => !newDeckName.trim() && setNewDeckOpen(false)}
+                      placeholder="Deck name ..."
+                      className="w-36 rounded-md border border-accent/40 bg-surface-raised px-2.5 py-1.5 text-base outline-none placeholder:text-muted sm:w-32 sm:text-sm"
+                    />
+                    <button
+                      type="submit"
+                      className="rounded-md bg-accent px-3 py-1.5 text-sm font-medium text-white transition-colors duration-150 hover:bg-accent/90"
+                    >
+                      OK
+                    </button>
+                  </form>
+                ) : (
+                  <button
+                    onClick={() => setNewDeckOpen(true)}
+                    className="flex items-center gap-1 rounded-md px-3 py-1.5 text-sm text-muted transition-colors duration-150 hover:bg-foreground/[0.04] hover:text-foreground"
+                  >
+                    <Plus size={14} strokeWidth={2} />
+                    New deck
+                  </button>
+                )}
+              </>
+            )}
+
+            <div className="ml-auto flex items-center gap-2">
+              <span className="hidden text-xs font-medium text-muted sm:inline">
+                Level
+              </span>
+              <LevelSelect value={level} onChange={changeLevel} />
+            </div>
+          </>
+        )}
       </div>
 
       {editing ? (
@@ -605,7 +666,7 @@ export function ReviewDemo() {
             deck={editing}
             onClose={() => {
               setEditing(null);
-              load();
+              load(deckId);
             }}
             onDeleted={() => {
               setDecks((d) => d.filter((x) => x.id !== editing.id));
@@ -614,35 +675,21 @@ export function ReviewDemo() {
             }}
           />
         </div>
+      ) : showGrid ? (
+        <div className="min-h-0 flex-1 overflow-y-auto">
+          <ModuleGrid
+            level={level}
+            refreshKey={moduleRefresh}
+            onStart={openModule}
+            onAdvance={changeLevel}
+          />
+        </div>
       ) : (
         <div className="min-h-0 flex-1 overflow-y-auto">
         <div className="flex min-h-full flex-col items-center justify-center gap-6 px-4 py-6 sm:gap-8 sm:px-6">
           {notice && (
             <div className="pop-in w-full max-w-lg rounded-xl border border-border bg-surface-raised px-4 py-3 text-center text-sm text-muted shadow-xs">
               {notice}
-            </div>
-          )}
-          {advanceTo && (
-            <div className="pop-in flex w-full max-w-lg flex-wrap items-center justify-between gap-3 rounded-xl border border-accent/30 bg-accent-soft px-4 py-3">
-              <p className="text-sm">
-                You&apos;ve covered all of{" "}
-                <span className="font-semibold">{level}</span>. Ready for{" "}
-                <span className="font-semibold">{advanceTo}</span>?
-              </p>
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={() => setAdvanceTo(null)}
-                  className="rounded-lg border border-border bg-surface-raised px-3 py-1.5 text-xs font-medium text-muted shadow-xs transition-colors duration-150 hover:text-foreground"
-                >
-                  Not yet
-                </button>
-                <button
-                  onClick={() => changeLevel(advanceTo)}
-                  className="rounded-lg bg-accent px-3 py-1.5 text-xs font-medium text-white shadow-xs transition-colors duration-150 hover:bg-accent/90"
-                >
-                  Move to {advanceTo}
-                </button>
-              </div>
             </div>
           )}
           {phase === "loading" && (
@@ -657,7 +704,7 @@ export function ReviewDemo() {
               <span className="flex size-10 items-center justify-center rounded-full bg-accent-soft">
                 <Loader2 size={18} strokeWidth={1.75} className="animate-spin text-accent" />
               </span>
-              <p className="text-sm text-muted">Generating new words ...</p>
+              <p className="text-sm text-muted">Preparing the next words ...</p>
             </div>
           )}
 
@@ -665,7 +712,9 @@ export function ReviewDemo() {
             <div className="flex max-w-sm flex-col items-center gap-4 text-center">
               <p className="text-sm text-muted">{errorMsg}</p>
               <button
-                onClick={() => load()}
+                onClick={() =>
+                  moduleTheme ? load(moduleKey(moduleTheme)) : load(deckId)
+                }
                 className="rounded-lg border border-border bg-surface-raised px-4 py-2 text-sm shadow-xs transition-all duration-150 hover:border-border-strong active:scale-[0.99]"
               >
                 Try again
@@ -701,10 +750,29 @@ export function ReviewDemo() {
                     Create account
                   </Link>
                 </>
+              ) : moduleTheme ? (
+                <div className="flex flex-wrap items-center justify-center gap-2">
+                  <button
+                    onClick={backToModules}
+                    className="flex items-center gap-2 rounded-lg border border-border bg-surface-raised px-4 py-2 text-sm font-medium shadow-xs transition-all duration-150 hover:border-border-strong active:scale-[0.99]"
+                  >
+                    <ArrowLeft size={14} strokeWidth={1.75} />
+                    Back to modules
+                  </button>
+                  {phase === "done" && (
+                    <button
+                      onClick={() => generate(moduleTheme)}
+                      className="flex items-center gap-2 rounded-lg bg-accent px-4 py-2 text-sm font-medium text-white shadow-xs transition-all duration-150 hover:bg-accent/90 active:scale-[0.99]"
+                    >
+                      <Sparkles size={14} strokeWidth={1.75} />
+                      Next {MODULE_BATCH} words
+                    </button>
+                  )}
+                </div>
               ) : activeDeck ? (
                 <button
                   onClick={() =>
-                    phase === "done" ? load() : setEditing(activeDeck)
+                    phase === "done" ? load(deckId) : setEditing(activeDeck)
                   }
                   className="flex items-center gap-2 rounded-lg bg-accent px-4 py-2 text-sm font-medium text-white shadow-xs transition-all duration-150 hover:bg-accent/90 active:scale-[0.99]"
                 >
@@ -722,7 +790,7 @@ export function ReviewDemo() {
                 </button>
               ) : deckId === "random" && phase === "done" ? (
                 <button
-                  onClick={() => load()}
+                  onClick={() => load(deckId)}
                   className="flex items-center gap-2 rounded-lg bg-accent px-4 py-2 text-sm font-medium text-white shadow-xs transition-all duration-150 hover:bg-accent/90 active:scale-[0.99]"
                 >
                   <Shuffle size={14} strokeWidth={1.75} />
@@ -731,15 +799,18 @@ export function ReviewDemo() {
               ) : (
                 <>
                   <button
-                    onClick={generate}
+                    onClick={() => {
+                      setModuleTheme(null);
+                      setMode("learn");
+                    }}
                     className="flex items-center gap-2 rounded-lg bg-accent px-4 py-2 text-sm font-medium text-white shadow-xs transition-all duration-150 hover:bg-accent/90 active:scale-[0.99]"
                   >
-                    <Sparkles size={14} strokeWidth={1.75} />
-                    Generate new words
+                    <LayoutGrid size={14} strokeWidth={1.75} />
+                    Browse modules
                   </button>
                   <p className="text-xs text-muted">
-                    Adds the next 10 words for your {level} level - only on
-                    click, never automatically.
+                    New words come from the modules - pick one and learn its
+                    next {MODULE_BATCH}.
                   </p>
                 </>
               )}
@@ -859,6 +930,33 @@ export function ReviewDemo() {
   );
 }
 
+function ModeTab({
+  label,
+  icon: Icon,
+  active,
+  onClick,
+}: {
+  label: string;
+  icon: React.ComponentType<{ size?: number; strokeWidth?: number }>;
+  active: boolean;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      onClick={onClick}
+      aria-pressed={active}
+      className={`flex items-center gap-1.5 rounded px-3 py-1.5 text-sm transition-all duration-150 ${
+        active
+          ? "bg-surface-raised font-medium text-foreground shadow-xs"
+          : "text-muted hover:text-foreground"
+      }`}
+    >
+      <Icon size={13} strokeWidth={2} />
+      {label}
+    </button>
+  );
+}
+
 function DeckTab({
   label,
   active,
@@ -880,34 +978,6 @@ function DeckTab({
     >
       {label}
     </button>
-  );
-}
-
-/** Compact A1–C1 segmented control. */
-function LevelPicker({
-  value,
-  onChange,
-}: {
-  value: CefrLevel;
-  onChange: (v: CefrLevel) => void;
-}) {
-  return (
-    <div className="flex rounded-md border border-border bg-foreground/[0.03] p-0.5">
-      {LEVELS.map((l) => (
-        <button
-          key={l.id}
-          onClick={() => onChange(l.id)}
-          aria-pressed={value === l.id}
-          className={`rounded px-2.5 py-1 text-sm transition-all duration-150 ${
-            value === l.id
-              ? "bg-surface-raised font-medium text-foreground shadow-xs"
-              : "text-muted hover:text-foreground"
-          }`}
-        >
-          {l.label}
-        </button>
-      ))}
-    </div>
   );
 }
 

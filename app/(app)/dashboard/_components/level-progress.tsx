@@ -6,6 +6,7 @@ import { supabase, ensureSession } from "@/lib/supabase";
 import { getActiveLanguageCode } from "@/lib/languages";
 import { useCefrLevel } from "@/lib/use-cefr-level";
 import { levelWordTarget, nextLevel } from "@/lib/curriculum";
+import { PURPOSES, sanitizePurpose, type Purpose } from "@/lib/purposes";
 import type { CefrLevel } from "@/lib/types";
 
 /**
@@ -18,6 +19,7 @@ export function LevelProgress() {
   const { level, loaded } = useCefrLevel();
   const [collected, setCollected] = useState<number | null>(null);
   const [goal, setGoal] = useState<CefrLevel | null>(null);
+  const [purpose, setPurpose] = useState<Purpose | null>(null);
 
   useEffect(() => {
     if (!loaded) return;
@@ -38,7 +40,7 @@ export function LevelProgress() {
             .eq("words.cefr_level", level),
           supabase
             .from("user_languages")
-            .select("goal_level")
+            .select("goal_level, purpose")
             .eq("user_id", session.user.id)
             .eq("language", lang)
             .maybeSingle(),
@@ -47,6 +49,7 @@ export function LevelProgress() {
         if (cancelled) return;
         setCollected(count ?? 0);
         setGoal((ul?.goal_level as CefrLevel | undefined) ?? null);
+        setPurpose(sanitizePurpose(ul?.purpose));
       } catch (err) {
         console.error("[level progress]", err);
         if (!cancelled) setCollected(0);
@@ -69,12 +72,19 @@ export function LevelProgress() {
           <TrendingUp size={13} strokeWidth={2} aria-hidden className="text-accent" />
           {next ? `Progress to ${next}` : `${level} vocabulary`}
         </p>
-        {goal && (
-          <span className="flex items-center gap-1.5 rounded-full border border-border px-2.5 py-1 text-[11px] font-medium text-muted">
-            <Flag size={11} strokeWidth={2} aria-hidden className="text-accent" />
-            Goal: {goal}
-          </span>
-        )}
+        <div className="flex items-center gap-2">
+          {purpose && (
+            <span className="rounded-full border border-border px-2.5 py-1 text-[11px] font-medium text-muted">
+              For: <span className="text-accent">{PURPOSES[purpose].label}</span>
+            </span>
+          )}
+          {goal && (
+            <span className="flex items-center gap-1.5 rounded-full border border-border px-2.5 py-1 text-[11px] font-medium text-muted">
+              <Flag size={11} strokeWidth={2} aria-hidden className="text-accent" />
+              Goal: {goal}
+            </span>
+          )}
+        </div>
       </div>
 
       <div className="mt-4 flex items-baseline justify-between gap-3">

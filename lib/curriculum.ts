@@ -64,12 +64,24 @@ export const CURRICULUM_LEVELS: readonly CefrLevel[] = [
   "C1",
 ];
 
-/** How many words each cell should eventually hold before we move on. */
+/**
+ * How many words each cell should eventually hold before we move on.
+ * Theme cells grow with the level — each CEFR step represents far more
+ * vocabulary than the last, so advancing gets progressively harder
+ * (A1 ≈ 280 words total, C1 ≈ 1000).
+ */
 const CORE_TARGET = 30;
-const THEME_TARGET = 20;
+const THEME_TARGETS: Record<CefrLevel, number> = {
+  A1: 25,
+  A2: 35,
+  B1: 50,
+  B2: 75,
+  C1: 100,
+  C2: 100,
+};
 
-export function cellTarget(theme: string): number {
-  return theme === CORE ? CORE_TARGET : THEME_TARGET;
+export function cellTarget(theme: string, level: CefrLevel): number {
+  return theme === CORE ? CORE_TARGET : THEME_TARGETS[level];
 }
 
 /**
@@ -79,7 +91,7 @@ export function cellTarget(theme: string): number {
  * certified CEFR attainment.
  */
 export function levelWordTarget(level: CefrLevel): number {
-  return themeOrder(level).reduce((sum, t) => sum + cellTarget(t), 0);
+  return themeOrder(level).reduce((sum, t) => sum + cellTarget(t, level), 0);
 }
 
 /** Sort key: core first, then theme order, then frequency rank. */

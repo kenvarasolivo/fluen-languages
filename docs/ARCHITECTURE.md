@@ -77,9 +77,13 @@ final transcripts and `speechSynthesis` playback.
 ## 2. Core User Flows
 
 ### Flow A — Daily SRS session (`/learn`)
-1. The deck view loads the learner's cards; the curriculum endpoint
-   (`/api/curriculum/next`) draws unseen words for the active language at the
-   learner's CEFR level, generating more lazily only when the pool runs dry.
+1. Foundations opens on the **module grid** ("Learn new"): every theme of the
+   current level as a card with its own progress bar, ordered by the learner's
+   purpose. A module is learned in batches — `/api/curriculum/next` draws its
+   next 10 words (pre-seeded via `scripts/seed-curriculum.mjs`, generated
+   lazily only as a fallback), and the next batch unlocks once every drawn
+   word has been seen. "Review" holds the SRS decks (Learning / Review /
+   Random) plus the learner's custom decks.
 2. Card front: the word (with article for nouns — gender is half the battle in
    German; Pinyin + Hanzi ruby for Mandarin).
 3. `Space` flips → meaning + AI-generated example sentence.
@@ -127,7 +131,8 @@ app/
 │   ├── cards/_components/
 │   │   └── card-catalog.tsx         # Browse the dictionary / owned words
 │   ├── learn/_components/
-│   │   ├── review-demo.tsx          # Client: keyboard handling, FSRS scheduling
+│   │   ├── review-demo.tsx          # Client: Learn/Review modes, keyboard handling, FSRS scheduling
+│   │   ├── module-grid.tsx          # Per-theme modules with progress bars (purpose-ordered)
 │   │   └── deck-editor.tsx          # Deck create / word management
 │   ├── immerse/_components/
 │   │   └── immerse-demo.tsx         # Generated text + clickable word → SRS bridge
