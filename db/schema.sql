@@ -347,3 +347,20 @@ create policy "avatars owner delete" on storage.objects
   for delete using (
     bucket_id = 'avatars' and (storage.foldername(name))[1] = auth.uid()::text
   );
+
+-- ------------------------------------------------------------
+-- Guest hygiene: anonymous auth users older than 7 days are purged
+-- nightly (the FK cascade removes all their rows). Returning guests
+-- keep working within the window; registered accounts are untouched.
+-- ------------------------------------------------------------
+create extension if not exists pg_cron;
+
+select cron.schedule(
+  'purge-stale-guests',
+  '0 3 * * *',
+  $$
+    delete from auth.users
+    where is_anonymous
+      and created_at < now() - interval '7 days'
+  $$
+);

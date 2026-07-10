@@ -31,6 +31,12 @@ export interface PurposeDef {
    * first for this purpose. Empty = keep the default order.
    */
   boostThemes: readonly string[];
+  /**
+   * A deep, saturated brand colour for this purpose's banner — white
+   * text sits on top, so it reads the same bold way in light and dark
+   * (Work → navy, Travel → terracotta, …).
+   */
+  color: string;
 }
 
 export const PURPOSES: Record<Purpose, PurposeDef> = {
@@ -43,6 +49,7 @@ export const PURPOSES: Record<Purpose, PurposeDef> = {
     coachNote:
       "The learner is preparing for travel. Prefer travel scenarios: play the waiter, hotel receptionist, ticket clerk or a helpful local, and steer toward practical situations.",
     boostThemes: ["travel & transport", "food & drink", "shopping & money"],
+    color: "#b4531a",
   },
   business: {
     id: "business",
@@ -53,6 +60,7 @@ export const PURPOSES: Record<Purpose, PurposeDef> = {
     coachNote:
       "The learner needs the language for work. Prefer professional contexts: play a colleague, client or business contact, and keep a polite, professional register.",
     boostThemes: ["work & study", "people & relationships", "travel & transport"],
+    color: "#1e2a63",
   },
   exam: {
     id: "exam",
@@ -63,6 +71,7 @@ export const PURPOSES: Record<Purpose, PurposeDef> = {
     coachNote:
       "The learner is preparing for an official language exam. Favour exam-style topics and keep to a clear, standard register — no slang.",
     boostThemes: [],
+    color: "#8a1f3d",
   },
   everyday: {
     id: "everyday",
@@ -73,6 +82,7 @@ export const PURPOSES: Record<Purpose, PurposeDef> = {
     coachNote:
       "The learner wants natural everyday conversation. Keep it casual — everyday topics, and the colloquial phrasing a friend would actually use.",
     boostThemes: ["daily life", "people & relationships", "food & drink"],
+    color: "#1f7a4d",
   },
   culture: {
     id: "culture",
@@ -83,6 +93,7 @@ export const PURPOSES: Record<Purpose, PurposeDef> = {
     coachNote:
       "The learner is here for the culture. Favour cultural topics: food, music, films, books and traditions of places where the language is spoken.",
     boostThemes: ["leisure & culture", "food & drink", "people & relationships"],
+    color: "#6b2d8c",
   },
 };
 

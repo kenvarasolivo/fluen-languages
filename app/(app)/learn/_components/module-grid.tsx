@@ -7,6 +7,7 @@ import { getActiveLanguageCode } from "@/lib/languages";
 import { CORE, cellTarget, nextLevel, themeOrder } from "@/lib/curriculum";
 import { PURPOSES, sanitizePurpose, type Purpose } from "@/lib/purposes";
 import type { CefrLevel } from "@/lib/types";
+import { PurposeBanner } from "./purpose-banner";
 
 /** One curriculum module = one (level, theme) cell of the shared catalog. */
 export interface ModuleStat {
@@ -45,8 +46,12 @@ export function ModuleGrid({
   onAdvance: (next: CefrLevel) => void;
 }) {
   const [purpose, setPurpose] = useState<Purpose | null>(null);
+  const [lang, setLang] = useState(getActiveLanguageCode());
   const [stats, setStats] = useState<ModuleStat[] | null>(null);
   const [failed, setFailed] = useState(false);
+  // Bumped after the learner switches their purpose, so the effect
+  // re-reads it and re-orders the modules from the source of truth.
+  const [reload, setReload] = useState(0);
 
   useEffect(() => {
     let cancelled = false;
@@ -54,6 +59,7 @@ export function ModuleGrid({
       try {
         const session = await ensureSession();
         const lang = getActiveLanguageCode();
+        setLang(lang);
 
         const [{ data: ul }, { data: owned, error }] = await Promise.all([
           supabase
@@ -105,7 +111,7 @@ export function ModuleGrid({
     return () => {
       cancelled = true;
     };
-  }, [level, refreshKey]);
+  }, [level, refreshKey, reload]);
 
   if (failed) {
     return (
@@ -129,16 +135,16 @@ export function ModuleGrid({
 
   return (
     <div className="mx-auto w-full max-w-4xl px-4 py-6 sm:px-6 sm:py-8">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <p className="eyebrow text-[11px] text-muted">
-          {level} modules · learn 10 words at a time
-        </p>
-        {purpose && (
-          <span className="rounded-full border border-border bg-surface-raised px-2.5 py-1 text-[11px] font-medium text-muted">
-            Ordered for: <span className="text-accent">{PURPOSES[purpose].label}</span>
-          </span>
-        )}
-      </div>
+      <PurposeBanner
+        purpose={purpose}
+        languageCode={lang}
+        onChanged={() => setReload((n) => n + 1)}
+      />
+
+      <p className="eyebrow mt-5 text-[11px] text-muted">
+        {level} modules{purpose ? " · ordered for your focus" : ""} · learn 10
+        words at a time
+      </p>
 
       {allComplete && next && (
         <div className="pop-in mt-4 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-accent/30 bg-accent-soft px-4 py-3">
