@@ -302,7 +302,7 @@ create policy "read cues"  on media_cues  for select using (auth.role() = 'authe
 
 -- ------------------------------------------------------------
 -- Public-profile helpers (SECURITY DEFINER — bypass the own-row RLS
--- above so usernames and ranking are visible across accounts).
+-- above so username availability can be checked across accounts).
 -- ------------------------------------------------------------
 
 -- Pre-flight check used by registration + the profile editor.
@@ -319,32 +319,6 @@ as $$
 $$;
 
 grant execute on function public.check_username_available(text) to authenticated, anon;
-
--- Leaderboard — every named learner ranked by words collected.
-create or replace function public.get_leaderboard()
-returns table (
-  user_id         uuid,
-  username        text,
-  avatar_url      text,
-  words_collected bigint
-)
-language sql
-security definer
-set search_path = public
-as $$
-  select
-    p.id,
-    p.username,
-    p.avatar_url,
-    count(uw.id) as words_collected
-  from public.profiles p
-  left join public.user_words uw on uw.user_id = p.id
-  where p.username is not null
-  group by p.id, p.username, p.avatar_url
-  order by words_collected desc, lower(p.username) asc;
-$$;
-
-grant execute on function public.get_leaderboard() to authenticated, anon;
 
 -- ------------------------------------------------------------
 -- Avatar storage bucket + policies. Files live under

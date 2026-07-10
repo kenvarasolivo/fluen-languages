@@ -9,7 +9,6 @@ import {
   Clapperboard,
   MessageCircle,
   Library,
-  Trophy,
   LogIn,
   LogOut,
 } from "lucide-react";
@@ -24,7 +23,6 @@ const nav = [
   { href: "/immerse", label: "Immerse", icon: Clapperboard },
   { href: "/speak", label: "Speak", icon: MessageCircle },
   { href: "/cards", label: "Cards", icon: Library },
-  { href: "/ranking", label: "Ranking", icon: Trophy },
 ];
 
 type Account =

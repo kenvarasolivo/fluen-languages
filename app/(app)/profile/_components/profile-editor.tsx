@@ -237,8 +237,8 @@ export function ProfileEditor() {
             </span>
             <p className="text-sm font-medium">Your profile belongs to your account.</p>
             <p className="max-w-xs text-xs leading-relaxed text-muted">
-              Create a free account to pick a username, add a photo and appear
-              on the ranking board. The cards you already have will be kept.
+              Create a free account to pick a username and add a photo. The
+              cards you already have will be kept.
             </p>
             <Link
               href="/login"
@@ -317,8 +317,7 @@ export function ProfileEditor() {
                   className="rounded-xl border border-border bg-surface px-3.5 py-2.5 text-base shadow-xs outline-none transition-all duration-150 placeholder:text-muted focus:border-accent/50 focus:ring-[3px] focus:ring-accent/15 sm:text-sm"
                 />
                 <p className="text-[11px] leading-relaxed text-muted">
-                  3–20 characters: letters, numbers, dots or underscores. This
-                  is the name shown on the ranking board.
+                  3–20 characters: letters, numbers, dots or underscores.
                 </p>
 
                 {error && <p className="text-xs text-negative">{error}</p>}

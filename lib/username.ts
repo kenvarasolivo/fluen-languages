@@ -2,7 +2,7 @@
  * Shared username rules for registration and the profile editor.
  * 3–20 characters, letters / numbers / underscore / dot, must start
  * with a letter or number. Kept deliberately strict so handles read
- * cleanly on the ranking board.
+ * cleanly wherever they're shown.
  */
 export const USERNAME_PATTERN = /^[a-zA-Z0-9][a-zA-Z0-9_.]{2,19}$/;
 

@@ -143,10 +143,8 @@ app/
 │   │   ├── correction-badge.tsx
 │   │   ├── composer.tsx             # Input + send
 │   │   └── voice-panel.tsx          # The orb; STT/TTS lifecycle hooks
-│   ├── profile/_components/
-│   │   └── profile-editor.tsx       # Username, avatar, target language
-│   └── ranking/_components/
-│       └── leaderboard.tsx
+│   └── profile/_components/
+│       └── profile-editor.tsx       # Username, avatar, target language
 ├── api/
 │   ├── chat/route.ts                # Gemini streaming proxy (system prompt server-side)
 │   ├── correct/route.ts             # Gemini structured-output grammar check
