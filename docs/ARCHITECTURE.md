@@ -16,6 +16,18 @@ language registry is `lib/languages.ts`; server routes resolve the active
 environment via `lib/learning-context.ts`. The Speak coach replies at native
 (C2) level regardless of the learner's level.
 
+**Onboarding & purpose:** a first-run questionnaire (`components/onboarding.tsx`,
+shown until `profiles.onboarded_at` is stamped) collects target language,
+current level, purpose and goal level. Purpose and goal live per language on
+`user_languages` (`purpose`, `goal_level`) — a learner can study Mandarin for
+business and Spanish for travel. Because all content is AI-generated, the
+purpose genuinely reshapes the experience: it sets the scene and register of
+Immerse texts, the scenarios the Speak coach plays, and which curriculum themes
+unlock first (`lib/purposes.ts`, threaded through `lib/learning-context.ts`).
+The dashboard shows progress toward the next CEFR step as vocabulary covered at
+the current level against the curriculum's word target — a real, measurable
+proxy, never a claimed certification.
+
 Non-Latin scripts are taught romanization-first: Mandarin is studied in Hanyu
 Pinyin (the typeable, readable form), with the Hanzi shown as a `<ruby>`
 annotation on top via the shared `<Lemma>` component. The dictionary stores the
@@ -111,7 +123,7 @@ app/
 ├── impressum/                       # Legal notice (portfolio disclaimer)
 ├── (app)/
 │   ├── layout.tsx                   # Persistent sidebar shell
-│   ├── dashboard/                   # greeting · quick-actions · stats (numbers only)
+│   ├── dashboard/                   # greeting · level-progress · quick-actions · stats
 │   ├── cards/_components/
 │   │   └── card-catalog.tsx         # Browse the dictionary / owned words
 │   ├── learn/_components/
@@ -138,6 +150,7 @@ app/
 │   └── immerse/route.ts             # Generate a story / dialog at level
 ├── components/
 │   ├── sidebar.tsx                  # Persistent nav
+│   ├── onboarding.tsx               # First-run questionnaire (language · level · purpose · goal)
 │   ├── language-switcher.tsx        # Switch active language environment
 │   ├── lemma.tsx                    # Hanzi-over-Pinyin <ruby> rendering
 │   └── theme-toggle.tsx             # Light/dark (localStorage)
@@ -146,7 +159,8 @@ app/
     ├── ai-errors.ts                 # Rate-limit / parse error handling
     ├── languages.ts                 # Language registry + active-language state
     ├── learning-context.ts          # Resolve active environment server-side
-    ├── curriculum.ts                # Theme ordering by CEFR level
+    ├── curriculum.ts                # Theme ordering by CEFR level (+ level word targets)
+    ├── purposes.ts                  # Learning purposes → prompt briefs + theme boosts
     ├── srs.ts                       # ts-fsrs wrapper
     ├── guest-limits.ts              # Per-day quota for guests
     ├── supabase.ts / supabase-server.ts

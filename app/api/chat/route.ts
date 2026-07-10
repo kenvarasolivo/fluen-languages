@@ -3,10 +3,11 @@ import { aiErrorResponse } from "@/lib/ai-errors";
 import { gateAiRequest } from "@/lib/guest-limits";
 import { createSupabaseServer } from "@/lib/supabase-server";
 import { getLearningContext } from "@/lib/learning-context";
+import { PURPOSES, type Purpose } from "@/lib/purposes";
 import type { LanguageDef } from "@/lib/languages";
 
 /** Coach prompt — speaks like an educated native (C2) in the target language. */
-function coachSystem(language: LanguageDef): string {
+function coachSystem(language: LanguageDef, purpose: Purpose | null): string {
   return `You are FLUEN's ${language.name} conversation partner.
 
 Rules:
@@ -19,8 +20,8 @@ Rules:
   Always end with something that invites a response: a question, a gentle
   prompt, an opinion to react to.
 - Warm, low-stakes, zero condescension.${
-    language.romanization ? `\n- ${language.romanization.textNote}` : ""
-  }`;
+    purpose ? `\n- ${PURPOSES[purpose].coachNote}` : ""
+  }${language.romanization ? `\n- ${language.romanization.textNote}` : ""}`;
 }
 
 interface ChatTurn {
@@ -38,7 +39,7 @@ export async function POST(req: Request) {
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  const { language } = await getLearningContext(supabase, user!.id);
+  const { language, purpose } = await getLearningContext(supabase, user!.id);
 
   const { messages } = (await req.json()) as { messages: ChatTurn[] };
 
@@ -54,7 +55,7 @@ export async function POST(req: Request) {
     stream = await ai.models.generateContentStream({
       model: LITE_MODEL,
       config: {
-        systemInstruction: coachSystem(language),
+        systemInstruction: coachSystem(language, purpose),
         // Thinking would eat the small output budget before any text.
         thinkingConfig: { thinkingBudget: 0 },
         maxOutputTokens: 256,

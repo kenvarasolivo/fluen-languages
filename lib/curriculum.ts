@@ -40,9 +40,19 @@ export const THEME_ORDER: readonly string[] = [CORE, ...THEMES];
  */
 const CORE_LEVELS: readonly CefrLevel[] = ["A1", "A2"];
 
-/** The themes to draw, in order, for a given level. */
-export function themeOrder(level: CefrLevel): readonly string[] {
-  return CORE_LEVELS.includes(level) ? [CORE, ...THEMES] : [...THEMES];
+/**
+ * The themes to draw, in order, for a given level. `boost` (the
+ * learner's purpose themes, see lib/purposes.ts) moves those themes to
+ * the front so relevant vocabulary unlocks first — the set of themes
+ * never changes, only the order. The grammatical core always stays first.
+ */
+export function themeOrder(
+  level: CefrLevel,
+  boost: readonly string[] = [],
+): readonly string[] {
+  const boosted = boost.filter((t) => (THEMES as readonly string[]).includes(t));
+  const themes = [...boosted, ...THEMES.filter((t) => !boosted.includes(t))];
+  return CORE_LEVELS.includes(level) ? [CORE, ...themes] : themes;
 }
 
 /** Levels the curriculum covers (C2 is intentionally out of scope). */
@@ -62,11 +72,25 @@ export function cellTarget(theme: string): number {
   return theme === CORE ? CORE_TARGET : THEME_TARGET;
 }
 
+/**
+ * Total curriculum words a level holds once fully seeded (A1/A2 include
+ * the core cell). Used by the dashboard as the honest denominator for
+ * "how far to the next level": it measures vocabulary covered, not a
+ * certified CEFR attainment.
+ */
+export function levelWordTarget(level: CefrLevel): number {
+  return themeOrder(level).reduce((sum, t) => sum + cellTarget(t), 0);
+}
+
 /** Sort key: core first, then theme order, then frequency rank. */
-export function curriculumOrder(theme: string, freqRank: number): number {
-  const themeIdx = THEME_ORDER.indexOf(theme);
+export function curriculumOrder(
+  theme: string,
+  freqRank: number,
+  order: readonly string[] = THEME_ORDER,
+): number {
+  const themeIdx = order.indexOf(theme);
   // Unknown themes sort after the known ones; rank breaks ties within a cell.
-  const bucket = themeIdx === -1 ? THEME_ORDER.length : themeIdx;
+  const bucket = themeIdx === -1 ? order.length : themeIdx;
   return bucket * 100_000 + freqRank;
 }
 

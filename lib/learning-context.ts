@@ -1,5 +1,6 @@
 import type { createSupabaseServer } from "@/lib/supabase-server";
 import { getLanguage, type LanguageDef } from "@/lib/languages";
+import { sanitizePurpose, type Purpose } from "@/lib/purposes";
 import type { CefrLevel } from "@/lib/types";
 
 type SupabaseServer = Awaited<ReturnType<typeof createSupabaseServer>>;
@@ -9,6 +10,8 @@ export interface LearningContext {
   language: LanguageDef;
   /** Their CEFR level in that language (defaults to A1). */
   level: CefrLevel;
+  /** Why they're learning it (from onboarding), null when unanswered. */
+  purpose: Purpose | null;
 }
 
 const LEVELS = ["A1", "A2", "B1", "B2", "C1", "C2"] as const;
@@ -38,10 +41,14 @@ export async function getLearningContext(
 
   const { data: ul } = await supabase
     .from("user_languages")
-    .select("cefr_level")
+    .select("cefr_level, purpose")
     .eq("user_id", userId)
     .eq("language", language.code)
     .maybeSingle();
 
-  return { language, level: sanitizeLevel(ul?.cefr_level) };
+  return {
+    language,
+    level: sanitizeLevel(ul?.cefr_level),
+    purpose: sanitizePurpose(ul?.purpose),
+  };
 }

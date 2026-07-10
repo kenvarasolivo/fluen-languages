@@ -88,7 +88,7 @@ export function StatsGrid() {
   ];
 
   return (
-    <div className="fade-up fade-up-1 flex w-full max-w-4xl flex-col items-center gap-6">
+    <div className="fade-up fade-up-2 flex w-full max-w-4xl flex-col items-center gap-6">
       <div className="grid w-full grid-cols-2 gap-4 md:grid-cols-4">
         {tiles.map(({ label, value, icon: Icon, chip, number }) => (
           <div

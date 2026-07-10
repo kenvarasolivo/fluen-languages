@@ -30,7 +30,7 @@ const actions = [
 
 export function QuickActions() {
   return (
-    <div className="fade-up fade-up-2 w-full max-w-4xl">
+    <div className="fade-up fade-up-3 w-full max-w-4xl">
       <h2 className="eyebrow mb-3 px-1 text-xs text-muted">
         Jump back in
       </h2>

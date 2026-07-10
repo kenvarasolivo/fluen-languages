@@ -42,6 +42,9 @@ create table profiles (
   usage_immerse     int not null default 0,
   usage_chat        int not null default 0,
 
+  -- Stamped when the first-run questionnaire finishes (or is skipped).
+  onboarded_at    timestamptz,
+
   created_at      timestamptz not null default now()
 );
 
@@ -83,6 +86,10 @@ create table user_languages (
   language   text not null,
   cefr_level text not null default 'A1'
              check (cefr_level in ('A1','A2','B1','B2','C1','C2')),
+  -- From onboarding: why they're learning (drives AI personalisation)
+  -- and the level they want to reach (drives the dashboard progress bar).
+  purpose    text check (purpose in ('travel','business','exam','everyday','culture')),
+  goal_level text check (goal_level in ('A1','A2','B1','B2','C1','C2')),
   created_at timestamptz not null default now(),
   primary key (user_id, language)
 );

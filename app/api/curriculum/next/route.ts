@@ -4,6 +4,7 @@ import { aiErrorResponse } from "@/lib/ai-errors";
 import { gateAiRequest } from "@/lib/guest-limits";
 import { createSupabaseServer } from "@/lib/supabase-server";
 import { getLearningContext } from "@/lib/learning-context";
+import { PURPOSES } from "@/lib/purposes";
 import type { LanguageDef } from "@/lib/languages";
 import {
   CORE,
@@ -89,14 +90,16 @@ export async function POST(req: Request) {
       .catch(() => ({}))) as { count?: number; theme?: string };
 
     // Draw from the active language environment at the learner's level in it.
-    const { language, level } = await getLearningContext(supabase, user.id);
+    const { language, level, purpose } = await getLearningContext(supabase, user.id);
+
+    // Auto-draw order: the learner's purpose front-loads its themes
+    // (travel unlocks "travel & transport" before "daily life", etc.).
+    const order = themeOrder(level, purpose ? PURPOSES[purpose].boostThemes : []);
 
     // An explicit theme pins the draw to one cell; otherwise we auto-pick
     // in curriculum order. Ignore a theme that isn't valid for this level.
     const targetTheme =
-      requestedTheme && themeOrder(level).includes(requestedTheme)
-        ? requestedTheme
-        : null;
+      requestedTheme && order.includes(requestedTheme) ? requestedTheme : null;
 
     // Words the learner already owns — excluded from every draw.
     const { data: owned } = await supabase
@@ -123,7 +126,8 @@ export async function POST(req: Request) {
         .filter((w) => !ownedIds.has(w.id) && (!targetTheme || w.theme === targetTheme))
         .sort(
           (a, b) =>
-            curriculumOrder(a.theme, a.freq_rank) - curriculumOrder(b.theme, b.freq_rank),
+            curriculumOrder(a.theme, a.freq_rank, order) -
+            curriculumOrder(b.theme, b.freq_rank, order),
         );
 
     // First theme cell that hasn't reached its target size yet, in draw
@@ -131,7 +135,7 @@ export async function POST(req: Request) {
     const firstIncompleteCell = (all: CurriculumWord[]): string | null => {
       const counts = new Map<string, number>();
       for (const w of all) counts.set(w.theme, (counts.get(w.theme) ?? 0) + 1);
-      for (const theme of themeOrder(level)) {
+      for (const theme of order) {
         if ((counts.get(theme) ?? 0) < cellTarget(theme)) return theme;
       }
       return null;

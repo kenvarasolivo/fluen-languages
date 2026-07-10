@@ -4,6 +4,7 @@ import { aiErrorResponse } from "@/lib/ai-errors";
 import { gateAiRequest } from "@/lib/guest-limits";
 import { createSupabaseServer } from "@/lib/supabase-server";
 import { getLearningContext } from "@/lib/learning-context";
+import { PURPOSES } from "@/lib/purposes";
 import type { ImmerseKind, ImmerseLevel } from "@/lib/types";
 
 const STORY_SCHEMA = {
@@ -62,7 +63,7 @@ export async function POST(req: Request) {
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  const { language } = await getLearningContext(supabase, user!.id);
+  const { language, purpose } = await getLearningContext(supabase, user!.id);
 
   try {
     const body = (await req.json().catch(() => ({}))) as {
@@ -88,8 +89,14 @@ export async function POST(req: Request) {
         thinkingConfig: { thinkingBudget: 0 },
         maxOutputTokens: 8192,
       },
-      contents: `Write ${format} in ${language.name} about an everyday situation
-(pick something fresh and a little charming — not always the same café scene).
+      contents: `Write ${format} in ${language.name} ${
+        // The learner's purpose (from onboarding) sets the scene and
+        // register; without one, fall back to a generic everyday topic.
+        purpose
+          ? PURPOSES[purpose].immerseBrief
+          : `about an everyday situation
+(pick something fresh and a little charming — not always the same café scene)`
+      }.
 The "text_de" field holds the ${language.name} text; "text_en" is its English translation.
 Language difficulty: ${guide}.
 Comprehensible-input style: engaging, concrete, lightly repetitive so
