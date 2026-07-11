@@ -88,6 +88,18 @@ export function LanguageSwitcher({
     setError(false);
     try {
       const session = await ensureSession();
+      // Decide authoritatively whether this language has ever been studied.
+      // The `arm()` probe that sets `pendingIsNew` runs in the background and
+      // may still be in flight when the user confirms, so re-check here — the
+      // onboarding flag below is the only signal the questionnaire gets after
+      // the reload, and it must not depend on that race.
+      const { data: existing } = await supabase
+        .from("user_languages")
+        .select("language")
+        .eq("user_id", session.user.id)
+        .eq("language", pending)
+        .maybeSingle();
+      const isNew = !existing;
       // Make sure the target language has a learner-state row (level A1).
       await supabase
         .from("user_languages")
@@ -103,7 +115,7 @@ export function LanguageSwitcher({
       // A never-studied language gets the onboarding questionnaire after
       // the reload; an already-known one just swaps environments.
       try {
-        if (pendingIsNew) localStorage.setItem(PENDING_ONBOARD_KEY, pending);
+        if (isNew) localStorage.setItem(PENDING_ONBOARD_KEY, pending);
       } catch {
         /* ignore storage failure — the switch still works */
       }

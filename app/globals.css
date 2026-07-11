@@ -950,6 +950,24 @@ body {
   animation: gradient-slide 8s linear infinite;
 }
 
+/* Solid white backing painted in the exact shape of the letters, so the
+   semi-transparent shimmer gradient pops on white instead of showing the
+   black sky through it. The gradient word is layered on top of this. */
+.text-gradient-backed {
+  position: relative;
+  display: inline-block;
+}
+.text-gradient-backed > .text-gradient-space {
+  position: relative;
+}
+.text-gradient-backed::before {
+  content: attr(data-text);
+  position: absolute;
+  inset: 0;
+  color: #fff;
+  pointer-events: none;
+}
+
 /* Blends the full-bleed globe video into the page — a soft melt into
    the header sky above and the next section below, plus a whisper of
    extra darkness where the headline sits so the text stays crisp. */

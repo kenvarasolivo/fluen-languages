@@ -320,7 +320,10 @@ export default function LandingPage() {
           <h1 className="display fade-up fade-up-1 mt-8 text-5xl text-white [text-shadow:0_2px_28px_rgba(2,4,8,0.9)] sm:text-6xl md:text-8xl">
             Languages
             <br />
-            that <span className="text-gradient-space">stick.</span>
+            that{" "}
+            <span className="text-gradient-backed" data-text="stick.">
+              <span className="text-gradient-space">stick.</span>
+            </span>
           </h1>
           <p className="fade-up fade-up-2 mt-6 max-w-xl text-base leading-relaxed text-white/75 [text-shadow:0_1px_14px_rgba(2,4,8,0.95),0_0_36px_rgba(2,4,8,0.8)] md:text-lg">
             Flashcards, real texts and conversations — one calm place, no
