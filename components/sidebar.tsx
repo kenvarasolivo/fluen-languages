@@ -6,6 +6,7 @@ import { usePathname } from "next/navigation";
 import {
   LayoutGrid,
   Layers,
+  BookOpen,
   Clapperboard,
   MessageCircle,
   Library,
@@ -25,6 +26,7 @@ import { PurposeFocusButton } from "@/components/purpose-focus";
 const nav = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutGrid },
   { href: "/learn", label: "Foundations", icon: Layers },
+  { href: "/grammar", label: "Grammar", icon: BookOpen },
   { href: "/immerse", label: "Immerse", icon: Clapperboard },
   { href: "/speak", label: "Speak", icon: MessageCircle },
   { href: "/cards", label: "Cards", icon: Library },

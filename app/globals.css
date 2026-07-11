@@ -932,22 +932,33 @@ body {
   }
 }
 
-/* Headline shimmer tuned for the black sky — periwinkle to ice to
-   white, always bright regardless of the app theme. */
+/* Headline shimmer tuned for the black sky. Both gradient stops are bright
+   (sky-blue and white), so as the sheen slides no dim band ever sweeps
+   through the letters. Symmetric endpoints keep the loop seamless. */
 .text-gradient-space {
   background: linear-gradient(
     100deg,
-    #7692ff,
-    #abd2fa 40%,
-    #ffffff 55%,
-    #abd2fa 70%,
-    #7692ff
+    #8fbcff 0%,
+    #ffffff 50%,
+    #8fbcff 100%
   );
-  background-size: 250% 100%;
+  background-size: 200% 100%;
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
-  animation: gradient-slide 8s linear infinite;
+  /* Override the h1's inherited near-black text-shadow, which otherwise
+     pools behind the transparent-filled letters and reads as a dark dent
+     in the middle of the word. A soft blue glow keeps it bright instead. */
+  text-shadow: 0 0 24px rgba(143, 188, 255, 0.5);
+  animation: headline-shimmer 6s linear infinite;
+}
+@keyframes headline-shimmer {
+  from {
+    background-position: 0% 50%;
+  }
+  to {
+    background-position: 200% 50%;
+  }
 }
 
 /* Solid white backing painted in the exact shape of the letters, so the
@@ -965,6 +976,9 @@ body {
   position: absolute;
   inset: 0;
   color: #fff;
+  /* Drop the inherited near-black h1 shadow so no dark halo bleeds
+     through the letter gaps behind the gradient word. */
+  text-shadow: none;
   pointer-events: none;
 }
 
