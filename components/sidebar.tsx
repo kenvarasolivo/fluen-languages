@@ -112,13 +112,13 @@ export function Sidebar() {
   const { purpose, setPurpose } = usePurpose();
 
   return (
-    <aside className="hidden h-full w-64 shrink-0 flex-col border-r border-border bg-surface md:flex">
+    <aside className="sidebar-blue hidden h-full w-64 shrink-0 flex-col border-r border-border md:flex">
       <div className="app-header flex h-16 shrink-0 items-center border-b px-5">
         <Link
           href="/dashboard"
           className="flex items-center gap-2.5 rounded-md text-lg font-extrabold tracking-[0.2em] text-white"
         >
-          <span aria-hidden className="size-2.5 bg-accent shadow-[0_0_10px] shadow-accent/50" />
+          <span aria-hidden className="logo-dot size-2.5" />
           FLUEN
         </Link>
       </div>
@@ -137,16 +137,16 @@ export function Sidebar() {
               key={href}
               href={href}
               aria-current={active ? "page" : undefined}
-              className={`group flex items-center gap-3 rounded-md px-3 py-2.5 text-[15px] transition-colors duration-150 ${
+              className={`group flex items-center gap-3 rounded-full px-4 py-2.5 text-[15px] transition-colors duration-150 ${
                 active
-                  ? "bg-accent font-semibold text-white shadow-xs"
-                  : "text-muted hover:bg-foreground/[0.04] hover:text-foreground"
+                  ? "bg-white font-semibold text-[#091540] shadow-raised"
+                  : "text-muted hover:bg-accent-soft hover:text-foreground"
               }`}
             >
               <Icon
                 size={19}
                 strokeWidth={active ? 2.25 : 1.75}
-                className={active ? "text-white" : "text-muted transition-colors duration-150 group-hover:text-foreground"}
+                className={active ? "text-[#091540]" : "text-muted transition-colors duration-150 group-hover:text-foreground"}
               />
               {label}
             </Link>
@@ -222,7 +222,7 @@ export function MobileHeader() {
         href="/dashboard"
         className="flex items-center gap-2 rounded-md text-base font-extrabold tracking-[0.2em]"
       >
-        <span aria-hidden className="size-2 bg-accent shadow-[0_0_8px] shadow-accent/40" />
+        <span aria-hidden className="logo-dot size-2" />
         FLUEN
       </Link>
       <div className="flex items-center gap-1.5">
@@ -275,7 +275,7 @@ export function MobileNav() {
             key={href}
             href={href}
             aria-current={active ? "page" : undefined}
-            className={`flex min-w-0 flex-1 flex-col items-center gap-0.5 px-1 pb-1.5 pt-2 text-[10px] font-bold uppercase tracking-wide transition-colors duration-150 ${
+            className={`flex min-w-0 flex-1 flex-col items-center gap-0.5 px-1 pb-1.5 pt-2 text-[10px] font-semibold tracking-wide transition-colors duration-150 ${
               active ? "text-accent" : "text-muted"
             }`}
           >

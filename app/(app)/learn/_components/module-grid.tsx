@@ -153,7 +153,7 @@ export function ModuleGrid({
           return (
             <div
               key={s.theme}
-              className="flex flex-col gap-3 rounded-md border-[1.5px] border-border-strong bg-surface-raised p-5 transition-transform duration-150 hover:-translate-y-0.5 hover:shadow-pop"
+              className="flex flex-col gap-3 rounded-3xl border border-border bg-surface-raised p-5 shadow-xs transition-transform duration-200 hover:-translate-y-0.5 hover:shadow-pop"
             >
               <div className="flex items-start justify-between gap-2">
                 <p className="text-sm font-semibold">{moduleLabel(s.theme)}</p>

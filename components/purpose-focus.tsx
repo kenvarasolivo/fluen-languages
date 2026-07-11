@@ -46,8 +46,8 @@ export function PurposeBanner({
   return (
     <>
       <div
-        className="fade-up relative isolate flex items-center gap-4 overflow-hidden rounded-lg border-[1.5px] border-border-strong px-5 py-5 text-white shadow-pop"
-        style={{ background: current ? current.color : "#0b0b0d" }}
+        className="fade-up relative isolate flex items-center gap-4 overflow-hidden rounded-3xl border border-white/15 px-5 py-5 text-white shadow-pop"
+        style={{ background: current ? current.color : "#091540" }}
       >
         <span
           aria-hidden
@@ -73,7 +73,7 @@ export function PurposeBanner({
         </div>
         <button
           onClick={() => setOpen(true)}
-          className="shrink-0 rounded-md border-[1.5px] border-white/40 px-3.5 py-2 text-xs font-semibold uppercase tracking-[0.06em] transition-colors duration-150 hover:bg-white hover:text-foreground"
+          className="shrink-0 rounded-full border-[1.5px] border-white/40 px-4 py-2 text-xs font-semibold transition-colors duration-150 hover:bg-white hover:text-[#091540]"
         >
           {current ? "Change" : "Choose"}
         </button>

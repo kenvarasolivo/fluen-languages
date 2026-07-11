@@ -66,7 +66,7 @@ export function LevelProgress() {
     collected === null ? 0 : Math.min(100, Math.round((collected / target) * 100));
 
   return (
-    <section className="fade-up fade-up-1 w-full max-w-4xl rounded-md border-[1.5px] border-border-strong bg-surface-raised px-5 py-5 sm:px-6">
+    <section className="fade-up fade-up-1 w-full max-w-4xl rounded-3xl border border-border bg-surface-raised px-5 py-5 shadow-xs sm:px-6">
       <div className="flex items-center justify-between gap-3">
         <p className="eyebrow flex items-center gap-1.5 text-[11px] text-muted">
           <TrendingUp size={13} strokeWidth={2} aria-hidden className="text-accent" />

@@ -1,83 +1,105 @@
 @import "tailwindcss";
 
 /* ============================================================
-   FLUEN design tokens — BOLD edition.
+   FLUEN design tokens — FLUID edition.
 
-   A high-contrast, editorial system: near-pure white and near-pure
-   black do the structural heavy lifting (bold black-on-white in
-   light, bold white-on-black in dark), with one electric accent and
-   a few saturated secondaries that are allowed to actually POP.
+   A liquid, blue-led system: deep navy (#091540) does the anchoring
+   that black used to, electric blue (#1B2CC1) is the voice, and
+   periwinkle (#7692FF) + ice (#ABD2FA) melt through backgrounds as
+   slow-moving gradients. Everything is soft: pill buttons, large
+   radii, glow shadows instead of hard offsets.
 
-   Voice: the wordmark's confident, uppercase, tightly-set type is the
-   house style — see `.eyebrow`, `.display` and the uppercase buttons.
+   Motion language: backgrounds drift, gradients shimmer, the orb
+   morphs like liquid — always slow, always ease-in-out, and all of
+   it collapses under prefers-reduced-motion.
 
-   Elevation model:
+   Elevation model (unchanged):
      --background      app canvas (lowest)
      --surface         panels, sidebars, cards at rest
-     --surface-raised  interactive / lifted elements (+ shadow)
+     --surface-raised  interactive / lifted elements (+ glow)
 
-   Accent rules: the electric accent and secondaries are for solid
-   pops — chips, active states, category bars, key highlights — not
-   timid 9% washes. The pale `*-soft` tints stay pale on purpose so
-   dark text on them is always readable.
+   Palette source: #091540 · #1B2CC1 · #3D518C · #7692FF · #ABD2FA
    ============================================================ */
 
 :root {
-  --background: #ffffff;
+  --background: #fbfcff;
   --surface: #ffffff;
   --surface-raised: #ffffff;
-  --border: #e4e0d8;
-  --border-strong: #100f0e;
-  --foreground: #100f0e;
-  --muted: #6a635b;
-  --accent: #4536f2;
-  --accent-soft: rgba(69, 54, 242, 0.1);
-  --coral: #e63b2a;
-  --coral-soft: rgba(230, 59, 42, 0.1);
-  --amber: #c2790f;
-  --amber-soft: rgba(194, 121, 15, 0.12);
-  --teal: #0d8c79;
-  --teal-soft: rgba(13, 140, 121, 0.11);
-  --positive: #1f9d57;
-  --negative: #db2b2b;
-  --ring: rgba(69, 54, 242, 0.55);
+  --border: #dbe4f8;
+  --border-strong: #b7c6f2;
+  --foreground: #091540;
+  --muted: #5d6b96;
+  --accent: #1b2cc1;
+  --accent-2: #7692ff;
+  --accent-3: #abd2fa;
+  --accent-soft: rgba(118, 146, 255, 0.14);
+  --coral: #d63d7e;
+  --coral-soft: rgba(214, 61, 126, 0.1);
+  --amber: #b07c08;
+  --amber-soft: rgba(176, 124, 8, 0.12);
+  --teal: #0793b4;
+  --teal-soft: rgba(7, 147, 180, 0.11);
+  --positive: #17a45f;
+  --negative: #e03131;
+  --ring: rgba(27, 44, 193, 0.45);
 
-  --shadow-xs: 0 1px 1px rgba(16, 15, 14, 0.06);
+  /* Blue-led gradients — one voice for actions and active states. */
+  --grad-accent: linear-gradient(135deg, #1b2cc1 0%, #4152dd 55%, #5f74ef 100%);
+  --grad-deep: linear-gradient(170deg, #03071c 0%, #091540 48%, #122058 86%, #1b2f8a 100%);
+
+  /* Aurora wash colours — kept faint in light mode so the canvas stays
+     white wherever text sits; the tint only ghosts through empty corners. */
+  --mesh-1: rgba(171, 210, 250, 0.3);
+  --mesh-2: rgba(118, 146, 255, 0.14);
+  --mesh-3: rgba(27, 44, 193, 0.06);
+  --blob-opacity: 0.3;
+
+  --shadow-xs: 0 1px 2px rgba(9, 21, 64, 0.06);
   --shadow-raised:
-    0 1px 0 rgba(16, 15, 14, 0.04),
-    0 2px 6px -2px rgba(16, 15, 14, 0.1);
+    0 1px 2px rgba(9, 21, 64, 0.05),
+    0 8px 20px -8px rgba(61, 81, 140, 0.2);
   --shadow-pop:
-    0 0 0 1.5px var(--foreground),
-    6px 6px 0 -1px var(--foreground);
+    0 2px 6px rgba(9, 21, 64, 0.07),
+    0 18px 44px -14px rgba(27, 44, 193, 0.35);
 }
 
 :root.dark {
-  --background: #0a0a0b;
-  --surface: #0a0a0b;
-  --surface-raised: #161617;
-  --border: #2a2a2c;
-  --border-strong: #f5f4f2;
-  --foreground: #f7f6f4;
-  --muted: #9a948c;
-  --accent: #6f60ff;
-  --accent-soft: rgba(111, 96, 255, 0.16);
-  --coral: #ff6a55;
-  --coral-soft: rgba(255, 106, 85, 0.16);
-  --amber: #e8a93a;
-  --amber-soft: rgba(232, 169, 58, 0.14);
-  --teal: #2bc1aa;
-  --teal-soft: rgba(43, 193, 170, 0.15);
-  --positive: #34c46e;
-  --negative: #ff5a5a;
-  --ring: rgba(140, 128, 255, 0.65);
+  --background: #060b24;
+  --surface: #081130;
+  --surface-raised: #0e1a44;
+  --border: #1d2b5c;
+  --border-strong: #3d518c;
+  --foreground: #eaf1ff;
+  --muted: #8fa0cf;
+  --accent: #7692ff;
+  --accent-2: #abd2fa;
+  --accent-3: #1b2cc1;
+  --accent-soft: rgba(118, 146, 255, 0.17);
+  --coral: #ff6fa5;
+  --coral-soft: rgba(255, 111, 165, 0.16);
+  --amber: #efb03f;
+  --amber-soft: rgba(239, 176, 63, 0.14);
+  --teal: #3ec7e0;
+  --teal-soft: rgba(62, 199, 224, 0.15);
+  --positive: #3ddc84;
+  --negative: #ff5d5d;
+  --ring: rgba(118, 146, 255, 0.6);
+
+  --grad-accent: linear-gradient(135deg, #2438cf 0%, #4c63ea 55%, #7692ff 100%);
+  --grad-deep: linear-gradient(170deg, #020515 0%, #081130 48%, #101d52 86%, #1a2c82 100%);
+
+  --mesh-1: rgba(27, 44, 193, 0.55);
+  --mesh-2: rgba(171, 210, 250, 0.26);
+  --mesh-3: rgba(118, 146, 255, 0.13);
+  --blob-opacity: 0.5;
 
   --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.5);
   --shadow-raised:
-    0 1px 0 rgba(0, 0, 0, 0.5),
-    0 2px 10px -2px rgba(0, 0, 0, 0.6);
+    0 1px 0 rgba(0, 0, 0, 0.4),
+    0 10px 26px -10px rgba(0, 0, 0, 0.65);
   --shadow-pop:
-    0 0 0 1.5px var(--foreground),
-    6px 6px 0 -1px var(--foreground);
+    0 2px 8px rgba(0, 0, 0, 0.45),
+    0 18px 50px -14px rgba(118, 146, 255, 0.32);
 }
 
 @theme inline {
@@ -104,14 +126,14 @@
   --shadow-raised: var(--shadow-raised);
   --shadow-pop: var(--shadow-pop);
 
-  /* Sharper radius scale — crisp, confident corners instead of pillowy
-     ones. Every rounded-* utility tightens app-wide from this. */
-  --radius-sm: 0.125rem;
-  --radius-md: 0.25rem;
-  --radius-lg: 0.3125rem;
-  --radius-xl: 0.375rem;
-  --radius-2xl: 0.5rem;
-  --radius-3xl: 0.75rem;
+  /* Fluid radius scale — generous, pillowy corners app-wide. Every
+     rounded-* utility softens from this. */
+  --radius-sm: 0.5rem;
+  --radius-md: 0.875rem;
+  --radius-lg: 1rem;
+  --radius-xl: 1.25rem;
+  --radius-2xl: 1.75rem;
+  --radius-3xl: 2.25rem;
 
   --font-sans: var(--font-inter), ui-sans-serif, system-ui, -apple-system,
     "Segoe UI", sans-serif;
@@ -143,43 +165,45 @@ body {
 }
 
 /* ============================================================
-   House voice — the wordmark's uppercase, tightly-tracked type
-   applied beyond the logo: eyebrow labels, display headlines and
-   the bold primary action.
+   House voice — quiet caps for tiny labels, big soft-set display
+   type for headlines. No shouting; the color does the talking.
    ============================================================ */
 
 /* Small, all-caps, wide-tracked labels (section kickers, meta). */
 .eyebrow {
   text-transform: uppercase;
-  letter-spacing: 0.16em;
+  letter-spacing: 0.14em;
   font-weight: 600;
 }
 
-/* Big, heavy, tight display headlines. */
+/* Big, heavy display headlines — sentence case, gently tightened. */
 .display {
   font-weight: 800;
-  letter-spacing: -0.03em;
-  line-height: 0.95;
+  letter-spacing: -0.025em;
+  line-height: 1.02;
 }
 
-/* Primary action — solid foreground on background, so it reads
-   black-on-white in light mode and white-on-black in dark. Uppercase
-   and tracked, like the wordmark. */
+/* Primary action — a liquid blue gradient pill. The unlayered
+   border-radius intentionally wins over any rounded-* utility so
+   every primary action reads as a pill without touching call sites. */
 .btn-primary {
-  background: var(--foreground);
-  color: var(--background);
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
+  background-image: var(--grad-accent);
+  background-size: 160% 160%;
+  background-position: 0% 50%;
+  color: #fff;
+  border: none;
+  border-radius: 9999px;
   font-weight: 600;
-  border: 1.5px solid var(--foreground);
+  letter-spacing: 0.01em;
   transition:
-    transform 150ms ease,
-    box-shadow 150ms ease,
-    background 150ms ease,
-    color 150ms ease;
+    transform 200ms ease,
+    box-shadow 200ms ease,
+    background-position 400ms ease;
 }
 .btn-primary:hover {
   transform: translateY(-1px);
+  background-position: 100% 50%;
+  box-shadow: 0 10px 28px -10px rgba(27, 44, 193, 0.55);
 }
 .btn-primary:active {
   transform: translateY(0) scale(0.99);
@@ -187,69 +211,185 @@ body {
 .btn-primary:disabled {
   opacity: 0.4;
   transform: none;
+  box-shadow: none;
 }
 
-/* Outline counterpart — bold border, transparent fill; inverts on hover. */
+/* Outline counterpart — glassy pill with a soft blue edge. */
 .btn-outline {
-  background: transparent;
+  background: color-mix(in srgb, var(--surface-raised) 55%, transparent);
   color: var(--foreground);
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
   font-weight: 600;
+  letter-spacing: 0.01em;
   border: 1.5px solid var(--border-strong);
+  border-radius: 9999px;
+  backdrop-filter: blur(8px);
   transition:
-    transform 150ms ease,
-    background 150ms ease,
-    color 150ms ease;
+    transform 200ms ease,
+    background 200ms ease,
+    border-color 200ms ease,
+    color 200ms ease;
 }
 .btn-outline:hover {
-  background: var(--foreground);
-  color: var(--background);
+  border-color: var(--accent);
+  color: var(--accent);
+  background: var(--accent-soft);
   transform: translateY(-1px);
 }
 .btn-outline:active {
   transform: translateY(0) scale(0.99);
 }
 
+/* Solid gradient fill for active chips / nav pills — white text on
+   the same liquid blue as the primary action. */
+.grad-accent {
+  background-image: var(--grad-accent);
+  color: #fff;
+}
+
 /* ============================================================
-   Surfaces — a crisp near-flat backdrop and a vivid headline.
+   Surfaces — a slowly drifting liquid-blue backdrop. The three
+   oversized radial washes move against each other so the canvas
+   feels alive without ever fighting the content.
    ============================================================ */
 
 .bg-mesh {
-  background:
-    radial-gradient(
-      42rem 26rem at 10% -12%,
-      color-mix(in srgb, var(--accent) 12%, transparent),
-      transparent 60%
-    ),
-    radial-gradient(
-      34rem 24rem at 92% 0%,
-      color-mix(in srgb, var(--coral) 9%, transparent),
-      transparent 58%
-    ),
-    var(--background);
+  background-color: var(--background);
+  background-image:
+    radial-gradient(52% 46% at 8% -6%, var(--mesh-1), transparent 68%),
+    radial-gradient(46% 42% at 102% 2%, var(--mesh-2), transparent 70%),
+    radial-gradient(58% 52% at 70% 108%, var(--mesh-3), transparent 72%);
+  background-size: 170% 170%, 165% 165%, 185% 185%;
+  background-position: 0% 0%, 100% 0%, 60% 100%;
+  animation: mesh-drift 28s ease-in-out infinite alternate;
 }
 
-/* Vivid, high-energy headline fill. */
+@keyframes mesh-drift {
+  0% {
+    background-position: 0% 0%, 100% 0%, 60% 100%;
+  }
+  50% {
+    background-position: 45% 35%, 55% 25%, 30% 65%;
+  }
+  100% {
+    background-position: 95% 60%, 5% 55%, 0% 15%;
+  }
+}
+
+/* Shimmering blue headline fill — the gradient slides through the
+   letters on a slow loop. */
 .text-gradient-warm {
-  background: linear-gradient(96deg, var(--accent), var(--coral) 92%);
+  background: linear-gradient(
+    100deg,
+    var(--accent),
+    var(--accent-2) 40%,
+    var(--accent-3) 55%,
+    var(--accent-2) 70%,
+    var(--accent)
+  );
+  background-size: 250% 100%;
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
+  animation: gradient-slide 7s linear infinite;
+}
+
+@keyframes gradient-slide {
+  from {
+    background-position: 0% 50%;
+  }
+  to {
+    background-position: 250% 50%;
+  }
+}
+
+/* Planet horizon — an enormous circle anchored below the viewport so
+   only a gently curved sliver of its top edge rises into the page:
+   deep-blue ground, a thin ice rim, and an atmosphere glow breathing
+   off the curve. Echoes the hero's globe at the journey's end. */
+.horizon-arc {
+  position: absolute;
+  left: 50%;
+  bottom: 0;
+  transform: translate(-50%, calc(100% - 11rem));
+  width: 300vw;
+  height: 300vw;
+  border-radius: 50%;
+  pointer-events: none;
+  /* Ground stays deep navy; the light concentrates in a luminous band
+     right at the rim, like an atmosphere seen edge-on. */
+  background: radial-gradient(
+    100% 100% at 50% 100%,
+    #030612 0%,
+    #060c26 96%,
+    #0d1a4a 98.4%,
+    #2140b8 99.6%,
+    #6d8cff 100%
+  );
+  box-shadow:
+    inset 0 2px 0 rgba(200, 224, 255, 0.55),
+    inset 0 30px 70px -22px rgba(118, 146, 255, 0.4),
+    0 -34px 130px -20px rgba(88, 122, 255, 0.5);
+}
+
+/* Round gradient brand dot (logo mark) — a tiny liquid orb. */
+.logo-dot {
+  border-radius: 9999px;
+  background: linear-gradient(135deg, var(--accent-2), var(--accent));
+  box-shadow: 0 0 14px color-mix(in srgb, var(--accent-2) 75%, transparent);
+}
+
+/* Decorative liquid blob — a big, blurred, slowly morphing gradient
+   mass used behind heroes. Purely aesthetic, always aria-hidden. */
+.blob {
+  position: absolute;
+  pointer-events: none;
+  background: linear-gradient(
+    135deg,
+    color-mix(in srgb, var(--accent-2) 60%, transparent),
+    color-mix(in srgb, var(--accent-3) 55%, transparent) 55%,
+    color-mix(in srgb, var(--accent) 35%, transparent)
+  );
+  filter: blur(52px);
+  opacity: var(--blob-opacity);
+  border-radius: 42% 58% 56% 44% / 46% 42% 58% 54%;
+  animation:
+    blob-morph 14s ease-in-out infinite,
+    blob-drift 22s ease-in-out infinite alternate;
+}
+
+@keyframes blob-morph {
+  0%,
+  100% {
+    border-radius: 42% 58% 56% 44% / 46% 42% 58% 54%;
+  }
+  33% {
+    border-radius: 58% 42% 44% 56% / 42% 58% 46% 54%;
+  }
+  66% {
+    border-radius: 48% 52% 60% 40% / 56% 44% 54% 46%;
+  }
+}
+
+@keyframes blob-drift {
+  from {
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+  to {
+    transform: translate3d(3rem, -2rem, 0) scale(1.12);
+  }
 }
 
 /* ============================================================
-   Country banner — a bold, near-black hero block with the active
-   language's accent glow woven in. White text sits on top (set by
-   the GermanyBanner / Greeting component), giving an explicit
-   white-on-black moment inside the app.
+   Country banner — deep navy hero with the country photo glowing
+   through a blue-tinted scrim. White text sits on top; the flag
+   rule underneath keeps each language's national colours.
    ============================================================ */
 
 .banner-de {
   position: relative;
   isolation: isolate;
   color: #fff;
-  background: #0b0b0d;
+  background: #091540;
 }
 
 /* The country photo sits behind the greeting; `isolation: isolate` on
@@ -262,57 +402,117 @@ body {
   background-position: center;
 }
 
-/* A gentle dark filter — heavier toward the lower-left where the text
-   lives, lighter on the right so the city still reads clearly. */
+/* Neutral dark filter — heavier toward the lower-left where the text
+   lives, lighter on the right so the country photo keeps its own
+   colours (no blue cast on the photo). */
 .banner-scrim {
   position: absolute;
   inset: 0;
   z-index: -1;
   background:
     linear-gradient(
-      105deg,
-      rgba(11, 11, 13, 0.6) 0%,
-      rgba(11, 11, 13, 0.32) 55%,
-      rgba(11, 11, 13, 0.18) 100%
+      100deg,
+      rgba(3, 6, 20, 0.74) 0%,
+      rgba(4, 8, 26, 0.42) 48%,
+      rgba(4, 8, 26, 0.08) 82%,
+      rgba(3, 6, 20, 0.3) 100%
     ),
     linear-gradient(
       to top,
-      rgba(11, 11, 13, 0.5) 0%,
-      rgba(11, 11, 13, 0) 60%
+      rgba(3, 6, 20, 0.66) 0%,
+      rgba(3, 6, 20, 0) 55%
+    ),
+    radial-gradient(
+      90% 70% at 100% -10%,
+      rgba(118, 146, 255, 0.18),
+      transparent 62%
     );
 }
 
 /* ============================================================
-   App chrome — an always-black top strip shared by the sidebar
-   logo header and every view header, so the whole top bar reads as
-   one bold black band that aligns left-to-right.
+   App chrome — a deep blue gradient strip shared by the sidebar
+   logo header and every view header, so the top band reads as one
+   continuous liquid-navy surface.
    ============================================================ */
 
 .app-header {
-  background: #0b0b0d;
+  /* Faint stars scattered over the deep gradient + a periwinkle
+     atmosphere glow rising from the top-right corner. */
+  background-image:
+    radial-gradient(1px 1px at 32px 14px, rgba(255, 255, 255, 0.5), transparent),
+    radial-gradient(1px 1px at 118px 42px, rgba(171, 210, 250, 0.4), transparent),
+    radial-gradient(1.5px 1.5px at 210px 24px, rgba(255, 255, 255, 0.3), transparent),
+    radial-gradient(70% 160% at 88% -30%, rgba(118, 146, 255, 0.25), transparent 65%),
+    var(--grad-deep);
+  background-size:
+    260px 64px,
+    260px 64px,
+    260px 64px,
+    100% 100%,
+    100% 100%;
   color: #fff;
-  border-color: rgba(255, 255, 255, 0.12);
+  border-color: rgba(118, 146, 255, 0.25);
 }
 
-/* Secondary controls (toggles, counters) that sit on the black
+/* Desktop sidebar — one continuous deep-blue panel. Re-scoping the
+   theme tokens here flips every child (switcher, focus chip, account
+   row) to light-on-navy without touching their markup. */
+.sidebar-blue {
+  --surface-raised: #16276b;
+  --border: rgba(171, 210, 250, 0.22);
+  --border-strong: rgba(171, 210, 250, 0.5);
+  --foreground: #ffffff;
+  --muted: #b7c5ef;
+  --accent: #9db4ff;
+  --accent-soft: rgba(255, 255, 255, 0.12);
+  /* Night sky in a column: sparse stars drifting over a vertical
+     space gradient, with a soft atmosphere glow pooling at the foot
+     of the panel like a horizon below the viewport. */
+  background-image:
+    radial-gradient(1px 1px at 26px 38px, rgba(255, 255, 255, 0.55), transparent),
+    radial-gradient(1px 1px at 98px 132px, rgba(171, 210, 250, 0.45), transparent),
+    radial-gradient(1.4px 1.4px at 152px 64px, rgba(255, 255, 255, 0.35), transparent),
+    radial-gradient(1px 1px at 60px 182px, rgba(255, 255, 255, 0.28), transparent),
+    radial-gradient(1px 1px at 186px 158px, rgba(171, 210, 250, 0.3), transparent),
+    radial-gradient(130% 34% at 50% 104%, rgba(118, 146, 255, 0.28), transparent 70%),
+    linear-gradient(180deg, #03071c 0%, #081130 46%, #0e1c50 82%, #16267a 100%);
+  background-size:
+    210px 210px,
+    210px 210px,
+    210px 210px,
+    210px 210px,
+    210px 210px,
+    100% 100%,
+    100% 100%;
+  color: #fff;
+}
+
+/* The logo strip melts into the sidebar's own gradient; its bottom
+   border still aligns with the page headers next to it. */
+.sidebar-blue .app-header {
+  background-image: none;
+  background: transparent;
+}
+
+/* Secondary controls (toggles, counters) that sit on the blue
    header — quiet outline by default, solid white when active. */
 .hdr-chip {
-  border: 1.5px solid rgba(255, 255, 255, 0.25);
+  border: 1.5px solid rgba(171, 210, 250, 0.35);
   background: transparent;
-  color: rgba(255, 255, 255, 0.85);
+  color: rgba(234, 241, 255, 0.85);
   transition:
     background 150ms ease,
     color 150ms ease,
     border-color 150ms ease;
 }
 .hdr-chip:hover {
-  background: rgba(255, 255, 255, 0.12);
+  background: rgba(171, 210, 250, 0.15);
   color: #fff;
 }
 .hdr-chip-active {
   border-color: #fff;
   background: #fff;
-  color: #0b0b0d;
+  color: #091540;
 }
 
 /* The three German flag bands as a bold accent rule. */
@@ -344,34 +544,34 @@ body {
   );
 }
 
-/* Solid-tinted tiles for the stat grid + quick actions — keyed to
-   each accent, mixed firmly so the colour reads but dark text stays
+/* Soft-tinted tiles for the stat grid + quick actions — keyed to
+   each accent, mixed gently so the colour reads but dark text stays
    legible. */
 .tile-accent {
   background: linear-gradient(
     160deg,
-    color-mix(in srgb, var(--accent) 18%, var(--surface-raised)),
+    color-mix(in srgb, var(--accent) 16%, var(--surface-raised)),
     var(--surface-raised) 78%
   );
 }
 .tile-coral {
   background: linear-gradient(
     160deg,
-    color-mix(in srgb, var(--coral) 18%, var(--surface-raised)),
+    color-mix(in srgb, var(--coral) 16%, var(--surface-raised)),
     var(--surface-raised) 78%
   );
 }
 .tile-teal {
   background: linear-gradient(
     160deg,
-    color-mix(in srgb, var(--teal) 18%, var(--surface-raised)),
+    color-mix(in srgb, var(--teal) 16%, var(--surface-raised)),
     var(--surface-raised) 78%
   );
 }
 .tile-amber {
   background: linear-gradient(
     160deg,
-    color-mix(in srgb, var(--amber) 20%, var(--surface-raised)),
+    color-mix(in srgb, var(--amber) 18%, var(--surface-raised)),
     var(--surface-raised) 78%
   );
 }
@@ -468,31 +668,51 @@ body {
 }
 
 /* ============================================================
-   Voice orb — the one place richer motion is allowed, and only
-   as functional state feedback.
+   Voice orb — liquid at rest: a blue gradient mass whose outline
+   slowly morphs. Richer motion only as functional state feedback.
    ============================================================ */
 
 .orb {
   background:
     radial-gradient(
-      circle at 32% 26%,
-      color-mix(in srgb, var(--accent) 18%, transparent),
+      circle at 30% 24%,
+      color-mix(in srgb, var(--accent-2) 36%, transparent),
       transparent 62%
     ),
+    radial-gradient(
+      circle at 72% 78%,
+      color-mix(in srgb, var(--accent) 22%, transparent),
+      transparent 58%
+    ),
     var(--surface-raised);
+  border-radius: 46% 54% 52% 48% / 48% 46% 54% 52%;
   box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.07),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1),
     0 0 0 1.5px var(--border-strong),
     0 0 90px -24px var(--accent);
+  animation: orb-morph 9s ease-in-out infinite;
   transition:
     box-shadow 200ms ease,
     transform 200ms ease;
 }
 
+@keyframes orb-morph {
+  0%,
+  100% {
+    border-radius: 46% 54% 52% 48% / 48% 46% 54% 52%;
+  }
+  33% {
+    border-radius: 54% 46% 46% 54% / 44% 56% 48% 56%;
+  }
+  66% {
+    border-radius: 48% 52% 58% 42% / 54% 44% 56% 46%;
+  }
+}
+
 .orb:hover {
   transform: scale(1.015);
   box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.07),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1),
     0 0 0 1.5px var(--accent),
     0 0 120px -20px var(--accent);
 }
@@ -503,29 +723,35 @@ body {
 
 .orb[data-state="listening"] {
   box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.07),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1),
     0 0 0 2px var(--accent),
     0 0 0 8px var(--accent-soft),
     0 0 150px -12px var(--accent);
-  animation: orb-breathe 2.4s ease-in-out infinite;
+  animation:
+    orb-morph 9s ease-in-out infinite,
+    orb-breathe 2.4s ease-in-out infinite;
 }
 
 .orb[data-state="thinking"] {
   box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.07),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1),
     0 0 0 2px var(--accent),
     0 0 0 4px var(--accent-soft),
     0 0 120px -18px var(--accent);
-  animation: orb-breathe 1.6s ease-in-out infinite;
+  animation:
+    orb-morph 9s ease-in-out infinite,
+    orb-breathe 1.6s ease-in-out infinite;
 }
 
 .orb[data-state="speaking"] {
   box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.07),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1),
     0 0 0 2px var(--accent),
     0 0 0 5px var(--accent-soft),
     0 0 130px -16px var(--accent);
-  animation: orb-speak 1.4s ease-in-out infinite;
+  animation:
+    orb-morph 9s ease-in-out infinite,
+    orb-speak 1.4s ease-in-out infinite;
 }
 
 @keyframes orb-breathe {
@@ -542,18 +768,189 @@ body {
   0%,
   100% {
     box-shadow:
-      inset 0 1px 0 rgba(255, 255, 255, 0.07),
+      inset 0 1px 0 rgba(255, 255, 255, 0.1),
       0 0 0 2px var(--accent),
       0 0 0 4px var(--accent-soft),
       0 0 110px -18px var(--accent);
   }
   50% {
     box-shadow:
-      inset 0 1px 0 rgba(255, 255, 255, 0.07),
+      inset 0 1px 0 rgba(255, 255, 255, 0.1),
       0 0 0 2px var(--accent),
       0 0 0 7px var(--accent-soft),
       0 0 150px -12px var(--accent);
   }
+}
+
+/* ============================================================
+   Outer space — the landing page's world. A near-black sky with
+   faint nebulae, three star layers twinkling at different tempos,
+   a handful of bright blinking stars, and the video globe melting
+   seamlessly into the page. Always dark, independent of theme.
+   ============================================================ */
+
+.page-space {
+  background-color: #020408;
+  /* Nebulae live only in the page's mid-section — the top stays pure
+     black so the header and the video hero read as one dark sky. */
+  background-image:
+    radial-gradient(46% 30% at 10% 32%, rgba(118, 146, 255, 0.08), transparent 70%),
+    radial-gradient(60% 36% at 90% 62%, rgba(27, 44, 193, 0.11), transparent 70%);
+  color: #eef2ff;
+}
+
+/* Repeating star sheets — each layer is a tile of tiny radial dots.
+   Layers twinkle out of phase so the sky never pulses as one. */
+.star-layer {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background-repeat: repeat;
+}
+
+.star-layer-1 {
+  background-image:
+    radial-gradient(1px 1px at 24px 34px, rgba(255, 255, 255, 0.85), transparent),
+    radial-gradient(1px 1px at 118px 92px, rgba(255, 255, 255, 0.6), transparent),
+    radial-gradient(1px 1px at 76px 158px, rgba(255, 255, 255, 0.5), transparent),
+    radial-gradient(1px 1px at 172px 202px, rgba(255, 255, 255, 0.7), transparent),
+    radial-gradient(1px 1px at 210px 56px, rgba(255, 255, 255, 0.45), transparent);
+  background-size: 240px 240px;
+  animation: twinkle 6s ease-in-out infinite;
+}
+
+.star-layer-2 {
+  background-image:
+    radial-gradient(1.4px 1.4px at 64px 26px, rgba(171, 210, 250, 0.8), transparent),
+    radial-gradient(1px 1px at 200px 140px, rgba(255, 255, 255, 0.55), transparent),
+    radial-gradient(1.2px 1.2px at 300px 224px, rgba(171, 210, 250, 0.6), transparent),
+    radial-gradient(1px 1px at 140px 290px, rgba(255, 255, 255, 0.5), transparent);
+  background-size: 340px 340px;
+  animation: twinkle 9s ease-in-out -3s infinite;
+}
+
+.star-layer-3 {
+  background-image:
+    radial-gradient(1.8px 1.8px at 90px 60px, rgba(255, 255, 255, 0.9), transparent),
+    radial-gradient(1.5px 1.5px at 340px 260px, rgba(171, 210, 250, 0.75), transparent),
+    radial-gradient(1.4px 1.4px at 220px 400px, rgba(255, 255, 255, 0.6), transparent);
+  background-size: 460px 460px;
+  animation: twinkle 12s ease-in-out -7s infinite;
+}
+
+@keyframes twinkle {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.35;
+  }
+}
+
+/* A single bright star — placed individually with inline top/left
+   and a staggered animation-delay so each blinks on its own beat. */
+.star {
+  position: absolute;
+  width: 3px;
+  height: 3px;
+  border-radius: 9999px;
+  background: #fff;
+  box-shadow: 0 0 8px 2px rgba(171, 210, 250, 0.65);
+  pointer-events: none;
+  animation: star-blink 3.4s ease-in-out infinite;
+}
+
+@keyframes star-blink {
+  0%,
+  100% {
+    opacity: 0.1;
+    transform: scale(0.6);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* Headline shimmer tuned for the black sky — periwinkle to ice to
+   white, always bright regardless of the app theme. */
+.text-gradient-space {
+  background: linear-gradient(
+    100deg,
+    #7692ff,
+    #abd2fa 40%,
+    #ffffff 55%,
+    #abd2fa 70%,
+    #7692ff
+  );
+  background-size: 250% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  animation: gradient-slide 8s linear infinite;
+}
+
+/* Blends the full-bleed globe video into the page — a soft melt into
+   the header sky above and the next section below, plus a whisper of
+   extra darkness where the headline sits so the text stays crisp. */
+.hero-globe-fade {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    linear-gradient(to bottom, rgba(2, 4, 8, 0.85) 0%, rgba(2, 4, 8, 0) 22%),
+    linear-gradient(to top, #020408 0%, rgba(2, 4, 8, 0) 12%),
+    radial-gradient(
+      60% 52% at 50% 30%,
+      rgba(2, 4, 8, 0.62),
+      rgba(2, 4, 8, 0.3) 55%,
+      transparent 75%
+    );
+}
+
+/* Dark glass card for the space sections — icy edge, faint blue fill. */
+.card-space {
+  border: 1px solid rgba(171, 210, 250, 0.14);
+  background: linear-gradient(
+    180deg,
+    rgba(118, 146, 255, 0.09),
+    rgba(118, 146, 255, 0.02)
+  );
+  backdrop-filter: blur(8px);
+  transition:
+    border-color 200ms ease,
+    box-shadow 200ms ease,
+    transform 200ms ease;
+}
+.card-space:hover {
+  border-color: rgba(171, 210, 250, 0.38);
+  box-shadow: 0 24px 70px -24px rgba(27, 44, 193, 0.65);
+}
+
+/* Glassy pill button for dark space sections. */
+.btn-space {
+  border: 1.5px solid rgba(171, 210, 250, 0.35);
+  border-radius: 9999px;
+  /* Dark base under the glass so the label survives bright backdrops
+     (e.g. sitting near the globe's atmosphere glow). */
+  background: rgba(2, 4, 8, 0.35);
+  color: #eef2ff;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  backdrop-filter: blur(8px);
+  transition:
+    transform 200ms ease,
+    background 200ms ease,
+    border-color 200ms ease;
+}
+.btn-space:hover {
+  border-color: rgba(171, 210, 250, 0.7);
+  background: rgba(171, 210, 250, 0.14);
+  transform: translateY(-1px);
+}
+.btn-space:active {
+  transform: translateY(0) scale(0.99);
 }
 
 /* ============================================================

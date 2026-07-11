@@ -39,9 +39,9 @@ export function QuickActions() {
           <Link
             key={href}
             href={href}
-            className={`group relative flex flex-col gap-3 overflow-hidden rounded-md border-[1.5px] border-border-strong ${tile} p-5 transition-transform duration-150 hover:-translate-y-1 hover:shadow-pop`}
+            className={`group relative flex flex-col gap-3 overflow-hidden rounded-3xl border border-border ${tile} p-5 shadow-xs transition-transform duration-200 hover:-translate-y-1 hover:shadow-pop`}
           >
-            <span className={`flex size-11 items-center justify-center rounded-md ${chip}`}>
+            <span className={`flex size-11 items-center justify-center rounded-2xl ${chip}`}>
               <Icon size={20} strokeWidth={2} aria-hidden />
             </span>
             <div>

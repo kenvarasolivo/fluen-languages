@@ -133,7 +133,7 @@ export function AuthForm() {
   return (
     <div>
       {/* Mode toggle */}
-      <div className="flex rounded-md border-[1.5px] border-border-strong p-1">
+      <div className="flex rounded-full border border-border bg-background/60 p-1">
         {(
           [
             { id: "signin", label: "Sign in" },
@@ -148,9 +148,9 @@ export function AuthForm() {
               setError(null);
               setNotice(null);
             }}
-            className={`flex-1 rounded-sm py-1.5 text-xs uppercase tracking-[0.06em] transition-all duration-150 ${
+            className={`flex-1 rounded-full py-1.5 text-xs transition-all duration-150 ${
               mode === o.id
-                ? "bg-foreground font-semibold text-background"
+                ? "grad-accent font-semibold text-white shadow-xs"
                 : "text-muted hover:text-foreground"
             }`}
           >

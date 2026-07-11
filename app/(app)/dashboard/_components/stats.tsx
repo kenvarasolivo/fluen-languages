@@ -93,9 +93,9 @@ export function StatsGrid() {
         {tiles.map(({ label, value, icon: Icon, chip, number }) => (
           <div
             key={label}
-            className="flex flex-col items-center gap-3 rounded-md border-[1.5px] border-border-strong bg-surface-raised px-4 pb-6 pt-6 text-center transition-transform duration-150 hover:-translate-y-1 hover:shadow-pop"
+            className="flex flex-col items-center gap-3 rounded-3xl border border-border bg-surface-raised px-4 pb-6 pt-6 text-center shadow-xs transition-transform duration-200 hover:-translate-y-1 hover:shadow-pop"
           >
-            <span className={`flex size-11 items-center justify-center rounded-md ${chip}`}>
+            <span className={`flex size-11 items-center justify-center rounded-2xl ${chip}`}>
               <Icon size={20} strokeWidth={2} aria-hidden />
             </span>
             <p

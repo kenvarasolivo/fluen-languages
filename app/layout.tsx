@@ -28,10 +28,11 @@ export default function RootLayout({
   return (
     <html lang="en" className={inter.variable} suppressHydrationWarning>
       <body className="font-sans">
-        {/* Apply saved theme before first paint to avoid a flash */}
+        {/* Apply saved theme before first paint to avoid a flash.
+            Dark is the default — light only when explicitly chosen. */}
         <script
           dangerouslySetInnerHTML={{
-            __html: `try{if(localStorage.getItem("fluen:theme")==="dark")document.documentElement.classList.add("dark")}catch(e){}`,
+            __html: `try{if(localStorage.getItem("fluen:theme")!=="light")document.documentElement.classList.add("dark")}catch(e){document.documentElement.classList.add("dark")}`,
           }}
         />
         {children}
