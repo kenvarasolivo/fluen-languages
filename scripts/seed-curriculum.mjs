@@ -98,6 +98,48 @@ const CELL_SCHEMA = {
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
+const RETRY_MAX = 5;
+
+// Wrap the AI call so a rate-limit (429) or transient server error (500/503)
+// pauses and retries instead of crashing the whole run. Honors the server's
+// suggested retryDelay when present, else backs off exponentially.
+async function generateWithRetry(params) {
+  for (let attempt = 1; ; attempt += 1) {
+    try {
+      return await ai.models.generateContent(params);
+    } catch (err) {
+      const status = err?.status ?? err?.code;
+      const msg = String(err?.message ?? err);
+      // Daily free-tier quota is spent — retrying won't refill it before the
+      // midnight-Pacific reset. Stop cleanly; the run is resumable.
+      if (/PerDay|per_day|RequestsPerDay/i.test(msg)) {
+        console.log(
+          `\n  ⛔ Daily free-tier quota exhausted for ${MODEL} (500 req/day). ` +
+            `Resets at 00:00 Pacific — re-run then; filled cells are skipped.`,
+        );
+        process.exit(1);
+      }
+      const retryable =
+        status === 429 ||
+        status === 500 ||
+        status === 503 ||
+        /429|RESOURCE_EXHAUSTED|quota|rate limit|unavailable|internal/i.test(msg);
+      if (attempt >= RETRY_MAX || !retryable) throw err;
+      const suggested = Number(msg.match(/retryDelay"?:?\s*"?(\d+)/i)?.[1]);
+      const wait =
+        Number.isFinite(suggested) && suggested > 0
+          ? suggested * 1000
+          : Math.min(60000, 5000 * 2 ** (attempt - 1));
+      console.log(
+        `\n  ⚠ ${status ?? "error"} (attempt ${attempt}/${RETRY_MAX}) — waiting ${Math.round(
+          wait / 1000,
+        )}s then retrying ...`,
+      );
+      await sleep(wait);
+    }
+  }
+}
+
 const [langCode, onlyLevel] = process.argv.slice(2);
 const lang = LANGS[langCode];
 if (!lang) {
@@ -156,7 +198,7 @@ async function extendCell(level, theme, existing, taken, rejected) {
   // keeps re-proposing, so they must survive the 400-entry cap.
   const avoid = [...rejected, ...inLevel].slice(0, 400).join(", ");
 
-  const response = await ai.models.generateContent({
+  const response = await generateWithRetry({
     model: MODEL,
     config: {
       responseMimeType: "application/json",

@@ -57,11 +57,14 @@ export function AuthForm() {
       } = await supabase.auth.getSession();
 
       if (session?.user.is_anonymous) {
-        const { error } = await supabase.auth.updateUser({
-          email,
-          password,
-          data: { username: handle },
-        });
+        const { error } = await supabase.auth.updateUser(
+          {
+            email,
+            password,
+            data: { username: handle },
+          },
+          { emailRedirectTo: `${window.location.origin}/login` },
+        );
         if (error) throw error;
         // The trigger only fires for brand-new users, so set the handle
         // on the existing profile row directly (RLS allows own-row).
@@ -79,7 +82,10 @@ export function AuthForm() {
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
-        options: { data: { username: handle } },
+        options: {
+          data: { username: handle },
+          emailRedirectTo: `${window.location.origin}/login`,
+        },
       });
       if (error) throw error;
       if (data.session) {
