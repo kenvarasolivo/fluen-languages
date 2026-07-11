@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { createPortal } from "react-dom";
 import {
   Briefcase,
   Clapperboard,
@@ -167,7 +168,12 @@ function PurposeModal({
     }
   };
 
-  return (
+  // Portalled to <body> so it escapes the sidebar's re-scoped theme
+  // tokens (`.sidebar-blue` flips --foreground white but leaves --surface
+  // light — inside the sidebar that renders white text on white cards).
+  if (typeof document === "undefined") return null;
+
+  return createPortal(
     <div
       className="fixed inset-0 z-[100] flex items-center justify-center overflow-y-auto bg-black/60 p-4"
       onClick={() => !saving && onClose()}
@@ -270,6 +276,7 @@ function PurposeModal({
           </div>
         )}
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }

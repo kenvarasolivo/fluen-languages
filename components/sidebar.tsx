@@ -11,11 +11,14 @@ import {
   Library,
   LogIn,
   LogOut,
+  PanelLeftClose,
+  PanelLeft,
 } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { onProfileUpdate } from "@/lib/profile-events";
 import { usePurpose } from "@/lib/use-purpose";
 import { ThemeToggle } from "@/components/theme-toggle";
+import { AmbientSoundButton } from "@/components/ambient-sound";
 import { LanguageSwitcher } from "@/components/language-switcher";
 import { PurposeFocusButton } from "@/components/purpose-focus";
 
@@ -104,32 +107,83 @@ function AccountAvatar({
   );
 }
 
+/** Remembers whether the desktop sidebar is collapsed, persisted across
+    sessions. Reads after mount so the server/client markup agree. */
+function useSidebarCollapsed() {
+  const [collapsed, setCollapsed] = useState(false);
+
+  useEffect(() => {
+    try {
+      setCollapsed(localStorage.getItem("fluen:sidebar") === "collapsed");
+    } catch {
+      /* storage unavailable — keep it open */
+    }
+  }, []);
+
+  // Mirror the state onto <html> so the view can reserve space for the
+  // floating reopen button (see `.sidebar-collapsed .app-main`) via CSS.
+  useEffect(() => {
+    document.documentElement.classList.toggle("sidebar-collapsed", collapsed);
+  }, [collapsed]);
+
+  const toggle = () =>
+    setCollapsed((c) => {
+      const next = !c;
+      try {
+        localStorage.setItem("fluen:sidebar", next ? "collapsed" : "open");
+      } catch {
+        /* ignore */
+      }
+      return next;
+    });
+
+  return { collapsed, toggle };
+}
+
 /** Desktop sidebar — hidden on small screens in favour of the
-    mobile top bar + bottom tab bar. */
+    mobile top bar + bottom tab bar. Collapsible: the panel slides away
+    to give the view full width, with a floating button to bring it back. */
 export function Sidebar() {
   const pathname = usePathname();
   const { account, signOut } = useAccount();
   const { purpose, setPurpose } = usePurpose();
+  const { collapsed, toggle } = useSidebarCollapsed();
 
   return (
-    <aside className="sidebar-blue hidden h-full w-64 shrink-0 flex-col border-r border-border md:flex">
-      <div className="app-header flex h-16 shrink-0 items-center border-b px-5">
-        <Link
-          href="/dashboard"
-          className="flex items-center gap-2.5 rounded-md text-lg font-extrabold tracking-[0.2em] text-white"
-        >
-          <span aria-hidden className="logo-dot size-2.5" />
-          FLUEN
-        </Link>
-      </div>
+    <>
+      <aside
+        className={`sidebar-blue hidden h-full shrink-0 flex-col overflow-hidden border-border transition-[width,border-width] duration-300 ease-in-out md:flex ${
+          collapsed ? "md:w-0 md:border-r-0" : "md:w-64 md:border-r"
+        }`}
+      >
+        {/* Fixed-width inner shell so content keeps its layout while the
+            outer panel animates its width down to zero. */}
+        <div className="flex h-full w-64 flex-col">
+          <div className="app-header flex h-16 shrink-0 items-center justify-between border-b px-5">
+            <Link
+              href="/dashboard"
+              className="flex items-center gap-2.5 rounded-md text-lg font-extrabold tracking-[0.2em] text-white"
+            >
+              <span aria-hidden className="logo-dot size-2.5" />
+              FLUEN
+            </Link>
+            <button
+              onClick={toggle}
+              aria-label="Collapse sidebar"
+              title="Collapse sidebar"
+              className="hdr-chip flex size-8 items-center justify-center rounded-lg"
+            >
+              <PanelLeftClose size={16} strokeWidth={1.75} />
+            </button>
+          </div>
 
-      {/* Language + theme pinned to the top — always visible on every page. */}
-      <div className="flex items-center justify-between gap-2 border-b border-border px-3 py-2.5">
-        <LanguageSwitcher />
-        <ThemeToggle />
-      </div>
+          {/* Language + theme pinned to the top — always visible on every page. */}
+          <div className="flex items-center justify-between gap-2 border-b border-border px-3 py-2.5">
+            <LanguageSwitcher />
+            <ThemeToggle />
+          </div>
 
-      <nav className="flex flex-1 flex-col gap-1 px-3 pt-4">
+          <nav className="flex flex-1 flex-col gap-1 px-3 pt-4">
         {nav.map(({ href, label, icon: Icon }) => {
           const active = pathname.startsWith(href);
           return (
@@ -153,6 +207,12 @@ export function Sidebar() {
           );
         })}
       </nav>
+
+      {/* Ambient galaxy sound — always starts off on load; the slider tunes
+          its volume live. Sits directly above the learning focus. */}
+      <div className="border-t border-border px-3 py-1.5">
+        <AmbientSoundButton />
+      </div>
 
       {/* Learning focus — always visible, steers modules, Speak & Immerse. */}
       <div className="border-t border-border px-3 py-2">
@@ -205,8 +265,24 @@ export function Sidebar() {
             </button>
           </div>
         )}
-      </div>
-    </aside>
+          </div>
+        </div>
+      </aside>
+
+      {/* Floating reopen button — top-left, sitting in the inset the page
+          top-bars open up (see `.sidebar-collapsed .topbar-inset`) so it
+          never overlaps a header. Only present while collapsed. */}
+      <button
+        onClick={toggle}
+        aria-label="Open sidebar"
+        title="Open sidebar"
+        className={`fixed left-3 top-3 z-30 hidden size-10 items-center justify-center rounded-xl border border-border bg-surface-raised text-muted shadow-raised transition-colors duration-150 hover:bg-accent-soft hover:text-foreground ${
+          collapsed ? "md:flex" : "md:hidden"
+        }`}
+      >
+        <PanelLeft size={18} strokeWidth={1.75} />
+      </button>
+    </>
   );
 }
 
@@ -227,6 +303,7 @@ export function MobileHeader() {
       </Link>
       <div className="flex items-center gap-1.5">
         <LanguageSwitcher variant="compact" />
+        <AmbientSoundButton variant="icon" />
         <ThemeToggle />
         {account?.kind === "guest" && (
           <Link

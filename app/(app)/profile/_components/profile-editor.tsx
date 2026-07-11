@@ -209,7 +209,7 @@ export function ProfileEditor() {
 
   return (
     <div className="flex h-full flex-col">
-      <header className="app-header flex h-16 shrink-0 items-center border-b px-4 sm:px-6">
+      <header className="app-header topbar-inset mt-3 flex h-14 shrink-0 items-center rounded-full px-5 shadow-raised sm:mt-4">
         <h1 className="eyebrow text-sm text-white">Profile</h1>
       </header>
 
@@ -251,7 +251,7 @@ export function ProfileEditor() {
       )}
 
       {phase === "ready" && (
-        <div className="flex-1 overflow-y-auto bg-mesh">
+        <div className="flex-1 overflow-y-auto">
           <div className="mx-auto w-full max-w-lg px-4 py-8 sm:px-6 sm:py-10">
             <div className="fade-up flex flex-col items-center gap-8 rounded-2xl border-[1.5px] border-border-strong bg-surface-raised px-6 py-10 shadow-pop sm:px-10">
               {/* Avatar with overlaid camera button */}

@@ -252,7 +252,7 @@ export function SpeakView() {
     <div className="relative flex h-full">
       {/* Left — chat log */}
       <section className="flex min-w-0 flex-1 flex-col">
-        <header className="app-header flex h-16 shrink-0 items-center justify-between border-b px-4 sm:px-6">
+        <header className="app-header topbar-inset mt-3 flex h-14 shrink-0 items-center justify-between gap-3 rounded-full px-5 shadow-raised sm:mt-4">
           <h1 className="eyebrow text-sm text-white">Speak</h1>
           <div className="flex items-center gap-3">
             <span className="hidden text-xs font-medium tracking-wide text-white/60 sm:inline">

@@ -14,6 +14,7 @@ import { supabase, ensureSession } from "@/lib/supabase";
 import {
   LANGUAGES,
   SUPPORTED_LANGUAGES,
+  PENDING_ONBOARD_KEY,
   getActiveLanguageCode,
   setActiveLanguageCode,
 } from "@/lib/languages";
@@ -51,16 +52,40 @@ export function Onboarding() {
   const [show, setShow] = useState(false);
   const [step, setStep] = useState(0);
   const [saving, setSaving] = useState(false);
+  // Set when we're onboarding a freshly-switched language rather than a
+  // brand-new account — the language is already chosen, so we skip step 0.
+  const [languageMode, setLanguageMode] = useState(false);
 
   const [lang, setLang] = useState(getActiveLanguageCode());
   const [level, setLevel] = useState<CefrLevel>("A1");
   const [purpose, setPurpose] = useState<Purpose | null>(null);
 
-  // Only appear when the profile explicitly says onboarding never ran —
-  // a failed query (e.g. migration not applied yet) keeps it hidden.
   useEffect(() => {
     let cancelled = false;
     (async () => {
+      // A language the learner just opened for the first time gets its own
+      // run of the questionnaire (level / purpose / goal), flagged by the
+      // switcher and picked up here after the reload.
+      try {
+        const pendingLang = localStorage.getItem(PENDING_ONBOARD_KEY);
+        if (pendingLang && pendingLang === getActiveLanguageCode()) {
+          if (!cancelled) {
+            setLang(pendingLang);
+            setLevel("A1");
+            setPurpose(null);
+            setLanguageMode(true);
+            setStep(1); // skip the "which language" step
+            setShow(true);
+          }
+          return;
+        }
+      } catch {
+        /* storage unavailable — fall through to the first-run check */
+      }
+
+      // Otherwise only appear when the profile explicitly says onboarding
+      // never ran — a failed query (e.g. migration not applied yet) keeps
+      // it hidden.
       try {
         const session = await ensureSession();
         const { data, error } = await supabase
@@ -81,6 +106,17 @@ export function Onboarding() {
   }, []);
 
   if (!show) return null;
+
+  const firstStep = languageMode ? 1 : 0;
+  const totalSteps = STEP_COUNT - firstStep;
+
+  const clearPendingFlag = () => {
+    try {
+      localStorage.removeItem(PENDING_ONBOARD_KEY);
+    } catch {
+      /* ignore */
+    }
+  };
 
   const finish = async (purpose: Purpose | null, goal: CefrLevel | null) => {
     setSaving(true);
@@ -106,6 +142,7 @@ export function Onboarding() {
         .eq("id", session.user.id);
       if (pError) throw pError;
       setActiveLanguageCode(lang);
+      clearPendingFlag();
       // Reload so every screen boots into the personalised environment.
       window.location.reload();
     } catch (err) {
@@ -115,17 +152,22 @@ export function Onboarding() {
     }
   };
 
-  // Skipping still stamps onboarded_at so the questionnaire never nags.
+  // Skipping still stamps onboarded_at so the questionnaire never nags. In
+  // language mode the account is already onboarded — we just clear the flag
+  // so this language isn't asked again.
   const skip = async () => {
     setSaving(true);
-    try {
-      const session = await ensureSession();
-      await supabase
-        .from("profiles")
-        .update({ onboarded_at: new Date().toISOString() })
-        .eq("id", session.user.id);
-    } catch (err) {
-      console.error("[onboarding skip]", err);
+    clearPendingFlag();
+    if (!languageMode) {
+      try {
+        const session = await ensureSession();
+        await supabase
+          .from("profiles")
+          .update({ onboarded_at: new Date().toISOString() })
+          .eq("id", session.user.id);
+      } catch (err) {
+        console.error("[onboarding skip]", err);
+      }
     }
     setShow(false);
   };
@@ -244,7 +286,10 @@ export function Onboarding() {
     <div className="fixed inset-0 z-[100] flex items-center justify-center overflow-y-auto bg-black/60 p-4">
       <div className="pop-in w-full max-w-lg rounded-2xl border-[1.5px] border-border-strong bg-surface-raised p-6 shadow-pop sm:p-8">
         <p className="eyebrow text-[11px] text-muted">
-          Welcome to FLUEN · Step {step + 1} of {STEP_COUNT}
+          {languageMode
+            ? `Set up ${LANGUAGES[lang].name}`
+            : "Welcome to FLUEN"}{" "}
+          · Step {step - firstStep + 1} of {totalSteps}
         </p>
         <h2 className="mt-2 text-xl font-extrabold tracking-tight">
           {steps[step].question}
@@ -252,7 +297,7 @@ export function Onboarding() {
         <div className="mt-5">{steps[step].body}</div>
 
         <div className="mt-6 flex items-center justify-between">
-          {step > 0 ? (
+          {step > firstStep ? (
             <button
               onClick={() => setStep(step - 1)}
               disabled={saving}

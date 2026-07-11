@@ -172,7 +172,7 @@ export function CardCatalog() {
 
   return (
     <div className="flex h-full flex-col">
-      <header className="app-header flex h-16 shrink-0 items-center justify-between border-b px-4 sm:px-6">
+      <header className="app-header topbar-inset mt-3 flex h-14 shrink-0 items-center justify-between gap-3 rounded-full px-5 shadow-raised sm:mt-4">
         <h1 className="eyebrow text-sm text-white">Cards</h1>
         {phase === "ready" && (
           <span className="hdr-chip rounded-full px-2.5 py-0.5 text-[11px] font-medium tabular-nums">
@@ -223,7 +223,7 @@ export function CardCatalog() {
       {phase === "ready" && (
         <>
           {/* Difficulty tabs — "Alle" shows everything */}
-          <div className="flex shrink-0 flex-wrap items-center gap-1.5 border-b border-border bg-surface px-4 py-3 sm:px-6">
+          <div className="flex shrink-0 flex-wrap items-center gap-1.5 topbar-inset mt-2 rounded-2xl border border-border bg-surface px-4 py-2.5 shadow-xs">
             {tabs.map((t) => (
               <button
                 key={t.id}
@@ -248,7 +248,7 @@ export function CardCatalog() {
           </div>
 
           {/* Type + A–Z filters */}
-          <div className="flex shrink-0 flex-col gap-2.5 border-b border-border bg-surface px-4 py-3 sm:px-6">
+          <div className="flex shrink-0 flex-col gap-2.5 topbar-inset mt-2 rounded-2xl border border-border bg-surface px-4 py-2.5 shadow-xs">
             {/* Part of speech */}
             <div className="flex flex-wrap items-center gap-1.5">
               <span className="eyebrow mr-1 text-[10px] text-muted">Type</span>

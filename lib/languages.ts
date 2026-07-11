@@ -175,6 +175,14 @@ export function stripLeadingArticle(lemma: string): string {
 
 const STORAGE_KEY = "fluen.lang";
 
+/**
+ * Set to a language code when the learner switches into a language they've
+ * never studied before, so the questionnaire (level / purpose / goal) runs
+ * for it after the reload. Cleared once that onboarding finishes or is
+ * skipped. Read by the `Onboarding` component.
+ */
+export const PENDING_ONBOARD_KEY = "fluen:onboard-language";
+
 /** The learner's active language code (browser only; SSR → default). */
 export function getActiveLanguageCode(): string {
   if (typeof window === "undefined") return DEFAULT_LANGUAGE;

@@ -64,9 +64,12 @@
 }
 
 :root.dark {
-  --background: #060b24;
-  --surface: #081130;
-  --surface-raised: #0e1a44;
+  /* Space-aligned with the landing page (page-space #020408): a
+     near-black canvas so the app reads as the same night sky, with
+     deep-navy surfaces lifting off it like glass panels in orbit. */
+  --background: #020408;
+  --surface: #070e28;
+  --surface-raised: #0d1840;
   --border: #1d2b5c;
   --border-strong: #3d518c;
   --foreground: #eaf1ff;
@@ -275,6 +278,35 @@ body {
   }
 }
 
+/* In dark mode the shared canvas becomes the landing's night sky:
+   a near-black base with faint periwinkle nebulae and three sheets of
+   tiny stars, so every app surface sits in the same world as the
+   hero. Static (no drift) so it stays calm behind working content;
+   the twinkle is a slow, whole-sheet breath rather than per-star. */
+:root.dark .bg-mesh {
+  background-color: var(--background);
+  background-image:
+    /* star sheet — near layer */
+    radial-gradient(1px 1px at 24px 34px, rgba(255, 255, 255, 0.7), transparent),
+    radial-gradient(1px 1px at 118px 92px, rgba(255, 255, 255, 0.45), transparent),
+    radial-gradient(1px 1px at 172px 202px, rgba(171, 210, 250, 0.5), transparent),
+    radial-gradient(1px 1px at 210px 56px, rgba(255, 255, 255, 0.35), transparent),
+    /* star sheet — far layer */
+    radial-gradient(1.4px 1.4px at 320px 140px, rgba(171, 210, 250, 0.4), transparent),
+    radial-gradient(1.2px 1.2px at 420px 320px, rgba(255, 255, 255, 0.3), transparent),
+    /* nebulae */
+    radial-gradient(46% 30% at 12% 22%, rgba(118, 146, 255, 0.09), transparent 70%),
+    radial-gradient(54% 34% at 88% 72%, rgba(27, 44, 193, 0.12), transparent 72%);
+  background-size:
+    240px 240px, 240px 240px, 240px 240px, 240px 240px,
+    520px 520px, 520px 520px,
+    100% 100%, 100% 100%;
+  /* Static sheet — painted on the container so it always sits behind
+     content; keeping it still avoids fading the page it wraps. */
+  background-position: 0 0, 0 0, 0 0, 0 0, 0 0, 0 0, 0 0, 0 0;
+  animation: none;
+}
+
 /* Shimmering blue headline fill — the gradient slides through the
    letters on a slow loop. */
 .text-gradient-warm {
@@ -452,6 +484,33 @@ body {
     100% 100%;
   color: #fff;
   border-color: rgba(118, 146, 255, 0.25);
+}
+
+/* ---- Floating top bars -----------------------------------------------
+   Page headers and their control rows float as rounded pills / cards over
+   the canvas instead of full-bleed strips. `.topbar-inset` centres each
+   bar and caps it at the dashboard greeting's width (max-w-4xl minus its
+   px-4 → px-8 padding = 52rem) so every top bar lines up exactly with the
+   greeting card, at every breakpoint. */
+.topbar-inset {
+  width: calc(100% - 2rem);
+  max-width: 52rem;
+  margin-inline: auto;
+}
+@media (min-width: 640px) {
+  .topbar-inset {
+    width: calc(100% - 4rem);
+  }
+}
+
+/* While the desktop sidebar is collapsed, reserve a strip of space on the
+   left of the whole view so the floating reopen button (top-left) never
+   overlaps the centred top bars. Header and greeting shift together, so
+   they stay aligned with each other. */
+@media (min-width: 768px) {
+  :root.sidebar-collapsed .app-main {
+    padding-left: 3.5rem;
+  }
 }
 
 /* Desktop sidebar — one continuous deep-blue panel. Re-scoping the

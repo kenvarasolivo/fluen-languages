@@ -507,7 +507,7 @@ export function ReviewDemo() {
 
   return (
     <div className="flex h-full flex-col">
-      <header className="app-header flex h-16 shrink-0 items-center justify-between border-b px-4 sm:px-6">
+      <header className="app-header topbar-inset mt-3 flex h-14 shrink-0 items-center justify-between gap-3 rounded-full px-5 shadow-raised sm:mt-4">
         <h1 className="eyebrow text-sm text-white">Foundations</h1>
         <div className="flex items-center gap-3">
           {inSession && phase !== "loading" && phase !== "error" && (
@@ -535,7 +535,7 @@ export function ReviewDemo() {
 
       {/* Mode bar — Learn new (modules) vs Review (decks), or the module
           session breadcrumb while a batch is being learned. */}
-      <div className="flex shrink-0 flex-wrap items-center gap-1.5 border-b border-border bg-surface px-4 py-3 sm:px-6">
+      <div className="flex shrink-0 flex-wrap items-center gap-1.5 topbar-inset mt-2 rounded-2xl border border-border bg-surface px-4 py-2.5 shadow-xs">
         {mode === "learn" && moduleTheme !== null ? (
           <>
             <button
