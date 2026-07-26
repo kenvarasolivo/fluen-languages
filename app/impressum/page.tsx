@@ -1,14 +1,15 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { FluenLogo } from "@/components/logo";
 
-export const metadata: Metadata = { title: "FLUEN - Impressum" };
+export const metadata: Metadata = { title: "fluen - Impressum" };
 
 export default function ImpressumPage() {
   return (
     <div className="flex min-h-dvh items-center justify-center px-6 py-16">
       <div className="w-full max-w-sm">
-        <h1 className="text-center text-5xl font-extrabold tracking-[0.2em]">
-          FLUEN
+        <h1 className="flex justify-center">
+          <FluenLogo height={52} />
         </h1>
         <p className="eyebrow mt-3 text-center text-[11px] text-muted">
           Impressum (Legal Notice)

@@ -1,108 +1,126 @@
 @import "tailwindcss";
 
 /* ============================================================
-   FLUEN design tokens — FLUID edition.
+   FLUEN design tokens — RIBBON edition.
 
-   A liquid, blue-led system: deep navy (#091540) does the anchoring
-   that black used to, electric blue (#1B2CC1) is the voice, and
-   periwinkle (#7692FF) + ice (#ABD2FA) melt through backgrounds as
-   slow-moving gradients. Everything is soft: pill buttons, large
-   radii, glow shadows instead of hard offsets.
+   The brand is the name: fluent, flowing, never square. Everything
+   is built from one continuous gradient ribbon that runs
+   blue → azure → cyan → mint, the way a single stroke of ink
+   changes colour as it travels.
 
-   Motion language: backgrounds drift, gradients shimmer, the orb
-   morphs like liquid — always slow, always ease-in-out, and all of
-   it collapses under prefers-reduced-motion.
+   Core ribbon stops (use these, don't invent new blues):
+     --ink    #0b1180  deep indigo, the anchoring "paper"
+     --blue   #1b3ce8  electric blue, the start of every ribbon
+     --azure  #06a3f0  the turn
+     --cyan   #00d3dd  the crest
+     --mint   #16e3a2  where the ribbon lands
+
+   Form language: no hard corners anywhere — pill buttons, blob
+   radii, wavy section edges, squiggle rules instead of straight
+   dividers, and gradient strokes with round caps.
+
+   Motion language: everything drifts, undulates or morphs. Always
+   slow, always ease-in-out, all of it off under reduced-motion.
 
    Elevation model (unchanged):
      --background      app canvas (lowest)
      --surface         panels, sidebars, cards at rest
      --surface-raised  interactive / lifted elements (+ glow)
-
-   Palette source: #091540 · #1B2CC1 · #3D518C · #7692FF · #ABD2FA
    ============================================================ */
 
 :root {
-  --background: #fbfcff;
+  /* The ribbon itself — identical in both themes so the brand never
+     shifts hue; only the paper it's drawn on changes. */
+  --ink: #0b1180;
+  --blue: #1b3ce8;
+  --azure: #06a3f0;
+  --cyan: #00d3dd;
+  --mint: #16e3a2;
+
+  --background: #fbfdff;
   --surface: #ffffff;
   --surface-raised: #ffffff;
-  --border: #dbe4f8;
-  --border-strong: #b7c6f2;
-  --foreground: #091540;
-  --muted: #5d6b96;
-  --accent: #1b2cc1;
-  --accent-2: #7692ff;
-  --accent-3: #abd2fa;
-  --accent-soft: rgba(118, 146, 255, 0.14);
-  --coral: #d63d7e;
-  --coral-soft: rgba(214, 61, 126, 0.1);
-  --amber: #b07c08;
-  --amber-soft: rgba(176, 124, 8, 0.12);
-  --teal: #0793b4;
-  --teal-soft: rgba(7, 147, 180, 0.11);
-  --positive: #17a45f;
+  --border: #dae6f7;
+  --border-strong: #aec8ef;
+  --foreground: #0b1256;
+  --muted: #5a6a9c;
+  --accent: #1b3ce8;
+  --accent-2: #06a3f0;
+  --accent-3: #16e3a2;
+  --accent-soft: rgba(6, 163, 240, 0.13);
+  --coral: #e0417c;
+  --coral-soft: rgba(224, 65, 124, 0.1);
+  --amber: #b8820a;
+  --amber-soft: rgba(184, 130, 10, 0.12);
+  --teal: #0b96a8;
+  --teal-soft: rgba(11, 150, 168, 0.11);
+  --positive: #0aa96b;
   --negative: #e03131;
-  --ring: rgba(27, 44, 193, 0.45);
+  --ring: rgba(6, 163, 240, 0.5);
 
-  /* Blue-led gradients — one voice for actions and active states. */
-  --grad-accent: linear-gradient(135deg, #1b2cc1 0%, #4152dd 55%, #5f74ef 100%);
-  --grad-deep: linear-gradient(170deg, #03071c 0%, #091540 48%, #122058 86%, #1b2f8a 100%);
+  /* The signature ribbon sweep — one voice for actions, active
+     states and every brand mark. */
+  --grad-accent: linear-gradient(115deg, #1b3ce8 0%, #06a3f0 46%, #00d3dd 74%, #16e3a2 100%);
+  --grad-ribbon: linear-gradient(100deg, #1b3ce8 0%, #06a3f0 38%, #00d3dd 68%, #16e3a2 100%);
+  --grad-deep: linear-gradient(150deg, #080c62 0%, #0b1180 45%, #142ab4 82%, #1b3ce8 100%);
 
-  /* Aurora wash colours — kept faint in light mode so the canvas stays
-     white wherever text sits; the tint only ghosts through empty corners. */
-  --mesh-1: rgba(171, 210, 250, 0.3);
-  --mesh-2: rgba(118, 146, 255, 0.14);
-  --mesh-3: rgba(27, 44, 193, 0.06);
-  --blob-opacity: 0.3;
+  /* Aurora wash — faint in light mode so the canvas stays clean
+     wherever text sits; the tint only ghosts through the corners. */
+  --mesh-1: rgba(6, 163, 240, 0.16);
+  --mesh-2: rgba(22, 227, 162, 0.13);
+  --mesh-3: rgba(27, 60, 232, 0.07);
+  --blob-opacity: 0.28;
 
-  --shadow-xs: 0 1px 2px rgba(9, 21, 64, 0.06);
+  --shadow-xs: 0 1px 2px rgba(11, 17, 128, 0.06);
   --shadow-raised:
-    0 1px 2px rgba(9, 21, 64, 0.05),
-    0 8px 20px -8px rgba(61, 81, 140, 0.2);
+    0 1px 2px rgba(11, 17, 128, 0.05),
+    0 10px 24px -10px rgba(27, 60, 232, 0.22);
   --shadow-pop:
-    0 2px 6px rgba(9, 21, 64, 0.07),
-    0 18px 44px -14px rgba(27, 44, 193, 0.35);
+    0 2px 6px rgba(11, 17, 128, 0.07),
+    0 20px 46px -14px rgba(6, 163, 240, 0.4);
 }
 
 :root.dark {
-  /* Space-aligned with the landing page (page-space #020408): a
-     near-black canvas so the app reads as the same night sky, with
-     deep-navy surfaces lifting off it like glass panels in orbit. */
-  --background: #020408;
-  --surface: #070e28;
-  --surface-raised: #0d1840;
-  --border: #1d2b5c;
-  --border-strong: #3d518c;
-  --foreground: #eaf1ff;
-  --muted: #8fa0cf;
-  --accent: #7692ff;
-  --accent-2: #abd2fa;
-  --accent-3: #1b2cc1;
-  --accent-soft: rgba(118, 146, 255, 0.17);
-  --coral: #ff6fa5;
-  --coral-soft: rgba(255, 111, 165, 0.16);
-  --amber: #efb03f;
-  --amber-soft: rgba(239, 176, 63, 0.14);
-  --teal: #3ec7e0;
-  --teal-soft: rgba(62, 199, 224, 0.15);
-  --positive: #3ddc84;
-  --negative: #ff5d5d;
-  --ring: rgba(118, 146, 255, 0.6);
+  /* Deep indigo paper — the same world as the landing page, so the
+     app reads as one continuous brand surface. Never black: the
+     ribbon needs blue underneath it to glow against. */
+  --background: #070a4a;
+  --surface: #0c1268;
+  --surface-raised: #141c86;
+  --border: #2b37a8;
+  --border-strong: #4b5cd8;
+  --foreground: #eef3ff;
+  --muted: #a2b0e8;
+  --accent: #4ec3ff;
+  --accent-2: #3ceec0;
+  --accent-3: #8aa4ff;
+  --accent-soft: rgba(78, 195, 255, 0.16);
+  --coral: #ff77aa;
+  --coral-soft: rgba(255, 119, 170, 0.16);
+  --amber: #f5bb4a;
+  --amber-soft: rgba(245, 187, 74, 0.14);
+  --teal: #3fd8e8;
+  --teal-soft: rgba(63, 216, 232, 0.15);
+  --positive: #3ce8a8;
+  --negative: #ff6b6b;
+  --ring: rgba(78, 195, 255, 0.65);
 
-  --grad-accent: linear-gradient(135deg, #2438cf 0%, #4c63ea 55%, #7692ff 100%);
-  --grad-deep: linear-gradient(170deg, #020515 0%, #081130 48%, #101d52 86%, #1a2c82 100%);
+  --grad-accent: linear-gradient(115deg, #2b53f5 0%, #14b4f8 46%, #00dbe6 74%, #2df0ae 100%);
+  --grad-ribbon: linear-gradient(100deg, #2b53f5 0%, #14b4f8 38%, #00dbe6 68%, #2df0ae 100%);
+  --grad-deep: linear-gradient(150deg, #050840 0%, #080c62 45%, #101a9a 82%, #1b3ce8 100%);
 
-  --mesh-1: rgba(27, 44, 193, 0.55);
-  --mesh-2: rgba(171, 210, 250, 0.26);
-  --mesh-3: rgba(118, 146, 255, 0.13);
-  --blob-opacity: 0.5;
+  --mesh-1: rgba(27, 60, 232, 0.5);
+  --mesh-2: rgba(6, 163, 240, 0.24);
+  --mesh-3: rgba(22, 227, 162, 0.14);
+  --blob-opacity: 0.45;
 
-  --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.5);
+  --shadow-xs: 0 1px 2px rgba(2, 4, 40, 0.6);
   --shadow-raised:
-    0 1px 0 rgba(0, 0, 0, 0.4),
-    0 10px 26px -10px rgba(0, 0, 0, 0.65);
+    0 1px 0 rgba(2, 4, 40, 0.5),
+    0 12px 28px -12px rgba(2, 4, 40, 0.7);
   --shadow-pop:
-    0 2px 8px rgba(0, 0, 0, 0.45),
-    0 18px 50px -14px rgba(118, 146, 255, 0.32);
+    0 2px 8px rgba(2, 4, 40, 0.5),
+    0 20px 52px -14px rgba(6, 163, 240, 0.4);
 }
 
 @theme inline {
@@ -131,15 +149,19 @@
 
   /* Fluid radius scale — generous, pillowy corners app-wide. Every
      rounded-* utility softens from this. */
-  --radius-sm: 0.5rem;
-  --radius-md: 0.875rem;
-  --radius-lg: 1rem;
-  --radius-xl: 1.25rem;
-  --radius-2xl: 1.75rem;
-  --radius-3xl: 2.25rem;
+  --radius-sm: 0.625rem;
+  --radius-md: 1rem;
+  --radius-lg: 1.25rem;
+  --radius-xl: 1.5rem;
+  --radius-2xl: 2rem;
+  --radius-3xl: 2.5rem;
 
   --font-sans: var(--font-inter), ui-sans-serif, system-ui, -apple-system,
     "Segoe UI", sans-serif;
+  /* Rounded geometric display face — the soft, flowing counterpart to
+     Inter, used for headlines and the wordmark. */
+  --font-display: var(--font-quicksand), var(--font-inter), ui-rounded,
+    ui-sans-serif, system-ui, sans-serif;
 }
 
 body {
@@ -179,11 +201,31 @@ body {
   font-weight: 600;
 }
 
-/* Big, heavy display headlines — sentence case, gently tightened. */
+/* Big display headlines in the rounded face — sentence case, gently
+   tightened, with generous line-height so long headlines still breathe. */
 .display {
-  font-weight: 800;
-  letter-spacing: -0.025em;
-  line-height: 1.02;
+  font-family: var(--font-display);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  line-height: 1.06;
+}
+
+/* The FLUEN wordmark — lowercase, rounded and softly tracked. The
+   brand never shouts in caps any more; it flows. */
+.wordmark {
+  font-family: var(--font-display);
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  text-transform: lowercase;
+}
+
+/* Wordmark drawn in the ribbon gradient — for light surfaces where a
+   solid fill would read flat. */
+.wordmark-grad {
+  background-image: var(--grad-ribbon);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
 }
 
 /* Primary action — a liquid blue gradient pill. The unlayered
@@ -206,7 +248,7 @@ body {
 .btn-primary:hover {
   transform: translateY(-1px);
   background-position: 100% 50%;
-  box-shadow: 0 10px 28px -10px rgba(27, 44, 193, 0.55);
+  box-shadow: 0 12px 30px -10px rgba(6, 163, 240, 0.6);
 }
 .btn-primary:active {
   transform: translateY(0) scale(0.99);
@@ -278,32 +320,19 @@ body {
   }
 }
 
-/* In dark mode the shared canvas becomes the landing's night sky:
-   a near-black base with faint periwinkle nebulae and three sheets of
-   tiny stars, so every app surface sits in the same world as the
-   hero. Static (no drift) so it stays calm behind working content;
-   the twinkle is a slow, whole-sheet breath rather than per-star. */
+/* In dark mode the shared canvas is the landing's indigo paper: colour
+   pools following the ribbon's blue→mint journey, plus a wide, very
+   faint wave banding that gives the surface a sense of current.
+   Static (no drift) so it stays calm behind working content. */
 :root.dark .bg-mesh {
   background-color: var(--background);
   background-image:
-    /* star sheet — near layer */
-    radial-gradient(1px 1px at 24px 34px, rgba(255, 255, 255, 0.7), transparent),
-    radial-gradient(1px 1px at 118px 92px, rgba(255, 255, 255, 0.45), transparent),
-    radial-gradient(1px 1px at 172px 202px, rgba(171, 210, 250, 0.5), transparent),
-    radial-gradient(1px 1px at 210px 56px, rgba(255, 255, 255, 0.35), transparent),
-    /* star sheet — far layer */
-    radial-gradient(1.4px 1.4px at 320px 140px, rgba(171, 210, 250, 0.4), transparent),
-    radial-gradient(1.2px 1.2px at 420px 320px, rgba(255, 255, 255, 0.3), transparent),
-    /* nebulae */
-    radial-gradient(46% 30% at 12% 22%, rgba(118, 146, 255, 0.09), transparent 70%),
-    radial-gradient(54% 34% at 88% 72%, rgba(27, 44, 193, 0.12), transparent 72%);
-  background-size:
-    240px 240px, 240px 240px, 240px 240px, 240px 240px,
-    520px 520px, 520px 520px,
-    100% 100%, 100% 100%;
-  /* Static sheet — painted on the container so it always sits behind
-     content; keeping it still avoids fading the page it wraps. */
-  background-position: 0 0, 0 0, 0 0, 0 0, 0 0, 0 0, 0 0, 0 0;
+    radial-gradient(52% 36% at 6% 2%, rgba(27, 60, 232, 0.45), transparent 70%),
+    radial-gradient(46% 30% at 96% 18%, rgba(6, 163, 240, 0.2), transparent 72%),
+    radial-gradient(60% 40% at 88% 96%, rgba(22, 227, 162, 0.12), transparent 72%),
+    radial-gradient(70% 44% at 20% 88%, rgba(0, 211, 221, 0.09), transparent 74%);
+  background-size: 100% 100%, 100% 100%, 100% 100%, 100% 100%;
+  background-position: 0 0, 0 0, 0 0, 0 0;
   animation: none;
 }
 
@@ -334,40 +363,64 @@ body {
   }
 }
 
-/* Planet horizon — an enormous circle anchored below the viewport so
-   only a gently curved sliver of its top edge rises into the page:
-   deep-blue ground, a thin ice rim, and an atmosphere glow breathing
-   off the curve. Echoes the hero's globe at the journey's end. */
-.horizon-arc {
+/* Closing swell — an enormous soft ellipse anchored below the page so
+   only its crest rises into the final section, lit along the rim in
+   the ribbon's colours. The page ends on a curve, never an edge. */
+.flow-crest {
   position: absolute;
   left: 50%;
   bottom: 0;
-  transform: translate(-50%, calc(100% - 11rem));
+  transform: translate(-50%, calc(100% - 12rem));
   width: 300vw;
-  height: 300vw;
+  height: 240vw;
   border-radius: 50%;
   pointer-events: none;
-  /* Ground stays deep navy; the light concentrates in a luminous band
-     right at the rim, like an atmosphere seen edge-on. */
   background: radial-gradient(
     100% 100% at 50% 100%,
-    #030612 0%,
-    #060c26 96%,
-    #0d1a4a 98.4%,
-    #2140b8 99.6%,
-    #6d8cff 100%
+    #050840 0%,
+    #0a1170 94%,
+    #142ab4 97.6%,
+    #0aa8f0 99.2%,
+    #35e8b8 100%
   );
   box-shadow:
-    inset 0 2px 0 rgba(200, 224, 255, 0.55),
-    inset 0 30px 70px -22px rgba(118, 146, 255, 0.4),
-    0 -34px 130px -20px rgba(88, 122, 255, 0.5);
+    inset 0 2px 0 rgba(150, 255, 230, 0.5),
+    inset 0 34px 80px -24px rgba(6, 163, 240, 0.45),
+    0 -30px 120px -18px rgba(0, 211, 221, 0.45);
 }
 
-/* Round gradient brand dot (logo mark) — a tiny liquid orb. */
-.logo-dot {
-  border-radius: 9999px;
-  background: linear-gradient(135deg, var(--accent-2), var(--accent));
-  box-shadow: 0 0 14px color-mix(in srgb, var(--accent-2) 75%, transparent);
+/* ============================================================
+   Brand mark — the ribbon "f". A single continuous stroke drawn in
+   the blue→mint gradient, with a soft halo of its own colour so it
+   reads as luminous ink on any surface.
+   ============================================================ */
+
+.brand-mark {
+  display: block;
+  overflow: visible;
+  filter: drop-shadow(0 3px 10px rgba(6, 163, 240, 0.35));
+}
+
+.brand-mark-path {
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  fill: none;
+}
+
+/* The wordmark breathes — a slow rise and fall, no rotation: tilting
+   a whole word reads as a wobble, not as flow. */
+.brand-mark-live {
+  animation: mark-float 6s ease-in-out infinite;
+}
+
+@keyframes mark-float {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-3px);
+  }
 }
 
 /* Decorative liquid blob — a big, blurred, slowly morphing gradient
@@ -468,22 +521,15 @@ body {
    ============================================================ */
 
 .app-header {
-  /* Faint stars scattered over the deep gradient + a periwinkle
-     atmosphere glow rising from the top-right corner. */
+  /* The ribbon's own colours pooled into the strip — azure rising at
+     the right, a mint whisper at the far edge. */
   background-image:
-    radial-gradient(1px 1px at 32px 14px, rgba(255, 255, 255, 0.5), transparent),
-    radial-gradient(1px 1px at 118px 42px, rgba(171, 210, 250, 0.4), transparent),
-    radial-gradient(1.5px 1.5px at 210px 24px, rgba(255, 255, 255, 0.3), transparent),
-    radial-gradient(70% 160% at 88% -30%, rgba(118, 146, 255, 0.25), transparent 65%),
+    radial-gradient(64% 180% at 84% -40%, rgba(6, 163, 240, 0.35), transparent 66%),
+    radial-gradient(40% 150% at 100% 130%, rgba(22, 227, 162, 0.22), transparent 68%),
     var(--grad-deep);
-  background-size:
-    260px 64px,
-    260px 64px,
-    260px 64px,
-    100% 100%,
-    100% 100%;
+  background-size: 100% 100%, 100% 100%, 100% 100%;
   color: #fff;
-  border-color: rgba(118, 146, 255, 0.25);
+  border-color: rgba(120, 200, 255, 0.25);
 }
 
 /* ---- Floating top bars -----------------------------------------------
@@ -517,32 +563,21 @@ body {
    theme tokens here flips every child (switcher, focus chip, account
    row) to light-on-navy without touching their markup. */
 .sidebar-blue {
-  --surface-raised: #16276b;
-  --border: rgba(171, 210, 250, 0.22);
-  --border-strong: rgba(171, 210, 250, 0.5);
+  --surface-raised: #18227f;
+  --border: rgba(120, 200, 255, 0.22);
+  --border-strong: rgba(120, 200, 255, 0.5);
   --foreground: #ffffff;
-  --muted: #b7c5ef;
-  --accent: #9db4ff;
+  --muted: #b3c3f5;
+  --accent: #7fd8ff;
   --accent-soft: rgba(255, 255, 255, 0.12);
-  /* Night sky in a column: sparse stars drifting over a vertical
-     space gradient, with a soft atmosphere glow pooling at the foot
-     of the panel like a horizon below the viewport. */
+  /* The ribbon read vertically: deep indigo at the top easing down
+     through blue into an azure/mint glow pooling at the panel's foot,
+     so the column itself flows from one brand colour to the other. */
   background-image:
-    radial-gradient(1px 1px at 26px 38px, rgba(255, 255, 255, 0.55), transparent),
-    radial-gradient(1px 1px at 98px 132px, rgba(171, 210, 250, 0.45), transparent),
-    radial-gradient(1.4px 1.4px at 152px 64px, rgba(255, 255, 255, 0.35), transparent),
-    radial-gradient(1px 1px at 60px 182px, rgba(255, 255, 255, 0.28), transparent),
-    radial-gradient(1px 1px at 186px 158px, rgba(171, 210, 250, 0.3), transparent),
-    radial-gradient(130% 34% at 50% 104%, rgba(118, 146, 255, 0.28), transparent 70%),
-    linear-gradient(180deg, #03071c 0%, #081130 46%, #0e1c50 82%, #16267a 100%);
-  background-size:
-    210px 210px,
-    210px 210px,
-    210px 210px,
-    210px 210px,
-    210px 210px,
-    100% 100%,
-    100% 100%;
+    radial-gradient(120% 26% at 50% 104%, rgba(22, 227, 162, 0.28), transparent 72%),
+    radial-gradient(140% 32% at 50% 96%, rgba(6, 163, 240, 0.32), transparent 74%),
+    linear-gradient(180deg, #050840 0%, #0a1170 44%, #121e9c 78%, #1b3ce8 100%);
+  background-size: 100% 100%, 100% 100%, 100% 100%;
   color: #fff;
 }
 
@@ -556,22 +591,22 @@ body {
 /* Secondary controls (toggles, counters) that sit on the blue
    header — quiet outline by default, solid white when active. */
 .hdr-chip {
-  border: 1.5px solid rgba(171, 210, 250, 0.35);
+  border: 1.5px solid rgba(120, 200, 255, 0.35);
   background: transparent;
-  color: rgba(234, 241, 255, 0.85);
+  color: rgba(238, 243, 255, 0.85);
   transition:
     background 150ms ease,
     color 150ms ease,
     border-color 150ms ease;
 }
 .hdr-chip:hover {
-  background: rgba(171, 210, 250, 0.15);
+  background: rgba(120, 200, 255, 0.16);
   color: #fff;
 }
 .hdr-chip-active {
   border-color: #fff;
   background: #fff;
-  color: #091540;
+  color: #0b1256;
 }
 
 /* The three German flag bands as a bold accent rule. */
@@ -842,206 +877,288 @@ body {
 }
 
 /* ============================================================
-   Outer space — the landing page's world. A near-black sky with
-   faint nebulae, three star layers twinkling at different tempos,
-   a handful of bright blinking stars, and the video globe melting
-   seamlessly into the page. Always dark, independent of theme.
+   The flow — the landing page's world. Deep indigo paper with
+   gradient ribbons curling through it, oversized blurred colour
+   masses drifting underneath, and squiggle rules where other sites
+   would put a straight line. Always dark, independent of theme.
    ============================================================ */
 
-.page-space {
-  background-color: #020408;
-  /* Nebulae live only in the page's mid-section — the top stays pure
-     black so the header and the video hero read as one dark sky. */
+.page-flow {
+  background-color: #070a4a;
+  /* Colour pools sunk into the paper — blue at the top-left, mint at
+     the lower-right, so the page itself follows the ribbon's journey
+     from one end to the other as you scroll. */
   background-image:
-    radial-gradient(46% 30% at 10% 32%, rgba(118, 146, 255, 0.08), transparent 70%),
-    radial-gradient(60% 36% at 90% 62%, rgba(27, 44, 193, 0.11), transparent 70%);
-  color: #eef2ff;
+    radial-gradient(56% 34% at 8% 4%, rgba(27, 60, 232, 0.5), transparent 70%),
+    radial-gradient(48% 28% at 92% 26%, rgba(6, 163, 240, 0.26), transparent 72%),
+    radial-gradient(58% 32% at 12% 62%, rgba(0, 211, 221, 0.14), transparent 70%),
+    radial-gradient(64% 38% at 88% 92%, rgba(22, 227, 162, 0.16), transparent 72%);
+  color: #eef3ff;
 }
 
-/* Repeating star sheets — each layer is a tile of tiny radial dots.
-   Layers twinkle out of phase so the sky never pulses as one. */
-.star-layer {
+/* A pool of shade sunk under the hero copy. The ribbons keep their
+   full brightness out at the edges, but the middle of the field
+   darkens enough for white text to hold against it — soft-edged, so
+   it reads as depth in the water rather than a panel behind the
+   words. Sits above the ribbons, below the copy. */
+.hero-scrim {
   position: absolute;
   inset: 0;
   pointer-events: none;
-  background-repeat: repeat;
+  background: radial-gradient(
+    62% 48% at 50% 42%,
+    rgba(4, 8, 56, 0.84) 0%,
+    rgba(4, 8, 56, 0.66) 40%,
+    rgba(4, 8, 56, 0.32) 66%,
+    transparent 84%
+  );
 }
 
-.star-layer-1 {
-  background-image:
-    radial-gradient(1px 1px at 24px 34px, rgba(255, 255, 255, 0.85), transparent),
-    radial-gradient(1px 1px at 118px 92px, rgba(255, 255, 255, 0.6), transparent),
-    radial-gradient(1px 1px at 76px 158px, rgba(255, 255, 255, 0.5), transparent),
-    radial-gradient(1px 1px at 172px 202px, rgba(255, 255, 255, 0.7), transparent),
-    radial-gradient(1px 1px at 210px 56px, rgba(255, 255, 255, 0.45), transparent);
-  background-size: 240px 240px;
-  animation: twinkle 6s ease-in-out infinite;
-}
+/* ---- Ribbons ---------------------------------------------------------
+   The SVG ribbon fields that sit behind the content. `.ribbon-field`
+   pins one to its section; the drift classes give each its own slow,
+   out-of-phase wander so the page never feels like it's on a grid. */
 
-.star-layer-2 {
-  background-image:
-    radial-gradient(1.4px 1.4px at 64px 26px, rgba(171, 210, 250, 0.8), transparent),
-    radial-gradient(1px 1px at 200px 140px, rgba(255, 255, 255, 0.55), transparent),
-    radial-gradient(1.2px 1.2px at 300px 224px, rgba(171, 210, 250, 0.6), transparent),
-    radial-gradient(1px 1px at 140px 290px, rgba(255, 255, 255, 0.5), transparent);
-  background-size: 340px 340px;
-  animation: twinkle 9s ease-in-out -3s infinite;
-}
-
-.star-layer-3 {
-  background-image:
-    radial-gradient(1.8px 1.8px at 90px 60px, rgba(255, 255, 255, 0.9), transparent),
-    radial-gradient(1.5px 1.5px at 340px 260px, rgba(171, 210, 250, 0.75), transparent),
-    radial-gradient(1.4px 1.4px at 220px 400px, rgba(255, 255, 255, 0.6), transparent);
-  background-size: 460px 460px;
-  animation: twinkle 12s ease-in-out -7s infinite;
-}
-
-@keyframes twinkle {
-  0%,
-  100% {
-    opacity: 1;
-  }
-  50% {
-    opacity: 0.35;
-  }
-}
-
-/* A single bright star — placed individually with inline top/left
-   and a staggered animation-delay so each blinks on its own beat. */
-.star {
+.ribbon-field {
   position: absolute;
-  width: 3px;
-  height: 3px;
-  border-radius: 9999px;
-  background: #fff;
-  box-shadow: 0 0 8px 2px rgba(171, 210, 250, 0.65);
+  inset: 0;
+  width: 100%;
+  height: 100%;
   pointer-events: none;
-  animation: star-blink 3.4s ease-in-out infinite;
+  overflow: visible;
 }
 
-@keyframes star-blink {
-  0%,
-  100% {
-    opacity: 0.1;
-    transform: scale(0.6);
+/* A ribbon field has to be clipped to its container, but a hard clip
+   line across a blurred colour mass reads as a seam. These veils fade
+   the field out before the clip reaches it, so each section melts
+   into the indigo rather than ending on an edge. */
+.ribbon-veil {
+  mask-image: linear-gradient(to bottom, #000 74%, transparent 100%);
+  -webkit-mask-image: linear-gradient(to bottom, #000 74%, transparent 100%);
+}
+.ribbon-veil-y {
+  mask-image: linear-gradient(
+    to bottom,
+    transparent 0%,
+    #000 16%,
+    #000 84%,
+    transparent 100%
+  );
+  -webkit-mask-image: linear-gradient(
+    to bottom,
+    transparent 0%,
+    #000 16%,
+    #000 84%,
+    transparent 100%
+  );
+}
+
+/* The app-canvas field. Held far back on both themes — this runs
+   behind forms, tables and review cards, so it may only ever be
+   felt, never read. Light mode needs less, since ink-on-white has
+   nowhere to hide. */
+.app-flow-field {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+  opacity: 0.18;
+}
+:root.dark .app-flow-field {
+  opacity: 0.4;
+}
+
+.ribbon-drift {
+  animation: ribbon-drift 26s ease-in-out infinite alternate;
+  transform-origin: center;
+}
+.ribbon-drift-slow {
+  animation: ribbon-drift 38s ease-in-out -9s infinite alternate;
+  transform-origin: center;
+}
+.ribbon-drift-fast {
+  animation: ribbon-drift 18s ease-in-out -5s infinite alternate;
+  transform-origin: center;
+}
+
+@keyframes ribbon-drift {
+  from {
+    transform: translate3d(0, 0, 0) scale(1);
   }
-  50% {
-    opacity: 1;
-    transform: scale(1);
+  to {
+    transform: translate3d(-2.5%, 1.8%, 0) scale(1.06);
   }
 }
 
-/* Headline shimmer tuned for the black sky. Both gradient stops are bright
-   (sky-blue and white), so as the sheen slides no dim band ever sweeps
-   through the letters. Symmetric endpoints keep the loop seamless. */
-.text-gradient-space {
+/* A ribbon that continuously travels along its own path — the dashes
+   are long enough that the stroke always reads as solid; only the
+   highlight appears to slide through it. */
+.ribbon-flow {
+  stroke-linecap: round;
+  fill: none;
+  animation: ribbon-flow 14s linear infinite;
+}
+.ribbon-flow-slow {
+  animation-duration: 22s;
+}
+
+@keyframes ribbon-flow {
+  from {
+    stroke-dashoffset: 0;
+  }
+  to {
+    stroke-dashoffset: -600;
+  }
+}
+
+/* The undulating squiggle rules used as dividers — the whole path
+   shifts sideways so the wave appears to travel across the page. */
+.squiggle-run {
+  animation: squiggle-run 16s linear infinite;
+}
+
+@keyframes squiggle-run {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-120px);
+  }
+}
+
+/* Headline fill in the full ribbon gradient, with a bright sheen
+   sliding through the letters. Every stop is luminous so no dim band
+   ever sweeps across the word. */
+.text-ribbon {
+  /* Every stop is luminous, so no dim band ever sweeps through the
+     letters as the sheen slides. Symmetric ends keep the loop seamless. */
   background: linear-gradient(
     100deg,
-    #8fbcff 0%,
-    #ffffff 50%,
-    #8fbcff 100%
+    #4d7bff 0%,
+    #22c2ff 22%,
+    #5ff5ff 42%,
+    #6bffcf 62%,
+    #22c2ff 82%,
+    #4d7bff 100%
   );
-  background-size: 200% 100%;
+  background-size: 220% 100%;
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
-  /* Override the h1's inherited near-black text-shadow, which otherwise
-     pools behind the transparent-filled letters and reads as a dark dent
-     in the middle of the word. A soft blue glow keeps it bright instead. */
-  text-shadow: 0 0 24px rgba(143, 188, 255, 0.5);
-  animation: headline-shimmer 6s linear infinite;
+  /* Must override the h1's inherited dark shadow. A text-shadow paints
+     *above* a background-clip:text fill, so a dark one would grey the
+     whole word out — only a light bloom is safe here. */
+  text-shadow: 0 0 30px rgba(120, 235, 255, 0.45);
+  animation: headline-shimmer 8s linear infinite;
 }
+
 @keyframes headline-shimmer {
   from {
     background-position: 0% 50%;
   }
   to {
-    background-position: 200% 50%;
+    background-position: 220% 50%;
   }
 }
 
-/* Solid white backing painted in the exact shape of the letters, so the
-   semi-transparent shimmer gradient pops on white instead of showing the
-   black sky through it. The gradient word is layered on top of this. */
-.text-gradient-backed {
-  position: relative;
-  display: inline-block;
-}
-.text-gradient-backed > .text-gradient-space {
-  position: relative;
-}
-.text-gradient-backed::before {
-  content: attr(data-text);
-  position: absolute;
-  inset: 0;
-  color: #fff;
-  /* Drop the inherited near-black h1 shadow so no dark halo bleeds
-     through the letter gaps behind the gradient word. */
-  text-shadow: none;
-  pointer-events: none;
-}
-
-/* Blends the full-bleed globe video into the page — a soft melt into
-   the header sky above and the next section below, plus a whisper of
-   extra darkness where the headline sits so the text stays crisp. */
-.hero-globe-fade {
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  background:
-    linear-gradient(to bottom, rgba(2, 4, 8, 0.85) 0%, rgba(2, 4, 8, 0) 22%),
-    linear-gradient(to top, #020408 0%, rgba(2, 4, 8, 0) 12%),
-    radial-gradient(
-      60% 52% at 50% 30%,
-      rgba(2, 4, 8, 0.62),
-      rgba(2, 4, 8, 0.3) 55%,
-      transparent 75%
-    );
-}
-
-/* Dark glass card for the space sections — icy edge, faint blue fill. */
-.card-space {
-  border: 1px solid rgba(171, 210, 250, 0.14);
+/* Glass card on the indigo paper — a soft cyan edge and a fill that
+   lightens toward the top, like a curved surface catching light. */
+.card-flow {
+  border: 1px solid rgba(120, 200, 255, 0.16);
   background: linear-gradient(
-    180deg,
-    rgba(118, 146, 255, 0.09),
-    rgba(118, 146, 255, 0.02)
+    170deg,
+    rgba(120, 200, 255, 0.12),
+    rgba(27, 60, 232, 0.06) 60%,
+    rgba(22, 227, 162, 0.05)
   );
-  backdrop-filter: blur(8px);
+  backdrop-filter: blur(10px);
   transition:
-    border-color 200ms ease,
-    box-shadow 200ms ease,
-    transform 200ms ease;
+    border-color 250ms ease,
+    box-shadow 250ms ease,
+    transform 250ms ease;
 }
-.card-space:hover {
-  border-color: rgba(171, 210, 250, 0.38);
-  box-shadow: 0 24px 70px -24px rgba(27, 44, 193, 0.65);
+.card-flow:hover {
+  border-color: rgba(120, 200, 255, 0.42);
+  box-shadow:
+    0 26px 70px -28px rgba(0, 211, 221, 0.55),
+    0 0 0 1px rgba(120, 200, 255, 0.1);
 }
 
-/* Glassy pill button for dark space sections. */
-.btn-space {
-  border: 1.5px solid rgba(171, 210, 250, 0.35);
+/* Glass pill button for the indigo sections. */
+.btn-flow {
+  border: 1.5px solid rgba(120, 200, 255, 0.4);
   border-radius: 9999px;
-  /* Dark base under the glass so the label survives bright backdrops
-     (e.g. sitting near the globe's atmosphere glow). */
-  background: rgba(2, 4, 8, 0.35);
-  color: #eef2ff;
+  background: rgba(7, 10, 74, 0.4);
+  color: #eef3ff;
   font-weight: 600;
   letter-spacing: 0.01em;
   backdrop-filter: blur(8px);
   transition:
-    transform 200ms ease,
-    background 200ms ease,
-    border-color 200ms ease;
+    transform 250ms ease,
+    background 250ms ease,
+    border-color 250ms ease;
 }
-.btn-space:hover {
-  border-color: rgba(171, 210, 250, 0.7);
-  background: rgba(171, 210, 250, 0.14);
+.btn-flow:hover {
+  border-color: rgba(107, 255, 207, 0.7);
+  background: rgba(120, 200, 255, 0.14);
   transform: translateY(-1px);
 }
-.btn-space:active {
+.btn-flow:active {
   transform: translateY(0) scale(0.99);
+}
+
+/* Feature "chips" — the small icon tiles. Squircle rather than a
+   rounded rectangle: adjacent corners have different radii, so the
+   silhouette itself is fluid. Each tile takes one segment of the
+   ribbon, so a row of them replays the gradient left to right. */
+.chip-blob {
+  border-radius: 58% 42% 46% 54% / 52% 48% 52% 48%;
+  color: #fff;
+}
+.chip-blue {
+  background-image: linear-gradient(140deg, #1b3ce8, #3f6bf5);
+  box-shadow: 0 10px 26px -12px rgba(27, 60, 232, 0.9);
+}
+.chip-azure {
+  background-image: linear-gradient(140deg, #0a72f0, #06a3f0);
+  box-shadow: 0 10px 26px -12px rgba(6, 163, 240, 0.9);
+}
+.chip-cyan {
+  background-image: linear-gradient(140deg, #06a3f0, #00d3dd);
+  box-shadow: 0 10px 26px -12px rgba(0, 211, 221, 0.85);
+}
+.chip-mint {
+  background-image: linear-gradient(140deg, #00d3dd, #16e3a2);
+  box-shadow: 0 10px 26px -12px rgba(22, 227, 162, 0.8);
+}
+
+/* Scattered arc glyphs — fragments of the ribbon, drifting. Each one
+   carries its own --r rotation and --d delay so the field never bobs
+   in unison. */
+.arc-bob {
+  animation: arc-bob 7s ease-in-out infinite;
+  animation-delay: var(--d, 0s);
+  transform: rotate(var(--r, 0deg));
+}
+
+@keyframes arc-bob {
+  0%,
+  100% {
+    transform: translateY(0) rotate(var(--r, 0deg));
+  }
+  50% {
+    transform: translateY(-10px) rotate(calc(var(--r, 0deg) + 8deg));
+  }
+}
+
+/* A ribbon-drawn number/letter badge — gradient ring, hollow centre. */
+.ring-ribbon {
+  position: relative;
+  border-radius: 9999px;
+  background:
+    linear-gradient(#0b1064, #0b1064) padding-box,
+    var(--grad-ribbon) border-box;
+  border: 2.5px solid transparent;
 }
 
 /* ============================================================

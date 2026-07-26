@@ -22,6 +22,7 @@ import { ThemeToggle } from "@/components/theme-toggle";
 import { AmbientSoundButton } from "@/components/ambient-sound";
 import { LanguageSwitcher } from "@/components/language-switcher";
 import { PurposeFocusButton } from "@/components/purpose-focus";
+import { FluenLogo } from "@/components/logo";
 
 const nav = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutGrid },
@@ -164,10 +165,12 @@ export function Sidebar() {
           <div className="app-header flex h-16 shrink-0 items-center justify-between border-b px-5">
             <Link
               href="/dashboard"
-              className="flex items-center gap-2.5 rounded-md text-lg font-extrabold tracking-[0.2em] text-white"
+              className="rounded-full text-white"
+              aria-label="fluen — dashboard"
             >
-              <span aria-hidden className="logo-dot size-2.5" />
-              FLUEN
+              {/* White tone: the strip is already painted in the brand
+                  gradient, so a gradient wordmark would vanish into it. */}
+              <FluenLogo height={24} tone="white" />
             </Link>
             <button
               onClick={toggle}
@@ -298,10 +301,10 @@ export function MobileHeader() {
     >
       <Link
         href="/dashboard"
-        className="flex items-center gap-2 rounded-md text-base font-extrabold tracking-[0.2em]"
+        className="rounded-full"
+        aria-label="fluen — dashboard"
       >
-        <span aria-hidden className="logo-dot size-2" />
-        FLUEN
+        <FluenLogo height={20} />
       </Link>
       <div className="flex items-center gap-1.5">
         <LanguageSwitcher variant="compact" />

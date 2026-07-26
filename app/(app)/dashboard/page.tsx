@@ -2,6 +2,7 @@ import { Greeting } from "./_components/greeting";
 import { LevelProgress } from "./_components/level-progress";
 import { StatsGrid } from "./_components/stats";
 import { QuickActions } from "./_components/quick-actions";
+import { Squiggle } from "@/components/flow-art";
 
 export default function DashboardPage() {
   return (
@@ -17,7 +18,13 @@ export default function DashboardPage() {
         <div className="mx-auto w-full max-w-4xl px-4 pt-5 sm:px-8 sm:pt-6">
           <Greeting />
         </div>
-        <div className="mx-auto flex w-full max-w-4xl flex-col items-center gap-8 px-4 py-8 sm:gap-10 sm:px-8 sm:py-10">
+        {/* The house divider, carried over from the landing page. The
+            padding lives on the wrapper so the squiggle's own clip lines
+            up exactly with the cards above and below it. */}
+        <div className="mx-auto w-full max-w-4xl px-4 sm:px-8">
+          <Squiggle className="mt-6 opacity-70" />
+        </div>
+        <div className="mx-auto flex w-full max-w-4xl flex-col items-center gap-8 px-4 pb-8 pt-2 sm:gap-10 sm:px-8 sm:pb-10">
           <LevelProgress />
           <StatsGrid />
           <QuickActions />

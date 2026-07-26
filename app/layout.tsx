@@ -1,10 +1,18 @@
 import type { Metadata, Viewport } from "next";
-import { Inter } from "next/font/google";
+import { Inter, Quicksand } from "next/font/google";
 import "./globals.css";
 
 const inter = Inter({
   subsets: ["latin"],
   variable: "--font-inter",
+});
+
+/* Rounded geometric face for headlines and the wordmark — the soft,
+   flowing voice of the brand. Inter still carries all body copy. */
+const quicksand = Quicksand({
+  subsets: ["latin"],
+  weight: ["500", "600", "700"],
+  variable: "--font-quicksand",
 });
 
 export const metadata: Metadata = {
@@ -26,7 +34,11 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" className={inter.variable} suppressHydrationWarning>
+    <html
+      lang="en"
+      className={`${inter.variable} ${quicksand.variable}`}
+      suppressHydrationWarning
+    >
       <body className="font-sans">
         {/* Apply saved theme before first paint to avoid a flash.
             Dark is the default — light only when explicitly chosen. */}

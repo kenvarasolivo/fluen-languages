@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import { AuthForm } from "./_components/auth-form";
+import { FluenLogo } from "@/components/logo";
 
 export const metadata: Metadata = { title: "FLUEN - Sign in" };
 
@@ -16,12 +17,8 @@ export default function LoginPage() {
           <ArrowLeft size={13} aria-hidden />
           Back to home
         </Link>
-        <Link
-          href="/"
-          className="fade-up flex items-center justify-center gap-3 rounded-md text-center text-5xl font-extrabold tracking-[0.2em]"
-        >
-          <span aria-hidden className="logo-dot size-3.5" />
-          FLUEN
+        <Link href="/" className="fade-up flex justify-center rounded-full">
+          <FluenLogo height={58} live />
         </Link>
         <p className="eyebrow fade-up fade-up-1 mt-4 text-center text-[11px] text-muted">
           Learn languages. Without the noise.
