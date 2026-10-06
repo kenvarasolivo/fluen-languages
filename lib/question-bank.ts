@@ -273,6 +273,17 @@ export function pickExercise(settings: Settings, previous: string[] = []): Exerc
   );
 }
 
+export function localAnswerFeedback(exercise: Exercise, answer: string, language: Language = "german") {
+  if (normalizeAnswer(answer, language) !== normalizeAnswer(exercise.german, language)) return null;
+  return {
+    correct: true,
+    corrected: exercise.german,
+    explanation: "Nicely done! Your translation matches the model answer.",
+    corrections: [],
+    vocabulary: exercise.vocabulary,
+  };
+}
+
 export function normalizeAnswer(answer: string, language: Language = "german") {
   if (language === "chinese") {
     return answer.toLowerCase().normalize("NFD")

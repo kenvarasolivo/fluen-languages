@@ -17,6 +17,7 @@ async function call(action, data) {
   return body;
 }
 const incorrect = await call("check", {
+  useAI: true,
   english: "I drink a coffee every morning.",
   answer: "Ich trinke ein Kaffee jeden Morgen.",
 });
@@ -25,6 +26,7 @@ assert.ok(incorrect.corrections.length > 0);
 assert.match(incorrect.corrected, /einen Kaffee/);
 console.log("PASS: incorrect article receives specific correction");
 const alternative = await call("check", {
+  useAI: true,
   english: "I drink a coffee every morning.",
   answer: "Jeden Morgen trinke ich einen Kaffee.",
 });

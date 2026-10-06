@@ -106,7 +106,7 @@ assert.equal(chineseConnected[3].german, "Suīrán wǒ gèng xǐhuan kāfēi, d�
 console.log("PASS: 288 German and 216 Chinese exercises, four explicit connector meanings per connected pool, complete word meanings and no early repeats");
 
 // The AI constructor throws if reached. This proves questions and exact checks
-// do not call the provider, while alternative answers retain the AI path.
+// do not call the provider. Alternatives require explicit AI opt-in.
 const providerUrl = moduleUrl(`
   export const Type = { ARRAY: "array", OBJECT: "object", STRING: "string", BOOLEAN: "boolean" };
   export const ThinkingLevel = { MINIMAL: "minimal" };
@@ -163,11 +163,23 @@ for (const level of levels) for (const topic of topics) for (const format of ["s
 assert.equal((await call("sentence", { ...settings, language: "klingon" })).status, 400);
 assert.equal((await call("sentence", { ...settings, level: "D1" })).status, 400);
 assert.equal((await call("check", settings, { english: starter.english, answer: "" })).status, 400);
-assert.equal((await call("check", settings, { english: starter.english, answer: "Jeden Morgen trinke ich einen Kaffee." })).status, 503);
+for (const answer of ["Jeden Morgen trinke ich einen Kaffee.", "Ich trinke ein Kaffee."]) {
+  const local = await call("check", settings, { english: starter.english, answer });
+  assert.equal(local.status, 200);
+  assert.deepEqual(await local.json(), { needsAI: true }, "Uncertain answers must not be marked wrong");
+}
+assert.equal((await call("check", settings, { english: starter.english, answer: "Jeden Morgen trinke ich einen Kaffee.", useAI: true })).status, 503);
 process.env.GEMINI_API_KEY = "test-only";
 assert.equal((await call("sentence", settings)).status, 200);
 assert.equal((await call("check", settings, { english: starter.english, answer: starter.german })).status, 200);
-console.log("PASS: German and Chinese checks work without AI; tone-free Chinese preserves tone-marked models; alternatives use AI; invalid input rejected");
+assert.equal((await call("check", settings, { english: starter.english, answer: starter.german, useAI: true })).status, 200);
+for (const language of ["german", "chinese"]) {
+  for (const useAI of [undefined, false, "true", 1]) {
+    const local = await call("check", { ...settings, language }, { english: starter.english, answer: "Unknown wording", useAI });
+    assert.deepEqual(await local.json(), { needsAI: true });
+  }
+}
+console.log("PASS: German and Chinese checks work without AI; tone-free Chinese preserves tone-marked models; alternatives require explicit AI opt-in; invalid input rejected");
 
 // Capture the provider request to verify the rules also reach alternative
 // translation checking and conversation, rather than only exact matches.
@@ -196,7 +208,7 @@ const mockFeedback = {
 globalThis.fluenTestResult = mockFeedback;
 const alternativeCheck = await aiPOST(new Request("http://localhost/api/practice", {
   method: "POST", body: JSON.stringify({ action: "check", settings: chineseSettings,
-    english: "I drink tea every morning.", answer: "wo zaoshang meitian he cha" }),
+    english: "I drink tea every morning.", answer: "wo zaoshang meitian he cha", useAI: true }),
 }));
 assert.equal(alternativeCheck.status, 200);
 assert.equal((await alternativeCheck.json()).vocabulary[0].language, "chinese");
@@ -230,7 +242,7 @@ for (const language of ["german", "chinese"]) {
   globalThis.fluenTestResult = { ...mockFeedback, correct: false, corrected: exercise.german };
   const response = await aiPOST(new Request("http://localhost/api/practice", {
     method: "POST", body: JSON.stringify({ action: "check", settings: connectedSettings,
-      english: exercise.english, answer: wrongAnswer }),
+      english: exercise.english, answer: wrongAnswer, useAI: true }),
   }));
   assert.equal(response.status, 200);
   assert.equal((await response.json()).correct, false);

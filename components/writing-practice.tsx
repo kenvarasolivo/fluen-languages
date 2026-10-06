@@ -48,16 +48,17 @@ export function WritingPractice() {
   const resultPanel = useRef<HTMLDivElement>(null);
   useEffect(() => () => controller.current?.abort(), []);
   useEffect(() => {
-    if (feedback)
+    if (feedback || revealed)
       resultPanel.current?.scrollIntoView({
         block: "nearest",
         behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches
           ? "auto"
           : "smooth",
       });
-  }, [feedback]);
+  }, [feedback, revealed]);
   function retry() {
     setFeedback(null);
+    setRevealed(false);
     setError("");
     setHint(false);
     requestAnimationFrame(() => input.current?.focus());
@@ -76,16 +77,22 @@ export function WritingPractice() {
     setRoll((value) => value + 1);
     requestAnimationFrame(() => input.current?.focus());
   }
-  async function check() {
-    if (!answer.trim() || busy || feedback || revealed) return;
-    setBusy("check");
+  function checkMyself() {
+    if (busy || feedback || revealed) return;
     setError("");
+    setHint(false);
+    setRevealed(true);
+  }
+  async function checkWithAI() {
+    if (!answer.trim() || busy || feedback || revealed) return;
+    setError("");
+    setBusy("check");
     const abort = new AbortController();
     controller.current = abort;
     try {
       const result = await request<Feedback>(
         "check",
-        { settings: current.current, english: exercise.english, answer },
+        { settings: current.current, english: exercise.english, answer, useAI: true },
         abort.signal,
       );
       if (abort.signal.aborted) return;
@@ -185,7 +192,7 @@ export function WritingPractice() {
               <form
                 onSubmit={(e) => {
                   e.preventDefault();
-                  void check();
+                  checkMyself();
                 }}
               >
                 <label className="answer-label" htmlFor="answer">
@@ -196,14 +203,17 @@ export function WritingPractice() {
                   id="answer"
                   lang={languageTag(language)}
                   value={answer}
-                  onChange={(e) => setAnswer(e.target.value)}
+                  onChange={(e) => {
+                    setAnswer(e.target.value);
+                    setError("");
+                  }}
                   placeholder={chinese ? "Your pinyin goes here… e.g. wo xiang he cha" : "Your German goes here…"}
                   maxLength={4000}
                   disabled={!!busy || !!feedback || revealed}
                   onKeyDown={(e) => {
                     if ((e.ctrlKey || e.metaKey) && e.key === "Enter") {
                       e.preventDefault();
-                      void check();
+                      checkMyself();
                     }
                   }}
                 />
@@ -221,6 +231,7 @@ export function WritingPractice() {
                           setAnswer(
                             answer.slice(0, start) + letter + answer.slice(end),
                           );
+                          setError("");
                           requestAnimationFrame(() => {
                             el?.focus();
                             el?.setSelectionRange(start + 1, start + 1);
@@ -231,7 +242,7 @@ export function WritingPractice() {
                       </button>
                     ))}
                   </div>
-                  <span>⌘ / Ctrl + Enter to check</span>
+                  <span>⌘ / Ctrl + Enter to check myself</span>
                 </div>
                 <div className="exercise-actions">
                   <button
@@ -255,49 +266,52 @@ export function WritingPractice() {
                       <RotateCcw size={17} /> Try again
                     </button>
                   ) : feedback || revealed ? (
-                    <button
-                      type="button"
-                      className="button primary"
-                      disabled={!!busy}
-                      onClick={() => void next()}
-                    >
-                      Next sentence <ArrowRight size={17} />
-                    </button>
-                  ) : (
-                    <button
-                      className="button primary"
-                      disabled={!answer.trim() || !!busy}
-                    >
-                      {busy === "check" ? (
-                        <>
-                          <LoaderCircle className="spin" size={17} /> Checking…
-                        </>
-                      ) : (
-                        <>
-                          <Check size={18} /> Submit answer
-                        </>
+                    <div className="check-options">
+                      {revealed && (
+                        <button type="button" className="button secondary" onClick={retry}>
+                          <RotateCcw size={17} /> Try again
+                        </button>
                       )}
-                    </button>
+                      <button
+                        type="button"
+                        className="button primary"
+                        disabled={!!busy}
+                        onClick={() => void next()}
+                      >
+                        Next sentence <ArrowRight size={17} />
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="check-options">
+                      <button type="submit" className="button primary" disabled={!!busy}>
+                        <Check size={18} /> Check myself
+                      </button>
+                      <button
+                        type="button"
+                        className="button secondary"
+                        disabled={!answer.trim() || !!busy}
+                        onClick={() => void checkWithAI()}
+                      >
+                        {busy === "check" ? (
+                          <>
+                            <LoaderCircle className="spin" size={17} /> Checking with AI…
+                          </>
+                        ) : (
+                          <>
+                            <Sparkles size={18} /> Check with AI
+                          </>
+                        )}
+                      </button>
+                    </div>
                   )}
                 </div>
               </form>
+              <p className="gentle-note">Check myself reveals a model answer for you to compare. Check with AI gives feedback on your writing.</p>
               {hint && (
                 <div className="hint-box">
                   <Lightbulb size={17} />
                   <p>{exercise.hint}</p>
                 </div>
-              )}
-              {!feedback && !revealed && (
-                <button
-                  className="reveal-button"
-                  disabled={!!busy}
-                  onClick={() => {
-                    setRevealed(true);
-                    setHint(false);
-                  }}
-                >
-                  I’m not sure — show me a translation
-                </button>
               )}
               {error && (
                 <div className="error-box" role="alert">
@@ -312,10 +326,10 @@ export function WritingPractice() {
               </div>
             )}
             {revealed && (
-              <section className="feedback-card learning">
+              <section ref={resultPanel} className="feedback-card learning" aria-label="Manual check">
                 <div className="feedback-heading">
                   <Sparkles size={20} />
-                  <h3>Another way to put it.</h3>
+                  <h3 role="status">Compare with the model answer.</h3>
                 </div>
                 <div className="corrected-answer">
                   <p lang={languageTag(language)}>{exercise.german}</p>
@@ -328,8 +342,9 @@ export function WritingPractice() {
                   </button>}
                 </div>
                 <p className="feedback-explanation">
-                  Read it aloud, notice the word order, and try the next one.
-                  Every attempt counts.
+                  Compare your answer above with this translation. Notice the
+                  meaning, grammar and word order. Other translations can also
+                  be correct. You decide how you did.
                 </p>
                 <Words key={exercise.english} words={exercise.vocabulary} language={language} />
               </section>

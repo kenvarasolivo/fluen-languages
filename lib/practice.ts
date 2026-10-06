@@ -51,6 +51,8 @@ export type Feedback = {
   corrections: Correction[];
   vocabulary: Vocabulary[];
 };
+// An unmatched answer is uncertain, not necessarily incorrect.
+export type CheckResult = Feedback | { needsAI: true };
 export type Reply = {
   reply: string;
   translation: string;

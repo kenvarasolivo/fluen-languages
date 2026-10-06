@@ -1,7 +1,7 @@
 import { GoogleGenAI, Type, ThinkingLevel } from "@google/genai";
 import { NextResponse } from "next/server";
 import { Exercise, languages, levels, topics } from "@/lib/practice";
-import { getExercisePool, normalizeAnswer, pickExercise } from "@/lib/question-bank";
+import { getExercisePool, localAnswerFeedback, pickExercise } from "@/lib/question-bank";
 
 export const runtime = "nodejs";
 const vocabulary = {
@@ -107,14 +107,10 @@ export async function POST(req: Request) {
           { status: 400 },
         );
       reference = getExercisePool(settings).find((item) => item.english === body.english);
-      if (reference && normalizeAnswer(body.answer, language) === normalizeAnswer(reference.german, language))
-        return NextResponse.json({
-          correct: true,
-          corrected: reference.german,
-          explanation: "Nicely done! Your translation matches the model answer.",
-          corrections: [],
-          vocabulary: reference.vocabulary,
-        });
+      const local = reference && localAnswerFeedback(reference, body.answer, language);
+      if (local) return NextResponse.json(local);
+      // Provider calls require an explicit opt-in, even for unknown exercises.
+      if (body.useAI !== true) return NextResponse.json({ needsAI: true });
     }
     const apiKey = process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY;
     if (!apiKey)

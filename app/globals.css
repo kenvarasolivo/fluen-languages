@@ -551,6 +551,14 @@ h2 {
   justify-content: space-between;
   gap: 14px;
   margin-top: 26px;
+  flex-wrap: wrap;
+}
+.check-options {
+  display: flex;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-left: auto;
 }
 .hint-button {
   display: flex;
