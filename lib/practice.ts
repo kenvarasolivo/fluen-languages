@@ -1,0 +1,95 @@
+export const levels = ["A1", "A2", "B1", "B2", "C1", "C2"] as const;
+export type Level = (typeof levels)[number];
+export const topics = [
+  "Everyday life",
+  "Travel & adventure",
+  "Food & cafés",
+  "Work & study",
+  "People & culture",
+  "Ideas & opinions",
+] as const;
+export type Settings = {
+  level: Level;
+  topic: string;
+  format: "single" | "connected";
+};
+export type Vocabulary = { german: string; english: string };
+export type Exercise = {
+  english: string;
+  german: string;
+  hint: string;
+  vocabulary: Vocabulary[];
+};
+export type Correction = {
+  original: string;
+  corrected: string;
+  explanation: string;
+};
+export type Feedback = {
+  correct: boolean;
+  corrected: string;
+  explanation: string;
+  corrections: Correction[];
+  vocabulary: Vocabulary[];
+};
+export type Reply = {
+  reply: string;
+  translation: string;
+  feedback: Feedback | null;
+  vocabulary: Vocabulary[];
+};
+export type Message = {
+  role: "user" | "assistant";
+  text: string;
+  translation?: string;
+  feedback?: Feedback | null;
+};
+export const defaults: Settings = {
+  level: "A1",
+  topic: topics[0],
+  format: "single",
+};
+export const starter: Exercise = {
+  english: "I drink a coffee every morning.",
+  german: "Ich trinke jeden Morgen einen Kaffee.",
+  hint: "Start with ‘Ich’. Remember: Kaffee is masculine.",
+  vocabulary: [
+    { german: "jeden Morgen", english: "every morning" },
+    { german: "der Kaffee", english: "coffee" },
+  ],
+};
+export async function request<T>(
+  action: string,
+  data: object,
+  signal?: AbortSignal,
+): Promise<T> {
+  const response = await fetch("/api/practice", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ action, ...data }),
+    signal,
+  });
+  const result = await response.json();
+  if (!response.ok)
+    throw new Error(result.error || "Something went wrong. Please try again.");
+  return result as T;
+}
+export function saveWords(words: Vocabulary[]) {
+  try {
+    const stored = JSON.parse(localStorage.getItem("fluen:words") || "[]");
+    const existing: Vocabulary[] = Array.isArray(stored)
+      ? stored.filter(
+          (w) =>
+            w && typeof w.german === "string" && typeof w.english === "string",
+        )
+      : [];
+    const merged = [...existing];
+    for (const word of words)
+      if (!merged.some((item) => item.german === word.german))
+        merged.push(word);
+    localStorage.setItem("fluen:words", JSON.stringify(merged));
+    window.dispatchEvent(new Event("fluen:words"));
+  } catch {
+    /* Storage can be unavailable in private browsing. */
+  }
+}

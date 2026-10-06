@@ -1,54 +1,18 @@
-import type { Metadata, Viewport } from "next";
-import { Inter, Quicksand } from "next/font/google";
+import type { Metadata } from "next";
 import "./globals.css";
-
-const inter = Inter({
-  subsets: ["latin"],
-  variable: "--font-inter",
-});
-
-/* Rounded geometric face for headlines and the wordmark — the soft,
-   flowing voice of the brand. Inter still carries all body copy. */
-const quicksand = Quicksand({
-  subsets: ["latin"],
-  weight: ["500", "600", "700"],
-  variable: "--font-quicksand",
-});
-
 export const metadata: Metadata = {
-  title: "FLUEN",
-  description: "Learn languages. Nothing else.",
+  title: "Fluen — A little German, every day",
+  description:
+    "Find your flow in German. Practice writing and speaking with friendly AI feedback, from A1 to C2.",
 };
-
-export const viewport: Viewport = {
-  width: "device-width",
-  initialScale: 1,
-  // Lets the app paint behind the iOS notch/home bar; the layouts pad
-  // with env(safe-area-inset-*) where needed.
-  viewportFit: "cover",
-};
-
 export default function RootLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
   return (
-    <html
-      lang="en"
-      className={`${inter.variable} ${quicksand.variable}`}
-      suppressHydrationWarning
-    >
-      <body className="font-sans">
-        {/* Apply saved theme before first paint to avoid a flash.
-            Dark is the default — light only when explicitly chosen. */}
-        <script
-          dangerouslySetInnerHTML={{
-            __html: `try{if(localStorage.getItem("fluen:theme")!=="light")document.documentElement.classList.add("dark")}catch(e){document.documentElement.classList.add("dark")}`,
-          }}
-        />
-        {children}
-      </body>
+    <html lang="en">
+      <body>{children}</body>
     </html>
   );
 }

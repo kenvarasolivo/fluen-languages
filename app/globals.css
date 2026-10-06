@@ -1,1185 +1,2078 @@
 @import "tailwindcss";
 
-/* ============================================================
-   FLUEN design tokens — RIBBON edition.
-
-   The brand is the name: fluent, flowing, never square. Everything
-   is built from one continuous gradient ribbon that runs
-   blue → azure → cyan → mint, the way a single stroke of ink
-   changes colour as it travels.
-
-   Core ribbon stops (use these, don't invent new blues):
-     --ink    #0b1180  deep indigo, the anchoring "paper"
-     --blue   #1b3ce8  electric blue, the start of every ribbon
-     --azure  #06a3f0  the turn
-     --cyan   #00d3dd  the crest
-     --mint   #16e3a2  where the ribbon lands
-
-   Form language: no hard corners anywhere — pill buttons, blob
-   radii, wavy section edges, squiggle rules instead of straight
-   dividers, and gradient strokes with round caps.
-
-   Motion language: everything drifts, undulates or morphs. Always
-   slow, always ease-in-out, all of it off under reduced-motion.
-
-   Elevation model (unchanged):
-     --background      app canvas (lowest)
-     --surface         panels, sidebars, cards at rest
-     --surface-raised  interactive / lifted elements (+ glow)
-   ============================================================ */
+.settings-title {
+  cursor: pointer;
+  list-style: none;
+}
+.settings-title::-webkit-details-marker {
+  display: none;
+}
+.settings-chevron {
+  margin-left: auto;
+  transition: transform 0.2s;
+}
+.settings-card[open] .settings-chevron {
+  transform: rotate(180deg);
+}
+.settings-card:not([open]) .settings-title {
+  margin-bottom: 0;
+}
 
 :root {
-  /* The ribbon itself — identical in both themes so the brand never
-     shifts hue; only the paper it's drawn on changes. */
-  --ink: #0b1180;
-  --blue: #1b3ce8;
-  --azure: #06a3f0;
-  --cyan: #00d3dd;
-  --mint: #16e3a2;
-
-  --background: #fbfdff;
-  --surface: #ffffff;
-  --surface-raised: #ffffff;
-  --border: #dae6f7;
-  --border-strong: #aec8ef;
-  --foreground: #0b1256;
-  --muted: #5a6a9c;
-  --accent: #1b3ce8;
-  --accent-2: #06a3f0;
-  --accent-3: #16e3a2;
-  --accent-soft: rgba(6, 163, 240, 0.13);
-  --coral: #e0417c;
-  --coral-soft: rgba(224, 65, 124, 0.1);
-  --amber: #b8820a;
-  --amber-soft: rgba(184, 130, 10, 0.12);
-  --teal: #0b96a8;
-  --teal-soft: rgba(11, 150, 168, 0.11);
-  --positive: #0aa96b;
-  --negative: #e03131;
-  --ring: rgba(6, 163, 240, 0.5);
-
-  /* The signature ribbon sweep — one voice for actions, active
-     states and every brand mark. */
-  --grad-accent: linear-gradient(115deg, #1b3ce8 0%, #06a3f0 46%, #00d3dd 74%, #16e3a2 100%);
-  --grad-ribbon: linear-gradient(100deg, #1b3ce8 0%, #06a3f0 38%, #00d3dd 68%, #16e3a2 100%);
-  --grad-deep: linear-gradient(150deg, #080c62 0%, #0b1180 45%, #142ab4 82%, #1b3ce8 100%);
-
-  /* Aurora wash — faint in light mode so the canvas stays clean
-     wherever text sits; the tint only ghosts through the corners. */
-  --mesh-1: rgba(6, 163, 240, 0.16);
-  --mesh-2: rgba(22, 227, 162, 0.13);
-  --mesh-3: rgba(27, 60, 232, 0.07);
-  --blob-opacity: 0.28;
-
-  --shadow-xs: 0 1px 2px rgba(11, 17, 128, 0.06);
-  --shadow-raised:
-    0 1px 2px rgba(11, 17, 128, 0.05),
-    0 10px 24px -10px rgba(27, 60, 232, 0.22);
-  --shadow-pop:
-    0 2px 6px rgba(11, 17, 128, 0.07),
-    0 20px 46px -14px rgba(6, 163, 240, 0.4);
+  --ink: #223f50;
+  --muted: #6b8190;
+  --blue: #258ac7;
+  --blue-dark: #1978b2;
+  --sky: #e5f4fc;
+  --line: #deebf1;
+  --paper: #f8fcfe;
+  --mint: #e5f4ed;
+  --round: 26px;
 }
-
-:root.dark {
-  /* Deep indigo paper — the same world as the landing page, so the
-     app reads as one continuous brand surface. Never black: the
-     ribbon needs blue underneath it to glow against. */
-  --background: #070a4a;
-  --surface: #0c1268;
-  --surface-raised: #141c86;
-  --border: #2b37a8;
-  --border-strong: #4b5cd8;
-  --foreground: #eef3ff;
-  --muted: #a2b0e8;
-  --accent: #4ec3ff;
-  --accent-2: #3ceec0;
-  --accent-3: #8aa4ff;
-  --accent-soft: rgba(78, 195, 255, 0.16);
-  --coral: #ff77aa;
-  --coral-soft: rgba(255, 119, 170, 0.16);
-  --amber: #f5bb4a;
-  --amber-soft: rgba(245, 187, 74, 0.14);
-  --teal: #3fd8e8;
-  --teal-soft: rgba(63, 216, 232, 0.15);
-  --positive: #3ce8a8;
-  --negative: #ff6b6b;
-  --ring: rgba(78, 195, 255, 0.65);
-
-  --grad-accent: linear-gradient(115deg, #2b53f5 0%, #14b4f8 46%, #00dbe6 74%, #2df0ae 100%);
-  --grad-ribbon: linear-gradient(100deg, #2b53f5 0%, #14b4f8 38%, #00dbe6 68%, #2df0ae 100%);
-  --grad-deep: linear-gradient(150deg, #050840 0%, #080c62 45%, #101a9a 82%, #1b3ce8 100%);
-
-  --mesh-1: rgba(27, 60, 232, 0.5);
-  --mesh-2: rgba(6, 163, 240, 0.24);
-  --mesh-3: rgba(22, 227, 162, 0.14);
-  --blob-opacity: 0.45;
-
-  --shadow-xs: 0 1px 2px rgba(2, 4, 40, 0.6);
-  --shadow-raised:
-    0 1px 0 rgba(2, 4, 40, 0.5),
-    0 12px 28px -12px rgba(2, 4, 40, 0.7);
-  --shadow-pop:
-    0 2px 8px rgba(2, 4, 40, 0.5),
-    0 20px 52px -14px rgba(6, 163, 240, 0.4);
+* {
+  box-sizing: border-box;
 }
-
-@theme inline {
-  --color-background: var(--background);
-  --color-surface: var(--surface);
-  --color-surface-raised: var(--surface-raised);
-  --color-border: var(--border);
-  --color-border-strong: var(--border-strong);
-  --color-foreground: var(--foreground);
-  --color-muted: var(--muted);
-  --color-accent: var(--accent);
-  --color-accent-soft: var(--accent-soft);
-  --color-coral: var(--coral);
-  --color-coral-soft: var(--coral-soft);
-  --color-amber: var(--amber);
-  --color-amber-soft: var(--amber-soft);
-  --color-teal: var(--teal);
-  --color-teal-soft: var(--teal-soft);
-  --color-positive: var(--positive);
-  --color-negative: var(--negative);
-  --color-ring: var(--ring);
-
-  --shadow-xs: var(--shadow-xs);
-  --shadow-raised: var(--shadow-raised);
-  --shadow-pop: var(--shadow-pop);
-
-  /* Fluid radius scale — generous, pillowy corners app-wide. Every
-     rounded-* utility softens from this. */
-  --radius-sm: 0.625rem;
-  --radius-md: 1rem;
-  --radius-lg: 1.25rem;
-  --radius-xl: 1.5rem;
-  --radius-2xl: 2rem;
-  --radius-3xl: 2.5rem;
-
-  --font-sans: var(--font-inter), ui-sans-serif, system-ui, -apple-system,
-    "Segoe UI", sans-serif;
-  /* Rounded geometric display face — the soft, flowing counterpart to
-     Inter, used for headlines and the wordmark. */
-  --font-display: var(--font-quicksand), var(--font-inter), ui-rounded,
-    ui-sans-serif, system-ui, sans-serif;
+html {
+  scroll-behavior: smooth;
 }
-
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-feature-settings: "cv11", "ss01";
+  margin: 0;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: "Segoe UI", Arial, sans-serif;
+  font-size: 15px;
   -webkit-font-smoothing: antialiased;
-  text-rendering: optimizeLegibility;
 }
-
-::selection {
-  background: var(--accent);
-  color: #fff;
+button,
+input,
+select,
+textarea {
+  font: inherit;
 }
-
-/* One consistent, visible keyboard focus everywhere. */
-:focus-visible {
-  outline: 2px solid var(--ring);
+button,
+a,
+input,
+textarea,
+select {
+  -webkit-tap-highlight-color: transparent;
+}
+button,
+a {
+  touch-action: manipulation;
+}
+button {
+  cursor: pointer;
+}
+button:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+a {
+  color: inherit;
+  text-decoration: none;
+}
+button {
+  border: 0;
+}
+button:focus-visible,
+a:focus-visible {
+  outline: 3px solid #65bce9;
+  outline-offset: 5px;
+}
+input:focus-visible,
+textarea:focus-visible,
+select:focus-visible {
+  outline: 2px solid #65bce9;
   outline-offset: 2px;
 }
-
-/* Thin, quiet scrollbars */
-* {
-  scrollbar-width: thin;
-  scrollbar-color: var(--border-strong) transparent;
+h1,
+h2,
+h3,
+p {
+  margin: 0;
 }
-
-/* ============================================================
-   House voice — quiet caps for tiny labels, big soft-set display
-   type for headlines. No shouting; the color does the talking.
-   ============================================================ */
-
-/* Small, all-caps, wide-tracked labels (section kickers, meta). */
-.eyebrow {
-  text-transform: uppercase;
-  letter-spacing: 0.14em;
-  font-weight: 600;
+h1,
+h2,
+h3,
+.logo {
+  font-family: "Trebuchet MS", "Segoe UI", sans-serif;
 }
-
-/* Big display headlines in the rounded face — sentence case, gently
-   tightened, with generous line-height so long headlines still breathe. */
-.display {
-  font-family: var(--font-display);
+h1,
+h2,
+h3 {
   font-weight: 700;
-  letter-spacing: -0.02em;
-  line-height: 1.06;
+  letter-spacing: -1.3px;
 }
-
-/* The FLUEN wordmark — lowercase, rounded and softly tracked. The
-   brand never shouts in caps any more; it flows. */
-.wordmark {
-  font-family: var(--font-display);
-  font-weight: 700;
-  letter-spacing: -0.01em;
-  text-transform: lowercase;
+svg {
+  flex-shrink: 0;
 }
-
-/* Wordmark drawn in the ribbon gradient — for light surfaces where a
-   solid fill would read flat. */
-.wordmark-grad {
-  background-image: var(--grad-ribbon);
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
-}
-
-/* Primary action — a liquid blue gradient pill. The unlayered
-   border-radius intentionally wins over any rounded-* utility so
-   every primary action reads as a pill without touching call sites. */
-.btn-primary {
-  background-image: var(--grad-accent);
-  background-size: 160% 160%;
-  background-position: 0% 50%;
-  color: #fff;
-  border: none;
-  border-radius: 9999px;
-  font-weight: 600;
-  letter-spacing: 0.01em;
-  transition:
-    transform 200ms ease,
-    box-shadow 200ms ease,
-    background-position 400ms ease;
-}
-.btn-primary:hover {
-  transform: translateY(-1px);
-  background-position: 100% 50%;
-  box-shadow: 0 12px 30px -10px rgba(6, 163, 240, 0.6);
-}
-.btn-primary:active {
-  transform: translateY(0) scale(0.99);
-}
-.btn-primary:disabled {
-  opacity: 0.4;
-  transform: none;
-  box-shadow: none;
-}
-
-/* Outline counterpart — glassy pill with a soft blue edge. */
-.btn-outline {
-  background: color-mix(in srgb, var(--surface-raised) 55%, transparent);
-  color: var(--foreground);
-  font-weight: 600;
-  letter-spacing: 0.01em;
-  border: 1.5px solid var(--border-strong);
-  border-radius: 9999px;
-  backdrop-filter: blur(8px);
-  transition:
-    transform 200ms ease,
-    background 200ms ease,
-    border-color 200ms ease,
-    color 200ms ease;
-}
-.btn-outline:hover {
-  border-color: var(--accent);
-  color: var(--accent);
-  background: var(--accent-soft);
-  transform: translateY(-1px);
-}
-.btn-outline:active {
-  transform: translateY(0) scale(0.99);
-}
-
-/* Solid gradient fill for active chips / nav pills — white text on
-   the same liquid blue as the primary action. */
-.grad-accent {
-  background-image: var(--grad-accent);
-  color: #fff;
-}
-
-/* ============================================================
-   Surfaces — a slowly drifting liquid-blue backdrop. The three
-   oversized radial washes move against each other so the canvas
-   feels alive without ever fighting the content.
-   ============================================================ */
-
-.bg-mesh {
-  background-color: var(--background);
-  background-image:
-    radial-gradient(52% 46% at 8% -6%, var(--mesh-1), transparent 68%),
-    radial-gradient(46% 42% at 102% 2%, var(--mesh-2), transparent 70%),
-    radial-gradient(58% 52% at 70% 108%, var(--mesh-3), transparent 72%);
-  background-size: 170% 170%, 165% 165%, 185% 185%;
-  background-position: 0% 0%, 100% 0%, 60% 100%;
-  animation: mesh-drift 28s ease-in-out infinite alternate;
-}
-
-@keyframes mesh-drift {
-  0% {
-    background-position: 0% 0%, 100% 0%, 60% 100%;
-  }
-  50% {
-    background-position: 45% 35%, 55% 25%, 30% 65%;
-  }
-  100% {
-    background-position: 95% 60%, 5% 55%, 0% 15%;
-  }
-}
-
-/* In dark mode the shared canvas is the landing's indigo paper: colour
-   pools following the ribbon's blue→mint journey, plus a wide, very
-   faint wave banding that gives the surface a sense of current.
-   Static (no drift) so it stays calm behind working content. */
-:root.dark .bg-mesh {
-  background-color: var(--background);
-  background-image:
-    radial-gradient(52% 36% at 6% 2%, rgba(27, 60, 232, 0.45), transparent 70%),
-    radial-gradient(46% 30% at 96% 18%, rgba(6, 163, 240, 0.2), transparent 72%),
-    radial-gradient(60% 40% at 88% 96%, rgba(22, 227, 162, 0.12), transparent 72%),
-    radial-gradient(70% 44% at 20% 88%, rgba(0, 211, 221, 0.09), transparent 74%);
-  background-size: 100% 100%, 100% 100%, 100% 100%, 100% 100%;
-  background-position: 0 0, 0 0, 0 0, 0 0;
-  animation: none;
-}
-
-/* Shimmering blue headline fill — the gradient slides through the
-   letters on a slow loop. */
-.text-gradient-warm {
-  background: linear-gradient(
-    100deg,
-    var(--accent),
-    var(--accent-2) 40%,
-    var(--accent-3) 55%,
-    var(--accent-2) 70%,
-    var(--accent)
-  );
-  background-size: 250% 100%;
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
-  animation: gradient-slide 7s linear infinite;
-}
-
-@keyframes gradient-slide {
-  from {
-    background-position: 0% 50%;
-  }
-  to {
-    background-position: 250% 50%;
-  }
-}
-
-/* Closing swell — an enormous soft ellipse anchored below the page so
-   only its crest rises into the final section, lit along the rim in
-   the ribbon's colours. The page ends on a curve, never an edge. */
-.flow-crest {
-  position: absolute;
-  left: 50%;
-  bottom: 0;
-  transform: translate(-50%, calc(100% - 12rem));
-  width: 300vw;
-  height: 240vw;
-  border-radius: 50%;
+button svg {
   pointer-events: none;
-  background: radial-gradient(
-    100% 100% at 50% 100%,
-    #050840 0%,
-    #0a1170 94%,
-    #142ab4 97.6%,
-    #0aa8f0 99.2%,
-    #35e8b8 100%
-  );
-  box-shadow:
-    inset 0 2px 0 rgba(150, 255, 230, 0.5),
-    inset 0 34px 80px -24px rgba(6, 163, 240, 0.45),
-    0 -30px 120px -18px rgba(0, 211, 221, 0.45);
 }
-
-/* ============================================================
-   Brand mark — the ribbon "f". A single continuous stroke drawn in
-   the blue→mint gradient, with a soft halo of its own colour so it
-   reads as luminous ink on any surface.
-   ============================================================ */
-
-.brand-mark {
+.header {
+  max-width: 1240px;
+  margin: auto;
+  height: 104px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 42px;
+  gap: 28px;
+}
+.logo {
+  display: inline-flex;
+  align-items: center;
+  font-size: 32px;
+  font-weight: 800;
+  letter-spacing: -1.8px;
+  gap: 10px;
+}
+.logo-mark {
+  width: 36px;
+  height: 38px;
+  background: var(--blue);
+  color: white;
+  border-radius: 12px 15px 12px 15px;
+  display: grid;
+  place-items: center;
+  transform: rotate(-8deg);
+}
+.logo-mark svg {
+  transform: rotate(8deg);
+}
+.logo-dot {
+  color: var(--blue);
+  margin-left: -10px;
+}
+.header nav {
+  display: flex;
+  align-items: center;
+  gap: 32px;
+  font-size: 13px;
+  font-weight: 600;
+}
+.header nav a {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  transition: color 0.2s;
+}
+.header nav a:hover {
+  color: var(--blue);
+}
+.header nav .nav-cta {
+  border: 1px solid #c9e3f0;
+  border-radius: 30px;
+  padding: 12px 19px;
+  background: #eef8fe;
+}
+.header nav .active {
+  color: var(--blue);
+  background: var(--sky);
+  padding: 10px 16px;
+  border-radius: 30px;
+}
+.german-flag {
+  display: inline-block;
+  width: 19px;
+  height: 13px;
+  background: linear-gradient(#293139 0 33%, #dc755b 33% 66%, #ecc967 66%);
+  border-radius: 3px;
+  flex-shrink: 0;
+}
+.eyebrow {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 1.7px;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  color: #618095;
+}
+.hero {
+  max-width: 1240px;
+  margin: auto;
+  padding: 64px 42px 70px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 36px;
+  align-items: center;
+}
+.hero h1 {
+  font-size: clamp(43px, 4.65vw, 65px);
+  line-height: 1.13;
+  letter-spacing: -3.2px;
+  margin: 25px 0 24px;
+}
+.flow-word {
+  color: var(--blue);
+  position: relative;
+  white-space: nowrap;
+}
+.flow-word svg {
+  position: absolute;
+  left: 0;
+  bottom: -15px;
+  width: 100%;
+  height: 20px;
+  fill: none;
+  stroke: #99d5f2;
+  stroke-width: 4;
+  stroke-linecap: round;
+}
+.hero-copy > p {
+  font-size: 15px;
+  line-height: 1.9;
+  color: var(--muted);
+  margin: 30px 0 26px;
+}
+.button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 20px;
+  border-radius: 16px;
+  padding: 15px 23px;
+  font-size: 14px;
+  font-weight: 600;
+  min-height: 50px;
+  transition:
+    background 0.2s,
+    transform 0.2s;
+  white-space: nowrap;
+}
+.button:hover:not(:disabled) {
+  transform: translateY(-2px);
+}
+.primary {
+  background: var(--blue);
+  color: white;
+  box-shadow: 0 5px 0 #d4eaf6;
+}
+.primary:hover:not(:disabled) {
+  background: var(--blue-dark);
+}
+.hero-note {
+  display: flex;
+  gap: 7px;
+  align-items: center;
+  font-size: 11px;
+  color: #7b8f9b;
+  margin-top: 18px;
+}
+.hero-note svg {
+  color: #72a58f;
+}
+.hero-levels {
+  margin-top: 42px;
+}
+.hero-levels > span {
+  font-size: 8px;
+  letter-spacing: 1.4px;
+  color: #8a9eaa;
+  font-weight: 600;
+}
+.hero-levels > div {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 12px;
+}
+.hero-levels > div > span:not(.level-line) {
+  font-size: 10px;
+  width: 30px;
+  height: 29px;
+  display: grid;
+  place-items: center;
+  border-radius: 10px;
+  color: #7d96a5;
+  background: #eef5f8;
+  border: 1px solid #e2edf3;
+  font-weight: 600;
+}
+.hero-levels > div > span.selected {
+  background: #dff0fc;
+  color: var(--blue);
+  border-color: #bedff2;
+}
+.level-line {
+  height: 1px;
+  width: 30px;
+  background: #d6e8f1;
+  margin: 0 3px;
+}
+.hero-levels svg {
+  color: #72a88c;
+}
+.hero-art {
+  position: relative;
+  height: 446px;
+  isolation: isolate;
+}
+.hero-art:before {
+  content: "";
+  position: absolute;
+  background: #def0fb;
+  inset: 10px 0 -2px 12px;
+  border-radius: 46% 50% 42% 47%;
+  transform: rotate(-7deg);
+  z-index: -2;
+}
+.hero-art:after {
+  content: "";
+  position: absolute;
+  background: #eaf6fc;
+  inset: -8px 29px 8px -9px;
+  border-radius: 49% 45% 48% 45%;
+  transform: rotate(10deg);
+  z-index: -3;
+}
+.art-orbit {
+  position: absolute;
+  width: 95%;
+  height: 85%;
+  border: 1px dashed #b7dceb;
+  border-radius: 50%;
+  z-index: -1;
+  top: 30px;
+  left: 10px;
+  transform: rotate(22deg);
+}
+.orbit-two {
+  width: 73%;
+  height: 109%;
+  top: -19px;
+  left: 76px;
+  transform: rotate(-36deg);
+}
+.demo-writing {
+  position: absolute;
+  top: 80px;
+  left: 19px;
+  right: 16px;
+  border: 1px solid #e4eef4;
+  border-radius: 22px;
+  background: #fff;
+  box-shadow: 0 16px 40px #335a7610;
+  padding: 22px 25px;
+  transform: rotate(-4deg);
+}
+.demo-top {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  font-size: 12px;
+  font-weight: 600;
+  margin-bottom: 23px;
+}
+.mini-icon {
+  width: 29px;
+  height: 29px;
+  display: grid;
+  place-items: center;
+  background: #ebf5fe;
+  color: var(--blue);
+  border-radius: 10px;
+}
+.tiny-tag {
+  margin-left: auto;
+  font-size: 10px;
+  border-radius: 8px;
+  padding: 4px 9px;
+  background: #eaf5fc;
+  color: var(--blue);
+}
+.demo-caption {
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: 1.4px;
+  color: #8c9da8;
+}
+.demo-writing h3 {
+  font-size: 20px;
+  letter-spacing: -0.6px;
+  margin: 10px 0 18px;
+}
+.demo-answer {
+  padding: 14px 12px;
+  border: 1px solid #c7e2f0;
+  border-radius: 12px;
+  background: #f9fcfe;
+  font-size: 13px;
+  color: #466578;
+  display: flex;
+  align-items: center;
+  gap: 3px;
+}
+.cursor {
+  display: inline-block;
+  width: 1px;
+  height: 16px;
+  background: var(--blue);
+}
+.demo-success {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  background: #eef7f1;
+  margin-top: 14px;
+  border-radius: 12px;
+  padding: 12px 10px;
+  color: #628671;
+}
+.demo-success > span:first-child {
+  background: #d9eee0;
+  border-radius: 8px;
+  padding: 5px;
+}
+.demo-success strong {
+  font-size: 10px;
+  font-weight: 600;
   display: block;
-  overflow: visible;
-  filter: drop-shadow(0 3px 10px rgba(6, 163, 240, 0.35));
 }
-
-.brand-mark-path {
+.demo-success small {
+  display: block;
+  font-size: 9px;
+  margin-top: 3px;
+  color: #789386;
+}
+.demo-success > span:last-child {
+  margin-left: auto;
+}
+.demo-chat {
+  position: absolute;
+  bottom: 43px;
+  left: 57px;
+  right: -8px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: #fff;
+  border: 1px solid #dfeef6;
+  border-radius: 21px;
+  padding: 19px;
+  box-shadow: 0 10px 35px #35577512;
+  transform: rotate(5deg);
+}
+.chat-avatar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 43px;
+  height: 43px;
+  border-radius: 15px;
+  background: #dff0fb;
+  color: var(--blue);
+  flex-shrink: 0;
+}
+.demo-chat .demo-caption {
+  font-size: 7px;
+  letter-spacing: 1px;
+}
+.demo-chat p {
+  font-size: 15px;
+  font-weight: 600;
+  margin: 5px 0;
+}
+.demo-chat p > span {
+  color: #e3b35c;
+  font-size: 21px;
+}
+.demo-chat small {
+  font-size: 10px;
+  color: #8b9aa5;
+}
+.demo-mic {
+  margin-left: auto;
+  width: 35px;
+  height: 35px;
+  border-radius: 50%;
+  background: var(--blue);
+  color: #fff;
+  display: grid;
+  place-items: center;
+  opacity: 1 !important;
+}
+.floating-label {
+  position: absolute;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: #fff;
+  border-radius: 30px;
+  padding: 12px 16px;
+  font-size: 10px;
+  box-shadow: 0 6px 25px #324e6410;
+}
+.label-top {
+  top: 9px;
+  right: 18px;
+  transform: rotate(5deg);
+  color: #7b8d99;
+}
+.label-top svg {
+  color: #d5ad52;
+}
+.label-bottom {
+  bottom: -9px;
+  left: 18px;
+  transform: rotate(-7deg);
+  color: #729388;
+}
+.label-bottom svg {
+  color: #82b49a;
+}
+.doodle-star {
+  position: absolute;
+  top: 21px;
+  left: 26px;
+  font-size: 51px;
+  color: #81bcdb;
+  transform: rotate(10deg);
+}
+.art-squiggle {
+  position: absolute;
+  bottom: -13px;
+  right: -17px;
+  width: 78px;
+  height: 65px;
+  transform: rotate(15deg);
+}
+.art-squiggle svg {
+  fill: none;
+  stroke: #85b7cf;
+  stroke-width: 3;
   stroke-linecap: round;
   stroke-linejoin: round;
-  fill: none;
 }
-
-/* The wordmark breathes — a slow rise and fall, no rotation: tilting
-   a whole word reads as a wobble, not as flow. */
-.brand-mark-live {
-  animation: mark-float 6s ease-in-out infinite;
+.belief-strip {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 75px;
+  padding: 24px 30px;
+  background: #edf6fb;
+  border-top: 1px solid #e2eff5;
+  border-bottom: 1px solid #e2eff5;
+  font-size: 11px;
+  color: #6c889a;
 }
-
-@keyframes mark-float {
-  0%,
-  100% {
-    transform: translateY(0);
-  }
-  50% {
-    transform: translateY(-3px);
-  }
+.belief-strip span {
+  display: flex;
+  align-items: center;
+  gap: 9px;
 }
-
-/* Decorative liquid blob — a big, blurred, slowly morphing gradient
-   mass used behind heroes. Purely aesthetic, always aria-hidden. */
-.blob {
-  position: absolute;
-  pointer-events: none;
-  background: linear-gradient(
-    135deg,
-    color-mix(in srgb, var(--accent-2) 60%, transparent),
-    color-mix(in srgb, var(--accent-3) 55%, transparent) 55%,
-    color-mix(in srgb, var(--accent) 35%, transparent)
-  );
-  filter: blur(52px);
-  opacity: var(--blob-opacity);
-  border-radius: 42% 58% 56% 44% / 46% 42% 58% 54%;
-  animation:
-    blob-morph 14s ease-in-out infinite,
-    blob-drift 22s ease-in-out infinite alternate;
+.belief-strip svg {
+  color: #78a8c2;
 }
-
-@keyframes blob-morph {
-  0%,
-  100% {
-    border-radius: 42% 58% 56% 44% / 46% 42% 58% 54%;
-  }
-  33% {
-    border-radius: 58% 42% 44% 56% / 42% 58% 46% 54%;
-  }
-  66% {
-    border-radius: 48% 52% 60% 40% / 56% 44% 54% 46%;
-  }
+.modes-section {
+  max-width: 1240px;
+  margin: auto;
+  padding: 74px 42px 64px;
 }
-
-@keyframes blob-drift {
-  from {
-    transform: translate3d(0, 0, 0) scale(1);
-  }
-  to {
-    transform: translate3d(3rem, -2rem, 0) scale(1.12);
-  }
+.section-heading {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 30px;
+  margin-bottom: 30px;
 }
-
-/* ============================================================
-   Country banner — deep navy hero with the country photo glowing
-   through a blue-tinted scrim. White text sits on top; the flag
-   rule underneath keeps each language's national colours.
-   ============================================================ */
-
-.banner-de {
-  position: relative;
-  isolation: isolate;
-  color: #fff;
-  background: #091540;
+h2 {
+  font-size: 33px;
+  line-height: 1.3;
 }
-
-/* The country photo sits behind the greeting; `isolation: isolate` on
-   .banner-de keeps these negative-z layers trapped inside the hero. */
-.banner-photo {
-  position: absolute;
-  inset: 0;
-  z-index: -2;
-  background-size: cover;
-  background-position: center;
+.section-heading h2 {
+  margin-top: 15px;
 }
-
-/* Neutral dark filter — heavier toward the lower-left where the text
-   lives, lighter on the right so the country photo keeps its own
-   colours (no blue cast on the photo). */
-.banner-scrim {
-  position: absolute;
-  inset: 0;
-  z-index: -1;
-  background:
-    linear-gradient(
-      100deg,
-      rgba(3, 6, 20, 0.74) 0%,
-      rgba(4, 8, 26, 0.42) 48%,
-      rgba(4, 8, 26, 0.08) 82%,
-      rgba(3, 6, 20, 0.3) 100%
-    ),
-    linear-gradient(
-      to top,
-      rgba(3, 6, 20, 0.66) 0%,
-      rgba(3, 6, 20, 0) 55%
-    ),
-    radial-gradient(
-      90% 70% at 100% -10%,
-      rgba(118, 146, 255, 0.18),
-      transparent 62%
-    );
+.section-heading > p {
+  font-size: 13px;
+  color: var(--muted);
+  line-height: 1.9;
+  margin-bottom: 5px;
 }
-
-/* ============================================================
-   App chrome — a deep blue gradient strip shared by the sidebar
-   logo header and every view header, so the top band reads as one
-   continuous liquid-navy surface.
-   ============================================================ */
-
-.app-header {
-  /* The ribbon's own colours pooled into the strip — azure rising at
-     the right, a mint whisper at the far edge. */
-  background-image:
-    radial-gradient(64% 180% at 84% -40%, rgba(6, 163, 240, 0.35), transparent 66%),
-    radial-gradient(40% 150% at 100% 130%, rgba(22, 227, 162, 0.22), transparent 68%),
-    var(--grad-deep);
-  background-size: 100% 100%, 100% 100%, 100% 100%;
-  color: #fff;
-  border-color: rgba(120, 200, 255, 0.25);
+.mode-cards {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 23px;
 }
-
-/* ---- Floating top bars -----------------------------------------------
-   Page headers and their control rows float as rounded pills / cards over
-   the canvas instead of full-bleed strips. `.topbar-inset` centres each
-   bar and caps it at the dashboard greeting's width (max-w-4xl minus its
-   px-4 → px-8 padding = 52rem) so every top bar lines up exactly with the
-   greeting card, at every breakpoint. */
-.topbar-inset {
-  width: calc(100% - 2rem);
-  max-width: 52rem;
-  margin-inline: auto;
-}
-@media (min-width: 640px) {
-  .topbar-inset {
-    width: calc(100% - 4rem);
-  }
-}
-
-/* While the desktop sidebar is collapsed, reserve a strip of space on the
-   left of the whole view so the floating reopen button (top-left) never
-   overlaps the centred top bars. Header and greeting shift together, so
-   they stay aligned with each other. */
-@media (min-width: 768px) {
-  :root.sidebar-collapsed .app-main {
-    padding-left: 3.5rem;
-  }
-}
-
-/* Desktop sidebar — one continuous deep-blue panel. Re-scoping the
-   theme tokens here flips every child (switcher, focus chip, account
-   row) to light-on-navy without touching their markup. */
-.sidebar-blue {
-  --surface-raised: #18227f;
-  --border: rgba(120, 200, 255, 0.22);
-  --border-strong: rgba(120, 200, 255, 0.5);
-  --foreground: #ffffff;
-  --muted: #b3c3f5;
-  --accent: #7fd8ff;
-  --accent-soft: rgba(255, 255, 255, 0.12);
-  /* The ribbon read vertically: deep indigo at the top easing down
-     through blue into an azure/mint glow pooling at the panel's foot,
-     so the column itself flows from one brand colour to the other. */
-  background-image:
-    radial-gradient(120% 26% at 50% 104%, rgba(22, 227, 162, 0.28), transparent 72%),
-    radial-gradient(140% 32% at 50% 96%, rgba(6, 163, 240, 0.32), transparent 74%),
-    linear-gradient(180deg, #050840 0%, #0a1170 44%, #121e9c 78%, #1b3ce8 100%);
-  background-size: 100% 100%, 100% 100%, 100% 100%;
-  color: #fff;
-}
-
-/* The logo strip melts into the sidebar's own gradient; its bottom
-   border still aligns with the page headers next to it. */
-.sidebar-blue .app-header {
-  background-image: none;
-  background: transparent;
-}
-
-/* Secondary controls (toggles, counters) that sit on the blue
-   header — quiet outline by default, solid white when active. */
-.hdr-chip {
-  border: 1.5px solid rgba(120, 200, 255, 0.35);
-  background: transparent;
-  color: rgba(238, 243, 255, 0.85);
+.mode-card {
+  padding: 29px 30px;
+  border: 1px solid #d3e8f5;
+  border-radius: var(--round);
+  background: #eaf5fd;
   transition:
-    background 150ms ease,
-    color 150ms ease,
-    border-color 150ms ease;
+    transform 0.25s,
+    box-shadow 0.25s;
 }
-.hdr-chip:hover {
-  background: rgba(120, 200, 255, 0.16);
-  color: #fff;
+.mode-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 24px #2f627a0d;
 }
-.hdr-chip-active {
-  border-color: #fff;
-  background: #fff;
-  color: #0b1256;
+.speaking-card {
+  background: #eff5ee;
+  border-color: #e0e9dc;
 }
-
-/* The three German flag bands as a bold accent rule. */
-.flag-rule-de {
-  background: linear-gradient(
-    90deg,
-    #111 0 33.3%,
-    #d7141a 33.3% 66.6%,
-    #ffce00 66.6% 100%
-  );
+.mode-card-top {
+  display: flex;
+  align-items: center;
+  gap: 13px;
 }
-
-/* Spanish flag bands (red / gold / red) as a bold accent rule. */
-.flag-rule-es {
-  background: linear-gradient(
-    90deg,
-    #aa151b 0 25%,
-    #f1bf00 25% 75%,
-    #aa151b 75% 100%
-  );
+.mode-icon {
+  width: 47px;
+  height: 47px;
+  border-radius: 15px;
+  background: #d7ebfa;
+  color: #4b9cc9;
+  display: grid;
+  place-items: center;
 }
-
-/* Chinese flag colours (red field + golden star band) as a bold accent rule. */
-.flag-rule-zh {
-  background: linear-gradient(
-    90deg,
-    #de2910 0 70%,
-    #ffde00 70% 100%
-  );
+.speaking-card .mode-icon {
+  background: #e0ebda;
+  color: #89a473;
 }
-
-/* Soft-tinted tiles for the stat grid + quick actions — keyed to
-   each accent, mixed gently so the colour reads but dark text stays
-   legible. */
-.tile-accent {
-  background: linear-gradient(
-    160deg,
-    color-mix(in srgb, var(--accent) 16%, var(--surface-raised)),
-    var(--surface-raised) 78%
-  );
-}
-.tile-coral {
-  background: linear-gradient(
-    160deg,
-    color-mix(in srgb, var(--coral) 16%, var(--surface-raised)),
-    var(--surface-raised) 78%
-  );
-}
-.tile-teal {
-  background: linear-gradient(
-    160deg,
-    color-mix(in srgb, var(--teal) 16%, var(--surface-raised)),
-    var(--surface-raised) 78%
-  );
-}
-.tile-amber {
-  background: linear-gradient(
-    160deg,
-    color-mix(in srgb, var(--amber) 18%, var(--surface-raised)),
-    var(--surface-raised) 78%
-  );
-}
-
-/* ============================================================
-   Review-card tints — a fill keyed to part of speech so a card
-   hints at its grammatical type at a glance. Each accent is mixed
-   into --surface-raised; the fill stays light enough that the dark
-   foreground text remains fully readable, and both themes recompute
-   automatically.
-   ============================================================ */
-.tint-default {
-  background: var(--surface-raised);
-}
-.tint-noun {
-  background: linear-gradient(
-    160deg,
-    color-mix(in srgb, var(--accent) 16%, var(--surface-raised)),
-    color-mix(in srgb, var(--accent) 7%, var(--surface-raised))
-  );
-}
-.tint-verb {
-  background: linear-gradient(
-    160deg,
-    color-mix(in srgb, var(--coral) 17%, var(--surface-raised)),
-    color-mix(in srgb, var(--coral) 7%, var(--surface-raised))
-  );
-}
-.tint-adjective {
-  background: linear-gradient(
-    160deg,
-    color-mix(in srgb, var(--teal) 17%, var(--surface-raised)),
-    color-mix(in srgb, var(--teal) 7%, var(--surface-raised))
-  );
-}
-.tint-adverb {
-  background: linear-gradient(
-    160deg,
-    color-mix(in srgb, var(--amber) 18%, var(--surface-raised)),
-    color-mix(in srgb, var(--amber) 7%, var(--surface-raised))
-  );
-}
-.tint-pronoun {
-  background: linear-gradient(
-    160deg,
-    color-mix(in srgb, var(--positive) 17%, var(--surface-raised)),
-    color-mix(in srgb, var(--positive) 7%, var(--surface-raised))
-  );
-}
-
-/* ============================================================
-   Micro-motion — entrances for popovers/armed states only.
-   ============================================================ */
-
-@keyframes pop-in {
-  from {
-    opacity: 0;
-    transform: translateY(4px) scale(0.98);
-  }
-  to {
-    opacity: 1;
-    transform: none;
-  }
-}
-
-.pop-in {
-  animation: pop-in 150ms ease-out;
-}
-
-/* Gentle staggered entrance for hero/section content. */
-@keyframes fade-up {
-  from {
-    opacity: 0;
-    transform: translateY(10px);
-  }
-  to {
-    opacity: 1;
-    transform: none;
-  }
-}
-
-.fade-up {
-  animation: fade-up 500ms ease-out both;
-}
-
-.fade-up-1 {
-  animation-delay: 80ms;
-}
-.fade-up-2 {
-  animation-delay: 160ms;
-}
-.fade-up-3 {
-  animation-delay: 240ms;
-}
-
-/* ============================================================
-   Voice orb — liquid at rest: a blue gradient mass whose outline
-   slowly morphs. Richer motion only as functional state feedback.
-   ============================================================ */
-
-.orb {
-  background:
-    radial-gradient(
-      circle at 30% 24%,
-      color-mix(in srgb, var(--accent-2) 36%, transparent),
-      transparent 62%
-    ),
-    radial-gradient(
-      circle at 72% 78%,
-      color-mix(in srgb, var(--accent) 22%, transparent),
-      transparent 58%
-    ),
-    var(--surface-raised);
-  border-radius: 46% 54% 52% 48% / 48% 46% 54% 52%;
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.1),
-    0 0 0 1.5px var(--border-strong),
-    0 0 90px -24px var(--accent);
-  animation: orb-morph 9s ease-in-out infinite;
-  transition:
-    box-shadow 200ms ease,
-    transform 200ms ease;
-}
-
-@keyframes orb-morph {
-  0%,
-  100% {
-    border-radius: 46% 54% 52% 48% / 48% 46% 54% 52%;
-  }
-  33% {
-    border-radius: 54% 46% 46% 54% / 44% 56% 48% 56%;
-  }
-  66% {
-    border-radius: 48% 52% 58% 42% / 54% 44% 56% 46%;
-  }
-}
-
-.orb:hover {
-  transform: scale(1.015);
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.1),
-    0 0 0 1.5px var(--accent),
-    0 0 120px -20px var(--accent);
-}
-
-.orb:active {
-  transform: scale(0.99);
-}
-
-.orb[data-state="listening"] {
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.1),
-    0 0 0 2px var(--accent),
-    0 0 0 8px var(--accent-soft),
-    0 0 150px -12px var(--accent);
-  animation:
-    orb-morph 9s ease-in-out infinite,
-    orb-breathe 2.4s ease-in-out infinite;
-}
-
-.orb[data-state="thinking"] {
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.1),
-    0 0 0 2px var(--accent),
-    0 0 0 4px var(--accent-soft),
-    0 0 120px -18px var(--accent);
-  animation:
-    orb-morph 9s ease-in-out infinite,
-    orb-breathe 1.6s ease-in-out infinite;
-}
-
-.orb[data-state="speaking"] {
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.1),
-    0 0 0 2px var(--accent),
-    0 0 0 5px var(--accent-soft),
-    0 0 130px -16px var(--accent);
-  animation:
-    orb-morph 9s ease-in-out infinite,
-    orb-speak 1.4s ease-in-out infinite;
-}
-
-@keyframes orb-breathe {
-  0%,
-  100% {
-    transform: scale(1);
-  }
-  50% {
-    transform: scale(1.035);
-  }
-}
-
-@keyframes orb-speak {
-  0%,
-  100% {
-    box-shadow:
-      inset 0 1px 0 rgba(255, 255, 255, 0.1),
-      0 0 0 2px var(--accent),
-      0 0 0 4px var(--accent-soft),
-      0 0 110px -18px var(--accent);
-  }
-  50% {
-    box-shadow:
-      inset 0 1px 0 rgba(255, 255, 255, 0.1),
-      0 0 0 2px var(--accent),
-      0 0 0 7px var(--accent-soft),
-      0 0 150px -12px var(--accent);
-  }
-}
-
-/* ============================================================
-   The flow — the landing page's world. Deep indigo paper with
-   gradient ribbons curling through it, oversized blurred colour
-   masses drifting underneath, and squiggle rules where other sites
-   would put a straight line. Always dark, independent of theme.
-   ============================================================ */
-
-.page-flow {
-  background-color: #070a4a;
-  /* Colour pools sunk into the paper — blue at the top-left, mint at
-     the lower-right, so the page itself follows the ribbon's journey
-     from one end to the other as you scroll. */
-  background-image:
-    radial-gradient(56% 34% at 8% 4%, rgba(27, 60, 232, 0.5), transparent 70%),
-    radial-gradient(48% 28% at 92% 26%, rgba(6, 163, 240, 0.26), transparent 72%),
-    radial-gradient(58% 32% at 12% 62%, rgba(0, 211, 221, 0.14), transparent 70%),
-    radial-gradient(64% 38% at 88% 92%, rgba(22, 227, 162, 0.16), transparent 72%);
-  color: #eef3ff;
-}
-
-/* A pool of shade sunk under the hero copy. The ribbons keep their
-   full brightness out at the edges, but the middle of the field
-   darkens enough for white text to hold against it — soft-edged, so
-   it reads as depth in the water rather than a panel behind the
-   words. Sits above the ribbons, below the copy. */
-.hero-scrim {
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  background: radial-gradient(
-    62% 48% at 50% 42%,
-    rgba(4, 8, 56, 0.84) 0%,
-    rgba(4, 8, 56, 0.66) 40%,
-    rgba(4, 8, 56, 0.32) 66%,
-    transparent 84%
-  );
-}
-
-/* ---- Ribbons ---------------------------------------------------------
-   The SVG ribbon fields that sit behind the content. `.ribbon-field`
-   pins one to its section; the drift classes give each its own slow,
-   out-of-phase wander so the page never feels like it's on a grid. */
-
-.ribbon-field {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  pointer-events: none;
-  overflow: visible;
-}
-
-/* A ribbon field has to be clipped to its container, but a hard clip
-   line across a blurred colour mass reads as a seam. These veils fade
-   the field out before the clip reaches it, so each section melts
-   into the indigo rather than ending on an edge. */
-.ribbon-veil {
-  mask-image: linear-gradient(to bottom, #000 74%, transparent 100%);
-  -webkit-mask-image: linear-gradient(to bottom, #000 74%, transparent 100%);
-}
-.ribbon-veil-y {
-  mask-image: linear-gradient(
-    to bottom,
-    transparent 0%,
-    #000 16%,
-    #000 84%,
-    transparent 100%
-  );
-  -webkit-mask-image: linear-gradient(
-    to bottom,
-    transparent 0%,
-    #000 16%,
-    #000 84%,
-    transparent 100%
-  );
-}
-
-/* The app-canvas field. Held far back on both themes — this runs
-   behind forms, tables and review cards, so it may only ever be
-   felt, never read. Light mode needs less, since ink-on-white has
-   nowhere to hide. */
-.app-flow-field {
-  position: absolute;
-  inset: 0;
-  overflow: hidden;
-  pointer-events: none;
-  opacity: 0.18;
-}
-:root.dark .app-flow-field {
-  opacity: 0.4;
-}
-
-.ribbon-drift {
-  animation: ribbon-drift 26s ease-in-out infinite alternate;
-  transform-origin: center;
-}
-.ribbon-drift-slow {
-  animation: ribbon-drift 38s ease-in-out -9s infinite alternate;
-  transform-origin: center;
-}
-.ribbon-drift-fast {
-  animation: ribbon-drift 18s ease-in-out -5s infinite alternate;
-  transform-origin: center;
-}
-
-@keyframes ribbon-drift {
-  from {
-    transform: translate3d(0, 0, 0) scale(1);
-  }
-  to {
-    transform: translate3d(-2.5%, 1.8%, 0) scale(1.06);
-  }
-}
-
-/* A ribbon that continuously travels along its own path — the dashes
-   are long enough that the stroke always reads as solid; only the
-   highlight appears to slide through it. */
-.ribbon-flow {
-  stroke-linecap: round;
-  fill: none;
-  animation: ribbon-flow 14s linear infinite;
-}
-.ribbon-flow-slow {
-  animation-duration: 22s;
-}
-
-@keyframes ribbon-flow {
-  from {
-    stroke-dashoffset: 0;
-  }
-  to {
-    stroke-dashoffset: -600;
-  }
-}
-
-/* The undulating squiggle rules used as dividers — the whole path
-   shifts sideways so the wave appears to travel across the page. */
-.squiggle-run {
-  animation: squiggle-run 16s linear infinite;
-}
-
-@keyframes squiggle-run {
-  from {
-    transform: translateX(0);
-  }
-  to {
-    transform: translateX(-120px);
-  }
-}
-
-/* Headline fill in the full ribbon gradient, with a bright sheen
-   sliding through the letters. Every stop is luminous so no dim band
-   ever sweeps across the word. */
-.text-ribbon {
-  /* Every stop is luminous, so no dim band ever sweeps through the
-     letters as the sheen slides. Symmetric ends keep the loop seamless. */
-  background: linear-gradient(
-    100deg,
-    #4d7bff 0%,
-    #22c2ff 22%,
-    #5ff5ff 42%,
-    #6bffcf 62%,
-    #22c2ff 82%,
-    #4d7bff 100%
-  );
-  background-size: 220% 100%;
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
-  /* Must override the h1's inherited dark shadow. A text-shadow paints
-     *above* a background-clip:text fill, so a dark one would grey the
-     whole word out — only a light bloom is safe here. */
-  text-shadow: 0 0 30px rgba(120, 235, 255, 0.45);
-  animation: headline-shimmer 8s linear infinite;
-}
-
-@keyframes headline-shimmer {
-  from {
-    background-position: 0% 50%;
-  }
-  to {
-    background-position: 220% 50%;
-  }
-}
-
-/* Glass card on the indigo paper — a soft cyan edge and a fill that
-   lightens toward the top, like a curved surface catching light. */
-.card-flow {
-  border: 1px solid rgba(120, 200, 255, 0.16);
-  background: linear-gradient(
-    170deg,
-    rgba(120, 200, 255, 0.12),
-    rgba(27, 60, 232, 0.06) 60%,
-    rgba(22, 227, 162, 0.05)
-  );
-  backdrop-filter: blur(10px);
-  transition:
-    border-color 250ms ease,
-    box-shadow 250ms ease,
-    transform 250ms ease;
-}
-.card-flow:hover {
-  border-color: rgba(120, 200, 255, 0.42);
-  box-shadow:
-    0 26px 70px -28px rgba(0, 211, 221, 0.55),
-    0 0 0 1px rgba(120, 200, 255, 0.1);
-}
-
-/* Glass pill button for the indigo sections. */
-.btn-flow {
-  border: 1.5px solid rgba(120, 200, 255, 0.4);
-  border-radius: 9999px;
-  background: rgba(7, 10, 74, 0.4);
-  color: #eef3ff;
+.mode-number {
+  font-size: 9px;
   font-weight: 600;
-  letter-spacing: 0.01em;
-  backdrop-filter: blur(8px);
-  transition:
-    transform 250ms ease,
-    background 250ms ease,
-    border-color 250ms ease;
+  letter-spacing: 1.2px;
+  color: #7794a7;
 }
-.btn-flow:hover {
-  border-color: rgba(107, 255, 207, 0.7);
-  background: rgba(120, 200, 255, 0.14);
-  transform: translateY(-1px);
+.mode-card-top > svg {
+  margin-left: auto;
+  color: #8ea5b4;
 }
-.btn-flow:active {
-  transform: translateY(0) scale(0.99);
+.mode-card h3 {
+  font-size: 23px;
+  margin-top: 25px;
+  letter-spacing: -0.8px;
 }
-
-/* Feature "chips" — the small icon tiles. Squircle rather than a
-   rounded rectangle: adjacent corners have different radii, so the
-   silhouette itself is fluid. Each tile takes one segment of the
-   ribbon, so a row of them replays the gradient left to right. */
-.chip-blob {
-  border-radius: 58% 42% 46% 54% / 52% 48% 52% 48%;
-  color: #fff;
+.mode-card p {
+  font-size: 13px;
+  line-height: 1.85;
+  color: #6d8493;
+  max-width: 430px;
+  margin-top: 12px;
 }
-.chip-blue {
-  background-image: linear-gradient(140deg, #1b3ce8, #3f6bf5);
-  box-shadow: 0 10px 26px -12px rgba(27, 60, 232, 0.9);
+.mode-tags {
+  display: flex;
+  gap: 7px;
+  flex-wrap: wrap;
+  margin-top: 20px;
 }
-.chip-azure {
-  background-image: linear-gradient(140deg, #0a72f0, #06a3f0);
-  box-shadow: 0 10px 26px -12px rgba(6, 163, 240, 0.9);
+.mode-tags span {
+  font-size: 9px;
+  border: 1px solid #cfe3ee;
+  padding: 6px 10px;
+  border-radius: 20px;
+  color: #688ba0;
 }
-.chip-cyan {
-  background-image: linear-gradient(140deg, #06a3f0, #00d3dd);
-  box-shadow: 0 10px 26px -12px rgba(0, 211, 221, 0.85);
+.speaking-card .mode-tags span {
+  border-color: #d8e4d2;
+  color: #7c9270;
 }
-.chip-mint {
-  background-image: linear-gradient(140deg, #00d3dd, #16e3a2);
-  box-shadow: 0 10px 26px -12px rgba(22, 227, 162, 0.8);
+.text-link {
+  margin-top: 28px;
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  font-size: 12px;
+  font-weight: 600;
+  color: #478fb9;
 }
-
-/* Scattered arc glyphs — fragments of the ribbon, drifting. Each one
-   carries its own --r rotation and --d delay so the field never bobs
-   in unison. */
-.arc-bob {
-  animation: arc-bob 7s ease-in-out infinite;
-  animation-delay: var(--d, 0s);
-  transform: rotate(var(--r, 0deg));
+.speaking-card .text-link {
+  color: #80976d;
 }
-
-@keyframes arc-bob {
-  0%,
-  100% {
-    transform: translateY(0) rotate(var(--r, 0deg));
-  }
-  50% {
-    transform: translateY(-10px) rotate(calc(var(--r, 0deg) + 8deg));
-  }
+.how-section {
+  max-width: 1240px;
+  margin: auto;
+  padding: 25px 42px 70px;
 }
-
-/* A ribbon-drawn number/letter badge — gradient ring, hollow centre. */
-.ring-ribbon {
+.how-section > h2 {
+  margin-top: 15px;
+}
+.steps {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 60px;
+  margin-top: 31px;
+}
+.steps > div > span {
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  background: #e7f2f9;
+  border-radius: 13px;
+  color: #7aabc6;
+  font-size: 12px;
+}
+.steps h3 {
+  font-size: 17px;
+  letter-spacing: -0.3px;
+  margin-top: 17px;
+}
+.steps p {
+  margin-top: 10px;
+  font-size: 12px;
+  color: var(--muted);
+  line-height: 1.9;
+}
+.bottom-cta {
+  max-width: 1156px;
+  margin: 0 auto 62px;
+  background: #e6f3fc;
+  border: 1px solid #dcecf6;
+  border-radius: 30px;
+  padding: 37px 45px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 20px;
+}
+.bottom-cta h2 {
+  margin: 12px 0 8px;
+}
+.bottom-cta p {
+  font-size: 13px;
+  color: var(--muted);
+}
+.footer {
+  max-width: 1240px;
+  min-height: 108px;
+  border-top: 1px solid var(--line);
+  margin: auto;
+  padding: 25px 42px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+}
+.footer .logo {
+  font-size: 24px;
+}
+.footer .logo-mark {
+  width: 29px;
+  height: 30px;
+  border-radius: 10px;
+}
+.footer > span {
+  color: #8a9eab;
+  font-size: 10px;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+.footer > span:last-child {
+  font-size: 9px;
+}
+.language-pill {
+  border: 1px solid var(--line);
+  background: white;
+  border-radius: 30px;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 10px 14px;
+  font-size: 11px;
+}
+.online-dot {
+  width: 6px;
+  height: 6px;
+  display: inline-block;
+  border-radius: 50%;
+  background: #7eae91;
+}
+.practice-main {
+  max-width: 1240px;
+  margin: auto;
+  padding: 37px 42px 70px;
+  min-height: calc(100vh - 212px);
+}
+.practice-heading {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 24px;
+  margin-bottom: 35px;
+}
+.practice-heading h1 {
+  font-size: 43px;
+  letter-spacing: -1.9px;
+  line-height: 1.2;
+  margin: 14px 0 10px;
+}
+.practice-heading p {
+  font-size: 14px;
+  color: var(--muted);
+  line-height: 1.7;
+}
+.session-count {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 11px;
+  color: #7c96a5;
+  padding-bottom: 5px;
+}
+.session-count svg {
+  color: #8dbbd1;
+}
+.session-count strong {
+  font-size: 15px;
+  color: #4289b2;
+}
+.practice-grid {
+  display: grid;
+  grid-template-columns: 292px minmax(0, 1fr);
+  gap: 28px;
+  align-items: start;
+}
+.settings-card {
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: 24px;
+  padding: 25px 22px;
+}
+.settings-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: #6f94a9;
+  margin-bottom: 25px;
+}
+.settings-title h2 {
+  font-family: inherit;
+  letter-spacing: 0;
+  font-size: 13px;
+  color: #4b6575;
+}
+.settings-card fieldset {
+  border: 0;
+  margin: 0 0 25px;
+  padding: 0;
+}
+.settings-card legend,
+.select-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: #567083;
+  display: block;
+  margin-bottom: 11px;
+}
+.level-picker {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 7px;
+}
+.level-picker button {
+  padding: 11px 3px;
+  border: 1px solid #e1edf3;
+  border-radius: 12px;
+  font-size: 12px;
+  background: #f7fafc;
+  color: #7993a3;
+  font-weight: 600;
+}
+.level-picker button[aria-pressed="true"] {
+  color: #2186be;
+  background: #e4f2fc;
+  border-color: #a9d6f0;
+}
+.field-note {
+  font-size: 10px;
+  font-weight: 400;
+  line-height: 1.7;
+  color: #8b9ca7;
+  margin-top: 11px;
+}
+.select-label {
+  margin-bottom: 25px;
+}
+.select-wrap {
   position: relative;
-  border-radius: 9999px;
-  background:
-    linear-gradient(#0b1064, #0b1064) padding-box,
-    var(--grad-ribbon) border-box;
-  border: 2.5px solid transparent;
+  margin-top: 11px;
 }
-
-/* ============================================================
-   Reduced motion — keep state changes, drop the movement.
-   ============================================================ */
-
-@media (prefers-reduced-motion: reduce) {
-  *,
-  ::before,
-  ::after {
-    animation-duration: 0.01ms !important;
-    animation-delay: 0s !important;
-    animation-iteration-count: 1 !important;
-    transition-duration: 0.01ms !important;
+.select-wrap select {
+  width: 100%;
+  appearance: none;
+  border: 1px solid #dae9f1;
+  border-radius: 12px;
+  background: #f7fbfd;
+  color: #587384;
+  font-size: 12px;
+  font-weight: 400;
+  padding: 12px 33px 12px 12px;
+}
+.select-wrap > svg {
+  position: absolute;
+  right: 12px;
+  top: 14px;
+  pointer-events: none;
+  color: #8ca4b3;
+}
+.format-picker {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.format-picker button {
+  border: 1px solid #e1edf3;
+  border-radius: 13px;
+  padding: 13px 14px;
+  text-align: left;
+  background: #fafcfd;
+  color: #658092;
+}
+.format-picker button[aria-pressed="true"] {
+  background: #edf7fd;
+  border-color: #b7daee;
+}
+.format-picker strong {
+  display: block;
+  font-size: 11px;
+  font-weight: 600;
+}
+.format-picker span {
+  display: block;
+  font-size: 9px;
+  margin-top: 4px;
+  color: #8b9fac;
+}
+.settings-tip {
+  display: flex;
+  gap: 9px;
+  border-top: 1px solid #e9f0f4;
+  padding-top: 17px;
+  font-size: 11px;
+  color: #829da4;
+  line-height: 1.8;
+}
+.settings-tip > span {
+  color: #94b49c;
+  font-size: 20px;
+}
+.exercise-column {
+  min-width: 0;
+}
+.exercise-card {
+  border: 1px solid var(--line);
+  background: #fff;
+  border-radius: 26px;
+  padding: 30px;
+}
+.exercise-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 33px;
+}
+.pill {
+  font-size: 10px;
+  color: #5593b9;
+  padding: 7px 11px;
+  border-radius: 25px;
+  background: #edf7fd;
+}
+.exercise-kind {
+  font-size: 10px;
+  color: #8ca0ac;
+}
+.english-sentence {
+  font-size: 28px;
+  letter-spacing: -0.6px;
+  margin-top: 15px;
+  line-height: 1.5;
+}
+.connector-note {
+  font-size: 11px;
+  color: #7592a5;
+  margin-top: 12px;
+}
+.answer-label {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: 1px;
+  color: #8a9da9;
+  margin: 27px 0 10px;
+}
+.answer-label span {
+  font-size: 10px;
+  letter-spacing: 0;
+  font-weight: 400;
+}
+.exercise-card textarea {
+  width: 100%;
+  resize: vertical;
+  min-height: 145px;
+  border: 1px solid #cde3ee;
+  background: #f9fcfe;
+  border-radius: 15px;
+  padding: 17px;
+  color: #385b72;
+  line-height: 1.7;
+  font-size: 17px;
+}
+.exercise-card textarea::placeholder {
+  color: #a2b6c3;
+  font-size: 15px;
+}
+.exercise-card textarea:disabled {
+  opacity: 0.8;
+}
+.umlaut-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 9px;
+}
+.umlaut-row > div {
+  display: flex;
+  gap: 5px;
+}
+.umlaut-row button {
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  background: #eef6fa;
+  color: #7996a9;
+  font-size: 13px;
+}
+.umlaut-row > span {
+  font-size: 9px;
+  color: #9babb6;
+}
+.exercise-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  margin-top: 26px;
+}
+.hint-button {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  color: #8299a5;
+  font-size: 12px;
+  background: none;
+  padding: 8px 0;
+}
+.hint-button svg {
+  color: #d1b06c;
+}
+.hint-box {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 14px;
+  background: #fbf7eb;
+  border-radius: 12px;
+  color: #998252;
+  margin-top: 18px;
+  font-size: 12px;
+  line-height: 1.7;
+}
+.hint-box svg {
+  margin-top: 2px;
+}
+.reveal-button {
+  display: block;
+  margin: 20px auto 0;
+  font-size: 10px;
+  color: #8ca0ad;
+  background: none;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  padding: 5px;
+}
+.sentence-loading {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 100px;
+  color: #80a3b9;
+  font-size: 14px;
+}
+.error-box {
+  background: #fff0ed;
+  color: #a45d4e;
+  font-size: 12px;
+  line-height: 1.7;
+  border: 1px solid #f2d9d1;
+  border-radius: 13px;
+  padding: 13px 16px;
+  margin-top: 20px;
+}
+.error-box button {
+  display: inline-flex;
+  gap: 6px;
+  align-items: center;
+  background: none;
+  color: inherit;
+  text-decoration: underline;
+  padding: 5px 10px;
+}
+.feedback-card {
+  border: 1px solid #dceadc;
+  border-radius: 23px;
+  padding: 24px;
+  margin-top: 19px;
+  background: #f0f7f0;
+}
+.feedback-card.learning {
+  border-color: #dce9f1;
+  background: #eef6fb;
+}
+.feedback-heading {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: #749880;
+}
+.feedback-heading h3 {
+  font-size: 15px;
+  letter-spacing: -0.2px;
+}
+.learning .feedback-heading {
+  color: #638faa;
+}
+.corrected-answer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-top: 16px;
+}
+.corrected-answer p {
+  font-size: 20px;
+  line-height: 1.6;
+  overflow-wrap: anywhere;
+  letter-spacing: -0.3px;
+}
+.feedback-explanation {
+  font-size: 12px;
+  color: #789082;
+  line-height: 1.85;
+  margin-top: 11px;
+}
+.learning .feedback-explanation {
+  color: #738b9b;
+}
+.icon-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 10px;
+  width: 34px;
+  height: 34px;
+  background: #ffffff80;
+  color: #7e9ead;
+  flex-shrink: 0;
+}
+.icon-button:hover:not(:disabled) {
+  background: #ddecf4;
+}
+.correction {
+  margin-top: 15px;
+  border-top: 1px solid #d8e7ef;
+  padding-top: 12px;
+  font-size: 12px;
+}
+.correction > div {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.correction del {
+  color: #b38a7e;
+}
+.correction strong {
+  color: #5485a2;
+  font-weight: 600;
+}
+.correction > div > span {
+  color: #95aab7;
+}
+.correction p {
+  font-size: 11px;
+  color: #7994a4;
+  line-height: 1.8;
+  margin-top: 6px;
+}
+.vocabulary {
+  border-top: 1px solid #dbe9e8;
+  margin-top: 18px;
+  padding-top: 14px;
+}
+.vocab-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: 10px;
+  color: #7f98a3;
+}
+.small-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  background: #edf5f9;
+  border: 1px solid #deebf2;
+  color: #7291a6;
+  border-radius: 10px;
+  padding: 8px 10px;
+  font-size: 10px;
+  white-space: nowrap;
+}
+.small-button.toggled {
+  background: #dff0fb;
+  color: var(--blue);
+}
+.word-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 12px;
+}
+.word-chips > span {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  border-radius: 10px;
+  border: 1px solid #d9e6e8;
+  background: #ffffff80;
+  padding: 9px 12px;
+}
+.word-chips strong {
+  font-size: 11px;
+  font-weight: 600;
+  color: #547588;
+}
+.word-chips > span > span {
+  font-size: 9px;
+  color: #8ba0ab;
+}
+.gentle-note {
+  text-align: center;
+  font-size: 10px;
+  line-height: 1.8;
+  color: #91a5b1;
+  margin-top: 22px;
+}
+.voice-info {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 23px 17px;
+  color: #7e9bad;
+}
+.voice-info strong {
+  font-size: 12px;
+  font-weight: 600;
+}
+.voice-info p {
+  font-size: 11px;
+  color: #90a4b1;
+  margin-top: 6px;
+  line-height: 1.85;
+}
+.conversation-card {
+  border: 1px solid var(--line);
+  border-radius: 26px;
+  background: #fff;
+  overflow: hidden;
+}
+.conversation-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 19px 24px;
+  border-bottom: 1px solid #e7f0f5;
+}
+.conversation-top > div {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.conversation-top strong {
+  font-size: 12px;
+  font-weight: 600;
+}
+.conversation-top > div > div > span {
+  font-size: 9px;
+  color: #97a8b1;
+  display: flex;
+  gap: 5px;
+  align-items: center;
+  margin-top: 5px;
+}
+.conversation-top .chat-avatar {
+  width: 38px;
+  height: 38px;
+  border-radius: 13px;
+}
+.chat-log {
+  min-height: 430px;
+  max-height: 650px;
+  overflow-y: auto;
+  padding: 25px;
+  scrollbar-width: thin;
+  scrollbar-color: #d5e7f0 transparent;
+}
+.conversation-empty {
+  display: flex;
+  align-items: center;
+  flex-direction: column;
+  justify-content: center;
+  text-align: center;
+  padding: 25px 0 20px;
+  min-height: 370px;
+}
+.empty-art {
+  position: relative;
+  width: 97px;
+  height: 93px;
+  border-radius: 35px 37px 30px 39px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #e6f4fd;
+  color: #79b6d8;
+  margin-bottom: 27px;
+  transform: rotate(-7deg);
+}
+.empty-art > span {
+  position: absolute;
+  top: -6px;
+  right: -28px;
+  padding: 9px 15px;
+  background: #eef5ec;
+  border: 1px solid #deead8;
+  color: #8ea581;
+  font-size: 11px;
+  border-radius: 15px;
+  transform: rotate(13deg);
+}
+.conversation-empty h2 {
+  font-size: 28px;
+  letter-spacing: -0.8px;
+  margin: 14px 0 13px;
+}
+.conversation-empty p,
+.words-empty p {
+  font-size: 12px;
+  line-height: 1.9;
+  color: #89a0af;
+  margin-bottom: 24px;
+}
+.chat-composer {
+  border: 1px solid #dbeaf2;
+  border-radius: 15px;
+  background: #f8fcfe;
+  margin: 0 22px;
+  padding: 9px 10px 9px 14px;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+}
+.chat-composer textarea {
+  border: 0;
+  outline: none !important;
+  background: none;
+  resize: none;
+  min-height: 49px;
+  max-height: 120px;
+  width: 100%;
+  font-size: 13px;
+  padding: 8px 0;
+  color: #46667c;
+  line-height: 1.6;
+}
+.chat-composer textarea::placeholder {
+  color: #96acba;
+}
+.composer-buttons {
+  display: flex;
+  gap: 5px;
+  align-items: center;
+}
+.mic-button {
+  background: none;
+}
+.mic-button.listening {
+  background: #fae4df;
+  color: #c88576;
+  animation: pulse 1.5s infinite;
+}
+.send-button {
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 12px;
+  color: white;
+  background: var(--blue);
+}
+.composer-note {
+  text-align: center;
+  font-size: 9px;
+  color: #9aadb9;
+  padding: 12px 10px 17px;
+}
+.conversation-card > .error-box {
+  margin: 0 22px 15px;
+}
+.message-group {
+  margin-bottom: 22px;
+}
+.message-label {
+  font-size: 8px;
+  font-weight: 600;
+  letter-spacing: 1.3px;
+  color: #90a7b7;
+  margin-bottom: 7px;
+}
+.message-bubble {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  border: 1px solid #dcebf3;
+  border-radius: 4px 18px 18px 18px;
+  background: #edf7fd;
+  padding: 13px 16px;
+  max-width: 92%;
+  width: fit-content;
+}
+.message-bubble p {
+  font-size: 14px;
+  line-height: 1.8;
+  overflow-wrap: anywhere;
+  white-space: pre-wrap;
+}
+.message-bubble .icon-button {
+  width: 26px;
+  height: 26px;
+  background: none;
+}
+.user .message-label {
+  text-align: right;
+}
+.user .message-bubble {
+  margin-left: auto;
+  background: #f0f5ed;
+  border-color: #e0e9d9;
+  border-radius: 18px 4px 18px 18px;
+}
+.message-translation {
+  font-size: 11px;
+  line-height: 1.7;
+  color: #8ea3b0;
+  max-width: 90%;
+  margin-top: 8px;
+}
+.message-group .feedback-card {
+  padding: 17px;
+  border-radius: 16px;
+  margin-top: 12px;
+}
+.message-group .feedback-heading h3 {
+  font-size: 12px;
+}
+.message-group .corrected-answer p {
+  font-size: 16px;
+}
+.translation-toggle {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 9px;
+  background: none;
+  color: #88a2b3;
+  margin: 0 0 23px auto;
+  padding: 0;
+}
+.typing-indicator {
+  display: flex;
+  gap: 5px;
+  align-items: center;
+  padding: 9px 0;
+}
+.typing-indicator > span {
+  width: 5px;
+  height: 5px;
+  background: #96bfd8;
+  border-radius: 50%;
+  animation: pulse 1s infinite;
+}
+.typing-indicator > span:nth-child(2) {
+  animation-delay: 0.15s;
+}
+.typing-indicator > span:nth-child(3) {
+  animation-delay: 0.3s;
+}
+.typing-indicator small {
+  font-size: 10px;
+  color: #8ca7b7;
+  margin-left: 5px;
+}
+.chat-vocabulary {
+  padding: 0 22px 20px;
+  border: 1px solid var(--line);
+  background: white;
+  border-radius: 20px;
+  margin-top: 18px;
+}
+.chat-vocabulary .vocabulary {
+  border: 0;
+}
+.words-empty {
+  background: #fff;
+  border: 1px solid var(--line);
+  padding: 65px 25px;
+  border-radius: 26px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+.words-empty h2 {
+  font-size: 28px;
+  margin-bottom: 14px;
+}
+.word-search {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  padding: 14px 17px;
+  max-width: 450px;
+  color: #91adbd;
+  margin-bottom: 23px;
+}
+.word-search input {
+  border: 0;
+  background: none;
+  outline: 0;
+  width: 100%;
+  font-size: 13px;
+  color: var(--ink);
+}
+.saved-words {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+}
+.saved-words article {
+  border: 1px solid var(--line);
+  border-radius: 20px;
+  padding: 21px;
+  background: white;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+.saved-words h2 {
+  font-size: 19px;
+  letter-spacing: -0.4px;
+  overflow-wrap: anywhere;
+}
+.saved-words p {
+  font-size: 12px;
+  color: #8ba1ae;
+  margin-top: 7px;
+}
+.saved-words article > div:last-child {
+  display: flex;
+  flex-direction: column;
+}
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+.spin {
+  animation: spin 1.2s linear infinite;
+}
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
   }
-
-  .orb,
-  .orb[data-state="listening"],
-  .orb[data-state="thinking"],
-  .orb[data-state="speaking"] {
-    animation: none;
-    transform: none;
+}
+@keyframes pulse {
+  50% {
+    opacity: 0.4;
+  }
+}
+@media (min-width: 1450px) {
+  .hero {
+    padding-top: 84px;
+    padding-bottom: 86px;
+  }
+  .hero-art {
+    height: 460px;
+  }
+}
+@media (max-width: 1050px) {
+  .header,
+  .hero,
+  .modes-section,
+  .how-section,
+  .practice-main,
+  .footer {
+    padding-left: 30px;
+    padding-right: 30px;
+  }
+  .hero {
+    gap: 18px;
+    padding-top: 45px;
+  }
+  .hero h1 {
+    font-size: 50px;
+  }
+  .hero-copy > p {
+    font-size: 13px;
+  }
+  .hero-art {
+    height: 410px;
+  }
+  .demo-writing {
+    padding: 20px;
+    left: 0;
+    right: 4px;
+  }
+  .demo-writing h3 {
+    font-size: 17px;
+  }
+  .demo-chat {
+    left: 28px;
+    right: -5px;
+    padding: 15px;
+    bottom: 38px;
+  }
+  .demo-chat p {
+    font-size: 13px;
+  }
+  .demo-chat .demo-caption {
+    font-size: 6px;
+  }
+  .hero-levels {
+    margin-top: 30px;
+  }
+  .belief-strip {
+    gap: 35px;
+  }
+  .mode-card {
+    padding: 25px;
+  }
+  .mode-card h3 {
+    font-size: 20px;
+  }
+  .bottom-cta {
+    margin-left: 30px;
+    margin-right: 30px;
+  }
+  .practice-grid {
+    grid-template-columns: 250px minmax(0, 1fr);
+    gap: 20px;
+  }
+  .settings-card {
+    padding: 22px 17px;
+  }
+  .exercise-card {
+    padding: 24px;
+  }
+  .header nav {
+    gap: 17px;
+  }
+  .header nav a {
+    font-size: 12px;
+  }
+  .english-sentence {
+    font-size: 24px;
+  }
+  .conversation-top {
+    padding: 16px;
+  }
+  .conversation-top .small-button span {
+    font-size: 9px;
+  }
+  .saved-words {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+@media (max-width: 760px) {
+  .header {
+    height: 83px;
+    flex-wrap: wrap;
+    padding: 20px 22px;
+    gap: 12px;
+  }
+  .header nav {
+    gap: 14px;
+  }
+  .header nav a {
+    font-size: 10px;
+  }
+  .header nav a[href="#how-it-works"],
+  .header nav a[href="#practice"] {
+    display: none;
+  }
+  .header nav .nav-cta {
+    padding: 10px 14px;
+  }
+  .logo {
+    font-size: 28px;
+  }
+  .logo-mark {
+    width: 31px;
+    height: 33px;
+  }
+  .hero {
+    grid-template-columns: 1fr;
+    padding: 34px 24px 40px;
+    gap: 23px;
+    max-width: 600px;
+  }
+  .hero h1 {
+    font-size: 51px;
+    letter-spacing: -2.5px;
+  }
+  .hero-copy > p {
+    font-size: 14px;
+  }
+  .hero-levels {
+    margin-top: 31px;
+  }
+  .hero-art {
+    height: 406px;
+    margin: 0 12px;
+  }
+  .demo-writing {
+    left: 5px;
+    right: 5px;
+    top: 73px;
+  }
+  .demo-writing h3 {
+    font-size: 21px;
+  }
+  .demo-chat {
+    left: 32px;
+    right: -5px;
+    bottom: 40px;
+  }
+  .demo-chat .demo-caption {
+    font-size: 7px;
+  }
+  .demo-chat p {
+    font-size: 15px;
+  }
+  .belief-strip {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 19px 25px;
+    padding: 23px 28px;
+    font-size: 10px;
+  }
+  .modes-section {
+    padding: 45px 24px;
+  }
+  .section-heading {
+    display: block;
+  }
+  .section-heading > p {
+    margin-top: 17px;
+  }
+  .section-heading h2 {
+    font-size: 28px;
+  }
+  .mode-cards {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+  .mode-card {
+    padding: 25px;
+  }
+  .mode-card h3 {
+    font-size: 22px;
+  }
+  .how-section {
+    padding: 0 24px 45px;
+  }
+  .how-section h2 {
+    font-size: 28px;
+  }
+  .steps {
+    grid-template-columns: 1fr;
+    gap: 25px;
+    margin-top: 24px;
+  }
+  .steps > div {
+    position: relative;
+    padding-left: 52px;
+  }
+  .steps > div > span {
+    position: absolute;
+    left: 0;
+    top: 0;
+  }
+  .steps h3 {
+    margin: 0;
+  }
+  .steps p {
+    margin-top: 7px;
+    max-width: 400px;
+  }
+  .bottom-cta {
+    margin: 0 24px 40px;
+    padding: 27px;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 23px;
+  }
+  .bottom-cta h2 {
+    font-size: 28px;
+  }
+  .bottom-cta .eyebrow {
+    font-size: 8px;
+  }
+  .footer {
+    padding: 25px 24px;
+    flex-wrap: wrap;
+    gap: 20px;
+  }
+  .footer > span:last-child {
+    display: none;
+  }
+  .footer > span {
+    font-size: 9px;
+  }
+  .language-pill {
+    display: none;
+  }
+  .header:has(.active) {
+    height: auto;
+    min-height: 106px;
+    justify-content: center;
+    gap: 17px;
+  }
+  .header:has(.active) .logo {
+    margin-right: auto;
+  }
+  .header:has(.active) nav {
+    width: 100%;
+    justify-content: center;
+    gap: 14px;
+  }
+  .header nav .active {
+    padding: 8px 12px;
+  }
+  .header:has(.active) nav a {
+    font-size: 11px;
+  }
+  .header:has(.active) nav svg {
+    width: 14px;
+  }
+  .practice-main {
+    padding: 28px 20px 45px;
+  }
+  .practice-heading {
+    align-items: flex-start;
+    margin-bottom: 25px;
+    flex-direction: column;
+    gap: 14px;
+  }
+  .practice-heading h1 {
+    font-size: 35px;
+  }
+  .practice-heading p {
+    font-size: 12px;
+  }
+  .practice-grid {
+    grid-template-columns: 1fr;
+    gap: 20px;
+  }
+  .settings-card {
+    padding: 20px;
+  }
+  .settings-title {
+    margin-bottom: 17px;
+  }
+  .settings-card fieldset {
+    margin-bottom: 18px;
+  }
+  .level-picker {
+    grid-template-columns: repeat(6, 1fr);
+  }
+  .settings-card .select-label {
+    margin-bottom: 18px;
+  }
+  .format-picker {
+    flex-direction: row;
+  }
+  .format-picker button {
+    flex: 1;
+  }
+  .settings-tip {
+    display: none;
+  }
+  .settings-card fieldset:last-of-type {
+    margin-bottom: 0;
+  }
+  .exercise-card {
+    padding: 24px 20px;
+  }
+  .exercise-top {
+    margin-bottom: 24px;
+  }
+  .english-sentence {
+    font-size: 25px;
+  }
+  .exercise-actions .button {
+    font-size: 12px;
+    padding: 13px 16px;
+    gap: 10px;
+  }
+  .hint-button {
+    font-size: 11px;
+  }
+  .umlaut-row > span {
+    font-size: 8px;
+  }
+  .feedback-card {
+    padding: 20px;
+  }
+  .feedback-heading h3 {
+    font-size: 14px;
+  }
+  .vocab-heading {
+    font-size: 9px;
+  }
+  .corrected-answer p {
+    font-size: 19px;
+  }
+  .voice-info {
+    padding: 15px 12px 0;
+  }
+  .conversation-top {
+    padding: 15px 13px;
+    gap: 6px;
+  }
+  .conversation-top strong {
+    font-size: 11px;
+  }
+  .conversation-top .small-button {
+    padding: 8px;
+  }
+  .conversation-top .small-button span {
+    font-size: 8px;
+  }
+  .conversation-top > div {
+    gap: 7px;
+  }
+  .chat-log {
+    padding: 20px 15px;
+    max-height: 570px;
+    min-height: 370px;
+  }
+  .conversation-empty {
+    min-height: 345px;
+    padding: 20px 5px;
+  }
+  .conversation-empty p {
+    font-size: 11px;
+  }
+  .conversation-empty h2 {
+    font-size: 26px;
+  }
+  .conversation-empty .eyebrow {
+    font-size: 9px;
+  }
+  .chat-composer {
+    margin: 0 12px;
+    padding-left: 11px;
+    gap: 4px;
+  }
+  .chat-composer textarea {
+    font-size: 12px;
+  }
+  .composer-note {
+    font-size: 8px;
+  }
+  .message-bubble {
+    max-width: 98%;
+    padding: 12px;
+  }
+  .message-bubble p {
+    font-size: 13px;
+  }
+  .message-group .feedback-card {
+    padding: 14px;
+  }
+  .message-group .feedback-heading h3 {
+    font-size: 11px;
+  }
+  .word-chips > span {
+    padding: 8px 10px;
+  }
+  .words-empty {
+    padding: 45px 20px;
+  }
+  .words-empty h2 {
+    font-size: 24px;
+  }
+  .saved-words {
+    grid-template-columns: 1fr;
+  }
+  .saved-words article > div:last-child {
+    flex-direction: row;
+  }
+}
+.hero-art {
+  height: 490px;
+}
+.hero-art .demo-chat {
+  bottom: 5px;
+}
+.hero-art .label-bottom {
+  bottom: -34px;
+}
+@media (max-width: 760px) {
+  .hero-art {
+    height: 450px;
+  }
+  .hero-art .demo-writing {
+    top: 55px;
+  }
+  .hero-art .label-bottom {
+    bottom: -24px;
+  }
+  .hero {
+    padding-bottom: 62px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+  *,
+  *:before,
+  *:after {
+    animation: none !important;
+    transition: none !important;
   }
 }
