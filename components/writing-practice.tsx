@@ -7,6 +7,7 @@ import {
   LoaderCircle,
   PenLine,
   RotateCcw,
+  Shuffle,
   Sparkles,
   Volume2,
 } from "lucide-react";
@@ -15,59 +16,68 @@ import { PracticeSettings } from "./settings";
 import { FeedbackCard, Words, speak } from "./feedback";
 import {
   defaults,
+  languageNames,
+  languageTag,
   Exercise,
   Feedback,
   request,
   Settings,
   starter,
 } from "@/lib/practice";
+import { pickExercise } from "@/lib/question-bank";
+import { ChallengeResult } from "./challenge-result";
 
 export function WritingPractice() {
   const [settings, setSettings] = useState<Settings>(defaults),
     [exercise, setExercise] = useState<Exercise>(starter),
     [answer, setAnswer] = useState(""),
     [feedback, setFeedback] = useState<Feedback | null>(null),
-    [busy, setBusy] = useState<"sentence" | "check" | null>(null),
+    [busy, setBusy] = useState<"check" | null>(null),
     [error, setError] = useState(""),
     [hint, setHint] = useState(false),
     [revealed, setRevealed] = useState(false),
-    [count, setCount] = useState(0),
-    [ready, setReady] = useState(true);
+    [attempt, setAttempt] = useState(0),
+    [roll, setRoll] = useState(0);
+  const language = settings.language ?? "german";
+  const chinese = language === "chinese";
+  const target = languageNames[language];
   const history = useRef<string[]>([starter.english]);
   const input = useRef<HTMLTextAreaElement>(null);
   const current = useRef(settings);
   const controller = useRef<AbortController | null>(null);
+  const resultPanel = useRef<HTMLDivElement>(null);
   useEffect(() => () => controller.current?.abort(), []);
-  async function next(nextSettings = settings) {
-    controller.current?.abort();
-    const abort = new AbortController();
-    controller.current = abort;
-    setBusy("sentence");
+  useEffect(() => {
+    if (feedback)
+      resultPanel.current?.scrollIntoView({
+        block: "nearest",
+        behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches
+          ? "auto"
+          : "smooth",
+      });
+  }, [feedback]);
+  function retry() {
+    setFeedback(null);
     setError("");
-    setReady(false);
+    setHint(false);
+    requestAnimationFrame(() => input.current?.focus());
+  }
+  function next(nextSettings = settings) {
+    controller.current?.abort();
+    const selected = pickExercise(nextSettings, history.current);
+    setBusy(null);
+    setError("");
     setFeedback(null);
     setAnswer("");
     setHint(false);
     setRevealed(false);
-    try {
-      const generated = await request<Exercise>(
-        "sentence",
-        { settings: nextSettings, previous: history.current },
-        abort.signal,
-      );
-      setExercise(generated);
-      history.current = [...history.current, generated.english].slice(-12);
-      setReady(true);
-      input.current?.focus();
-    } catch (e) {
-      if (!abort.signal.aborted)
-        setError(e instanceof Error ? e.message : "Please try again.");
-    } finally {
-      if (!abort.signal.aborted) setBusy(null);
-    }
+    setExercise(selected);
+    history.current = [...history.current, selected.english].slice(-576);
+    setRoll((value) => value + 1);
+    requestAnimationFrame(() => input.current?.focus());
   }
   async function check() {
-    if (!answer.trim() || busy || !ready || feedback || revealed) return;
+    if (!answer.trim() || busy || feedback || revealed) return;
     setBusy("check");
     setError("");
     const abort = new AbortController();
@@ -78,8 +88,9 @@ export function WritingPractice() {
         { settings: current.current, english: exercise.english, answer },
         abort.signal,
       );
+      if (abort.signal.aborted) return;
       setFeedback(result);
-      setCount((c) => c + 1);
+      setAttempt((value) => value + 1);
     } catch (e) {
       if (!abort.signal.aborted)
         setError(e instanceof Error ? e.message : "Please try again.");
@@ -94,19 +105,18 @@ export function WritingPractice() {
   }
   return (
     <>
-      <Header active="write" />
-      <main className="practice-main">
+      <Header active="write" language={language} />
+      <main className="practice-main writing-main">
         <div className="practice-heading">
           <div>
             <div className="eyebrow">
-              <PenLine size={15} /> WRITE IT OUT
+              <PenLine size={15} /> LEARN BY DOING / WRITING
             </div>
-            <h1>One sentence closer.</h1>
-            <p>Make it yours in German. We’ll help with the little things.</p>
-          </div>
-          <div className="session-count">
-            <Sparkles size={18} />
-            <strong>{count}</strong> sentences practiced
+            <h1>Make the next sentence yours.</h1>
+            <p>
+              Write it in {target}, learn from the feedback, and try what you’ve
+              learned.
+            </p>
           </div>
         </div>
         <div className="practice-grid">
@@ -116,7 +126,19 @@ export function WritingPractice() {
             disabled={!!busy}
           />
           <div className="exercise-column">
-            <section className="exercise-card">
+            <section
+              className={`exercise-card challenge-card ${feedback ? (feedback.correct ? "is-won" : "is-lost") : ""}`}
+              aria-busy={!!busy}
+            >
+              <div className="challenge-banner">
+                <span>
+                  <PenLine size={18} /> SENTENCE{" "}
+                  {String(roll + 1).padStart(2, "0")}
+                </span>
+                <span>
+                  <Sparkles size={15} /> Your words. Your progress.
+                </span>
+              </div>
               <div className="exercise-top">
                 <span className="pill">
                   {settings.level} · {settings.topic}
@@ -128,23 +150,36 @@ export function WritingPractice() {
                 </span>
               </div>
               <div className="demo-caption">
-                HOW WOULD YOU SAY THIS IN GERMAN?
+                HOW WOULD YOU SAY THIS IN {target.toUpperCase()}?
               </div>
-              {busy === "sentence" ? (
-                <div className="sentence-loading">
-                  <LoaderCircle className="spin" size={22} /> Finding your next
-                  little challenge…
-                </div>
-              ) : ready ? (
-                <h2 className="english-sentence">“{exercise.english}”</h2>
-              ) : (
-                <h2 className="english-sentence">
-                  Let’s find your next sentence.
-                </h2>
-              )}
+              <h2
+                key={roll}
+                className={`english-sentence${roll ? " sentence-reroll" : ""}`}
+                aria-live="polite"
+                aria-atomic="true"
+              >
+                “{exercise.english}”
+              </h2>
+              <div className="question-tools">
+                <span>Every sentence is a chance to express yourself.</span>
+                <button
+                  type="button"
+                  className="reroll-button"
+                  disabled={!!busy}
+                  onClick={() => next()}
+                  title="Get a different question and clear this attempt"
+                >
+                  <Shuffle
+                    key={roll}
+                    className={roll ? "reroll-icon" : ""}
+                    size={16}
+                  />
+                  Different sentence
+                </button>
+              </div>
               {settings.format === "connected" && (
                 <p className="connector-note">
-                  Combine both ideas in German using a suitable Konnektor.
+                  Combine both ideas in {target} using a suitable connector.
                 </p>
               )}
               <form
@@ -154,17 +189,17 @@ export function WritingPractice() {
                 }}
               >
                 <label className="answer-label" htmlFor="answer">
-                  YOUR TURN <span>Deutsch, bitte.</span>
+                  YOUR TURN <span>{chinese ? "Pinyin, please. Tone marks optional." : "Deutsch, bitte."}</span>
                 </label>
                 <textarea
                   ref={input}
                   id="answer"
-                  lang="de"
+                  lang={languageTag(language)}
                   value={answer}
                   onChange={(e) => setAnswer(e.target.value)}
-                  placeholder="Your German goes here…"
+                  placeholder={chinese ? "Your pinyin goes here… e.g. wo xiang he cha" : "Your German goes here…"}
                   maxLength={4000}
-                  disabled={!!busy || !!feedback || revealed || !ready}
+                  disabled={!!busy || !!feedback || revealed}
                   onKeyDown={(e) => {
                     if ((e.ctrlKey || e.metaKey) && e.key === "Enter") {
                       e.preventDefault();
@@ -174,11 +209,11 @@ export function WritingPractice() {
                 />
                 <div className="umlaut-row">
                   <div>
-                    {["ä", "ö", "ü", "ß"].map((letter) => (
+                    {(chinese ? [] : ["ä", "ö", "ü", "ß"]).map((letter) => (
                       <button
                         key={letter}
                         type="button"
-                        disabled={!!busy || !!feedback || revealed || !ready}
+                        disabled={!!busy || !!feedback || revealed}
                         onClick={() => {
                           const el = input.current;
                           const start = el?.selectionStart ?? answer.length;
@@ -202,16 +237,28 @@ export function WritingPractice() {
                   <button
                     type="button"
                     className="hint-button"
-                    disabled={!!busy || !ready}
+                    disabled={!!busy}
                     onClick={() => setHint(!hint)}
                   >
                     <Lightbulb size={17} />
-                    {hint ? "Hide hint" : "A little hint"}
+                    {hint ? "Hide hint" : "Get a hint"}
                   </button>
-                  {feedback || revealed ? (
+                  {feedback && !feedback.correct ? (
                     <button
                       type="button"
                       className="button primary"
+                      onClick={(event) => {
+                        event.preventDefault();
+                        retry();
+                      }}
+                    >
+                      <RotateCcw size={17} /> Try again
+                    </button>
+                  ) : feedback || revealed ? (
+                    <button
+                      type="button"
+                      className="button primary"
+                      disabled={!!busy}
                       onClick={() => void next()}
                     >
                       Next sentence <ArrowRight size={17} />
@@ -219,7 +266,7 @@ export function WritingPractice() {
                   ) : (
                     <button
                       className="button primary"
-                      disabled={!answer.trim() || !!busy || !ready}
+                      disabled={!answer.trim() || !!busy}
                     >
                       {busy === "check" ? (
                         <>
@@ -227,20 +274,20 @@ export function WritingPractice() {
                         </>
                       ) : (
                         <>
-                          <Check size={18} /> Check my German
+                          <Check size={18} /> Submit answer
                         </>
                       )}
                     </button>
                   )}
                 </div>
               </form>
-              {hint && ready && (
+              {hint && (
                 <div className="hint-box">
                   <Lightbulb size={17} />
                   <p>{exercise.hint}</p>
                 </div>
               )}
-              {!feedback && !revealed && ready && (
+              {!feedback && !revealed && (
                 <button
                   className="reveal-button"
                   disabled={!!busy}
@@ -255,42 +302,41 @@ export function WritingPractice() {
               {error && (
                 <div className="error-box" role="alert">
                   {error}
-                  {!ready && (
-                    <button onClick={() => void next()}>
-                      <RotateCcw size={14} /> Try again
-                    </button>
-                  )}
                 </div>
               )}
             </section>
             {feedback && (
-              <FeedbackCard key={exercise.english} feedback={feedback} />
-            )}{" "}
+              <div ref={resultPanel} key={`${roll}-${attempt}`}>
+                <ChallengeResult correct={feedback.correct} />
+                <FeedbackCard feedback={feedback} language={language} />
+              </div>
+            )}
             {revealed && (
               <section className="feedback-card learning">
                 <div className="feedback-heading">
                   <Sparkles size={20} />
-                  <h3>A new sentence to take with you.</h3>
+                  <h3>Another way to put it.</h3>
                 </div>
                 <div className="corrected-answer">
-                  <p lang="de">{exercise.german}</p>
-                  <button
+                  <p lang={languageTag(language)}>{exercise.german}</p>
+                  {!chinese && <button
                     className="icon-button"
                     aria-label="Listen to the German translation"
-                    onClick={() => speak(exercise.german)}
+                    onClick={() => speak(exercise.german, language)}
                   >
                     <Volume2 size={18} />
-                  </button>
+                  </button>}
                 </div>
                 <p className="feedback-explanation">
                   Read it aloud, notice the word order, and try the next one.
                   Every attempt counts.
                 </p>
-                <Words key={exercise.english} words={exercise.vocabulary} />
+                <Words key={exercise.english} words={exercise.vocabulary} language={language} />
               </section>
             )}
             <p className="gentle-note">
-              ✦ Making mistakes is part of making progress.
+              ✦ You learn by trying. Every attempt gives you something to build
+              on.
             </p>
           </div>
         </div>

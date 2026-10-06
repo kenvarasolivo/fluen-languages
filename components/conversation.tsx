@@ -17,6 +17,8 @@ import { PracticeSettings } from "./settings";
 import { FeedbackCard, Words, speak } from "./feedback";
 import {
   defaults,
+  languageNames,
+  languageTag,
   Message,
   Reply,
   request,
@@ -56,6 +58,10 @@ export function Conversation() {
     [voiceAvailable, setVoiceAvailable] = useState(false),
     [latestWords, setLatestWords] = useState<Vocabulary[]>([]),
     [showTranslations, setShowTranslations] = useState(false);
+  const language = settings.language ?? "german";
+  const chinese = language === "chinese";
+  const target = languageNames[language];
+  const greeting = chinese ? "Nǐ hǎo" : "Hallo";
   const recognition = useRef<Recognition | null>(null),
     controller = useRef<AbortController | null>(null),
     bottom = useRef<HTMLDivElement>(null),
@@ -110,7 +116,7 @@ export function Conversation() {
       setMessages(updated);
       setText("");
       setLatestWords(result.vocabulary);
-      if (autoSpeak) speak(result.reply);
+      if (autoSpeak) speak(result.reply, language);
     } catch (e) {
       if (!abort.signal.aborted)
         setError(e instanceof Error ? e.message : "Please try again.");
@@ -128,6 +134,7 @@ export function Conversation() {
     setListening(false);
     setBusy(false);
     setSettings(value);
+    setAutoSpeak(false);
     setMessages([]);
     setText("");
     setError("");
@@ -179,15 +186,18 @@ export function Conversation() {
   }
   return (
     <>
-      <Header active="speak" />
+      <Header active="speak" language={language} />
       <main className="practice-main">
         <div className="practice-heading">
           <div>
             <div className="eyebrow">
-              <AudioLines size={15} /> TALK IT THROUGH
+              <AudioLines size={15} /> OUTPUT PRACTICE / CONVERSATION
             </div>
-            <h1>Let’s talk about it.</h1>
-            <p>A friendly place to find your voice. Mistakes included.</p>
+            <h1>Give your {target} a voice.</h1>
+            <p>
+              Speak or type your own replies. Build confidence one conversation
+              at a time.
+            </p>
           </div>
           <button
             className="small-button reset-button"
@@ -210,7 +220,9 @@ export function Conversation() {
               <div>
                 <strong>Speak your mind</strong>
                 <p>
-                  {voiceAvailable
+                  {chinese
+                    ? "Type your replies in pinyin. Tone marks are optional. Voice features are available for German."
+                    : voiceAvailable
                     ? "Tap the mic, speak German, then send your reply. Turn on read-aloud to hear your companion."
                     : "Typing works in every browser. Microphone input needs a browser with speech recognition, such as Chrome or Edge."}
                 </p>
@@ -225,7 +237,7 @@ export function Conversation() {
                     <Waves size={23} />
                   </span>
                   <div>
-                    <strong>Your German companion</strong>
+                    <strong>Your {target} companion</strong>
                     <span>
                       <i className="online-dot" /> Here to help you flow
                     </span>
@@ -233,6 +245,7 @@ export function Conversation() {
                 </div>
                 <button
                   className={`small-button ${autoSpeak ? "toggled" : ""}`}
+                  disabled={chinese}
                   aria-pressed={autoSpeak}
                   onClick={() => {
                     setAutoSpeak(!autoSpeak);
@@ -248,7 +261,7 @@ export function Conversation() {
                   <div className="conversation-empty">
                     <span className="empty-art">
                       <Waves size={45} />
-                      <span>Hallo!</span>
+                      <span>{greeting}!</span>
                     </span>
                     <span className="eyebrow">
                       {settings.level} · {settings.topic}
@@ -271,11 +284,11 @@ export function Conversation() {
                       {busy ? (
                         <>
                           <LoaderCircle size={18} className="spin" /> Saying
-                          Hallo…
+                          {greeting}…
                         </>
                       ) : (
                         <>
-                          Say Hallo <AudioLines size={18} />
+                          Say {greeting} <AudioLines size={18} />
                         </>
                       )}
                     </button>
@@ -298,12 +311,12 @@ export function Conversation() {
                           {message.role === "user" ? "YOU" : "FLUEN"}
                         </div>
                         <div className="message-bubble">
-                          <p lang="de">{message.text}</p>
-                          {message.role === "assistant" && (
+                          <p lang={languageTag(language)}>{message.text}</p>
+                          {message.role === "assistant" && !chinese && (
                             <button
                               className="icon-button"
                               aria-label="Listen to this reply"
-                              onClick={() => speak(message.text)}
+                              onClick={() => speak(message.text, language)}
                             >
                               <Volume2 size={16} />
                             </button>
@@ -315,7 +328,7 @@ export function Conversation() {
                           </p>
                         )}
                         {message.feedback && (
-                          <FeedbackCard feedback={message.feedback} />
+                          <FeedbackCard feedback={message.feedback} language={language} />
                         )}
                       </div>
                     ))}
@@ -324,7 +337,7 @@ export function Conversation() {
                         <span />
                         <span />
                         <span />
-                        <small>Thinking in German…</small>
+                        <small>Thinking in {target}…</small>
                       </div>
                     )}
                   </>
@@ -344,16 +357,16 @@ export function Conversation() {
                 }}
               >
                 <label className="sr-only" htmlFor="chat-text">
-                  Your German message
+                  Your {target} message
                 </label>
                 <textarea
                   ref={compose}
                   id="chat-text"
-                  lang="de"
+                  lang={languageTag(language)}
                   placeholder={
                     messages.length
-                      ? "What’s on your mind? Try it in German…"
-                      : "Say Hallo to start your conversation…"
+                      ? `What’s on your mind? Try it in ${target}…`
+                      : `Say ${greeting} to start your conversation…`
                   }
                   value={text}
                   onChange={(e) => setText(e.target.value)}
@@ -370,12 +383,12 @@ export function Conversation() {
                   <button
                     type="button"
                     className={`icon-button mic-button ${listening ? "listening" : ""}`}
-                    disabled={busy || !voiceAvailable || !messages.length}
+                    disabled={chinese || busy || !voiceAvailable || !messages.length}
                     aria-label={
-                      listening ? "Stop recording" : "Speak in German"
+                      listening ? "Stop recording" : chinese ? "Type pinyin for Chinese" : "Speak in German"
                     }
                     title={
-                      voiceAvailable
+                      chinese ? "Type pinyin for Chinese" : voiceAvailable
                         ? "Speak in German"
                         : "Speech recognition unavailable in this browser"
                     }
@@ -401,12 +414,12 @@ export function Conversation() {
               <div className="composer-note">
                 {listening
                   ? "Listening… tap stop when you’re done."
-                  : "Speak or type · Enter to send · Shift + Enter for a new line"}
+                  : chinese ? "Type pinyin · Tone marks optional · Enter to send" : "Speak or type · Enter to send · Shift + Enter for a new line"}
               </div>
             </section>
             {latestWords.length > 0 && (
               <section className="chat-vocabulary">
-                <Words key={messages.length} words={latestWords} />
+                <Words key={messages.length} words={latestWords} language={language} />
               </section>
             )}
             <p className="gentle-note">

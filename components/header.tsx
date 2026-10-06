@@ -1,11 +1,6 @@
 import Link from "next/link";
-import {
-  ArrowUpRight,
-  AudioLines,
-  PenLine,
-  Sprout,
-  BookOpen,
-} from "lucide-react";
+import { ArrowUpRight, AudioLines, PenLine, BookOpen } from "lucide-react";
+import { Language, languageNames } from "@/lib/practice";
 export function Logo() {
   return (
     <Link href="/" className="logo" aria-label="Fluen home">
@@ -16,20 +11,35 @@ export function Logo() {
     </Link>
   );
 }
-export function Header({ active }: { active?: string }) {
+export function Header({ active, language }: { active?: string; language?: Language }) {
   return (
     <header className="header">
-      <Logo />
+      <div className="brand-lockup">
+        <Logo />
+        <span>Language in action.</span>
+      </div>
       <nav aria-label="Main navigation">
         {active ? (
           <>
-            <Link className={active === "write" ? "active" : ""} href="/write">
+            <Link
+              aria-current={active === "write" ? "page" : undefined}
+              className={active === "write" ? "active" : ""}
+              href="/write"
+            >
               <PenLine size={16} /> Writing
             </Link>
-            <Link className={active === "speak" ? "active" : ""} href="/speak">
+            <Link
+              aria-current={active === "speak" ? "page" : undefined}
+              className={active === "speak" ? "active" : ""}
+              href="/speak"
+            >
               <AudioLines size={16} /> Conversation
             </Link>
-            <Link className={active === "words" ? "active" : ""} href="/words">
+            <Link
+              aria-current={active === "words" ? "page" : undefined}
+              className={active === "words" ? "active" : ""}
+              href="/words"
+            >
               <BookOpen size={16} /> My words
             </Link>
           </>
@@ -38,14 +48,14 @@ export function Header({ active }: { active?: string }) {
             <a href="#how-it-works">How it works</a>
             <a href="#practice">Ways to practice</a>
             <Link href="/write" className="nav-cta">
-              Let’s get started <ArrowUpRight size={16} />
+              Start practicing <ArrowUpRight size={16} />
             </Link>
           </>
         )}
       </nav>
-      {active && (
+      {active && language && (
         <span className="language-pill">
-          <span className="german-flag" /> German{" "}
+          {language === "german" && <span className="german-flag" />} {languageNames[language]}{" "}
           <span className="online-dot" />
         </span>
       )}
@@ -56,10 +66,8 @@ export function Footer() {
   return (
     <footer className="footer">
       <Logo />
-      <span>A little practice. A lot more possibility.</span>
-      <span>
-        Made for your German journey <Sprout size={15} />
-      </span>
+      <span>Learn a language by putting it into words.</span>
+      <span>German and Chinese (pinyin). More languages coming soon.</span>
     </footer>
   );
 }

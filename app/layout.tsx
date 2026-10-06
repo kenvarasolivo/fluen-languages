@@ -1,9 +1,9 @@
 import type { Metadata } from "next";
 import "./globals.css";
 export const metadata: Metadata = {
-  title: "Fluen — A little German, every day",
+  title: "Fluen — Language in action",
   description:
-    "Find your flow in German. Practice writing and speaking with friendly AI feedback, from A1 to C2.",
+    "The output-first language learning app. Turn what you know into what you can say through writing, conversation, and clear AI feedback. German and Chinese (pinyin) available now.",
 };
 export default function RootLayout({
   children,

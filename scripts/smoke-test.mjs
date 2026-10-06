@@ -40,7 +40,7 @@ assert.ok(
     sentence.hint &&
     sentence.vocabulary.length,
 );
-console.log("PASS: C2 connector exercise generated");
+console.log("PASS: preloaded C2 connector exercise selected");
 const greeting = await call("chat", { messages: [] });
 assert.ok(greeting.reply && greeting.translation);
 assert.equal(greeting.feedback, null);

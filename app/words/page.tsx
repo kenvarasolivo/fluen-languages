@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { ArrowRight, BookOpen, Search, Trash2, Volume2 } from "lucide-react";
 import { Header, Footer } from "@/components/header";
-import { Vocabulary } from "@/lib/practice";
+import { Vocabulary, languageNames, languageTag } from "@/lib/practice";
 import { speak } from "@/components/feedback";
 export default function WordsPage() {
   const [words, setWords] = useState<Vocabulary[]>([]),
@@ -22,11 +22,12 @@ export default function WordsPage() {
         );
     } catch {}
   }, []);
-  function remove(german: string) {
-    const next = words.filter((w) => w.german !== german);
+  function remove(word: Vocabulary) {
+    const next = words.filter((w) => w.german !== word.german || (w.language ?? "german") !== (word.language ?? "german"));
     setWords(next);
     try {
       localStorage.setItem("fluen:words", JSON.stringify(next));
+      window.dispatchEvent(new Event("fluen:words"));
     } catch {}
   }
   const filtered = words.filter((w) =>
@@ -39,10 +40,13 @@ export default function WordsPage() {
         <div className="practice-heading">
           <div>
             <div className="eyebrow">
-              <BookOpen size={15} /> LITTLE DISCOVERIES
+              <BookOpen size={15} /> YOUR ACTIVE VOCABULARY
             </div>
-            <h1>Words that stay with you.</h1>
-            <p>Your collection of German words, saved on this browser.</p>
+            <h1>Words for your next conversation.</h1>
+            <p>
+              Revisit what you’ve learned, then use it in your next sentence.
+              Saved in this browser.
+            </p>
           </div>
           <span className="session-count">{words.length} words collected</span>
         </div>
@@ -51,7 +55,7 @@ export default function WordsPage() {
             <span className="empty-art">
               <BookOpen size={40} />
             </span>
-            <h2>A little room for new words.</h2>
+            <h2>Make your vocabulary work for you.</h2>
             <p>
               Save vocabulary from your writing feedback or conversations.
               <br />
@@ -74,22 +78,23 @@ export default function WordsPage() {
             </label>
             <div className="saved-words">
               {filtered.map((w) => (
-                <article key={w.german}>
+                <article key={`${w.language ?? "german"}:${w.german}`}>
                   <div>
-                    <h2 lang="de">{w.german}</h2>
+                    <h2 lang={languageTag(w.language)}>{w.german}</h2>
                     <p>{w.english}</p>
+                    <small>{languageNames[w.language === "chinese" ? "chinese" : "german"]}</small>
                   </div>
                   <div>
-                    <button
+                    {w.language !== "chinese" && <button
                       className="icon-button"
                       onClick={() => speak(w.german)}
                       aria-label={`Listen to ${w.german}`}
                     >
                       <Volume2 size={18} />
-                    </button>
+                    </button>}
                     <button
                       className="icon-button"
-                      onClick={() => remove(w.german)}
+                      onClick={() => remove(w)}
                       aria-label={`Remove ${w.german}`}
                     >
                       <Trash2 size={16} />

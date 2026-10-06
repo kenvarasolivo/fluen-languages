@@ -1,5 +1,5 @@
 "use client";
-import { Level, levels, topics, Settings } from "@/lib/practice";
+import { Level, levels, topics, Settings, languages, languageNames, Language } from "@/lib/practice";
 import { ChevronDown, SlidersHorizontal } from "lucide-react";
 import { useEffect, useState } from "react";
 export function PracticeSettings({
@@ -26,9 +26,27 @@ export function PracticeSettings({
     >
       <summary className="settings-title">
         <SlidersHorizontal size={18} />
-        <h2>Your practice, your way</h2>
+        <h2>Practice settings</h2>
         <ChevronDown className="settings-chevron" size={15} />
       </summary>
+      <label className="select-label">
+        Your language
+        <div className="select-wrap">
+          <select
+            value={settings.language ?? "german"}
+            disabled={disabled}
+            onChange={(e) => onChange({ ...settings, language: e.target.value as Language })}
+          >
+            {languages.map((language) => (
+              <option key={language} value={language}>{languageNames[language]}</option>
+            ))}
+          </select>
+          <ChevronDown size={16} />
+        </div>
+      </label>
+      {settings.language === "chinese" && (
+        <p className="field-note">Mandarin in pinyin only. Tone marks are optional; type ü as u, v or u:.</p>
+      )}
       <fieldset disabled={disabled}>
         <legend>Your level</legend>
         <div className="level-picker">
@@ -50,7 +68,7 @@ export function PracticeSettings({
               B1: "Find your voice in familiar situations.",
               B2: "Express yourself with more detail.",
               C1: "Explore nuance and complex ideas.",
-              C2: "Fine-tune your most fluent German.",
+              C2: "Fine-tune your most fluent expression.",
             }[settings.level]
           }
         </p>
@@ -86,7 +104,7 @@ export function PracticeSettings({
               onClick={() => onChange({ ...settings, format: "connected" })}
             >
               <strong>Connect two ideas</strong>
-              <span>Two sentences → use a Konnektor</span>
+              <span>Two sentences → use a connector</span>
             </button>
           </div>
         </fieldset>
