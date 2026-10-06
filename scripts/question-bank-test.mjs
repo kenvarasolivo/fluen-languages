@@ -13,22 +13,38 @@ async function compile(path, replacements = {}) {
   return moduleUrl(source);
 }
 const practiceUrl = await compile("../lib/practice.ts");
-const chineseUrl = await compile("../lib/chinese-bank.ts", { "./practice": practiceUrl });
-const bankUrl = await compile("../lib/question-bank.ts", { "./practice": practiceUrl, "./chinese-bank": chineseUrl });
+const connectedUrl = await compile("../lib/connected-bank.ts", { "./practice": practiceUrl });
+const chineseUrl = await compile("../lib/chinese-bank.ts", { "./practice": practiceUrl, "./connected-bank": connectedUrl });
+const bankUrl = await compile("../lib/question-bank.ts", { "./practice": practiceUrl, "./chinese-bank": chineseUrl, "./connected-bank": connectedUrl });
 const { levels, topics, starter } = await import(practiceUrl);
 const { getExercisePool, pickExercise, normalizeAnswer } = await import(bankUrl);
+function assertEveryWord(item) {
+  const words = item.german.match(/[\p{L}\p{M}]+(?:[-'’][\p{L}\p{M}]+)*/gu) ?? [];
+  assert.deepEqual(item.vocabulary.map((word) => word.german), words,
+    `Missing sentence words: ${item.german}`);
+  assert.ok(item.vocabulary.every((word) => word.english.trim()));
+}
+assertEveryWord(starter);
+assert.deepEqual(starter.vocabulary.map((word) => word.english),
+  ["I", "drink", "every", "morning", "a", "coffee"]);
 let total = 0;
 for (const level of levels) {
   for (const topic of topics) {
     for (const format of ["single", "connected"]) {
       const settings = { level, topic, format };
       const pool = getExercisePool(settings);
-      assert.equal(pool.length, format === "single" ? 4 : 12);
+      assert.equal(pool.length, 4);
+      if (format === "connected") assert.deepEqual(pool.map(item => item.connector.english), ["and", "but", "because", "although"]);
       assert.equal(new Set(pool.map((item) => item.english)).size, pool.length);
       for (const item of pool) {
+        assertEveryWord(item);
         assert.ok(item.english && item.german && item.hint && item.vocabulary.length);
         assert.ok(item.vocabulary.every((word) => word.german && word.english));
-        if (format === "connected") assert.match(item.german, /, und /);
+        if (format === "connected") {
+          assert.ok(item.english.includes(`, ${item.connector.english} `));
+          assert.ok(item.german.includes(`, ${item.connector.target} `));
+          assert.ok(item.hint.includes(`${item.connector.target} (${item.connector.english})`));
+        }
       }
       const history = [];
       for (let i = 0; i < pool.length; i++) {
@@ -43,7 +59,7 @@ for (const level of levels) {
     }
   }
 }
-assert.equal(total, 576);
+assert.equal(total, 288);
 assert.ok(getExercisePool({ level: "A1", topic: topics[0], format: "single" })
   .some((item) => item.english === starter.english && item.german === starter.german));
 assert.equal(normalizeAnswer("  Ich   trinke einen Kaffee! "), normalizeAnswer("Ich trinke einen Kaffee."));
@@ -59,10 +75,12 @@ let chineseTotal = 0;
 for (const level of levels) for (const topic of topics) for (const format of ["single", "connected"]) {
   const settings = { language: "chinese", level, topic, format };
   const pool = getExercisePool(settings);
-  assert.equal(pool.length, 2);
+  assert.equal(pool.length, format === "single" ? 2 : 4);
+  if (format === "connected") assert.deepEqual(pool.map(item => item.connector.english), ["and", "but", "because", "although"]);
   assert.equal(new Set(pool.map((item) => item.english)).size, pool.length);
   const history = [];
   for (const item of pool) {
+    assertEveryWord(item);
     assert.ok(item.english && item.german && item.hint && item.vocabulary.length);
     assert.ok(!/\p{Script=Han}/u.test(JSON.stringify(item)));
     assert.ok(item.vocabulary.every((word) => word.language === "chinese"));
@@ -73,8 +91,19 @@ for (const level of levels) for (const topic of topics) for (const format of ["s
   assert.equal(pickExercise(settings, history).english, history[0]);
   chineseTotal += pool.length;
 }
-assert.equal(chineseTotal, 144);
-console.log("PASS: 576 complete exercises, all 72 settings combinations, no early repeats, pool cycling and answer normalization");
+assert.equal(chineseTotal, 216);
+const germanConnected = getExercisePool({ level: "A1", topic: topics[0], format: "connected" });
+assert.equal(germanConnected[2].german, "Ich trinke jeden Morgen einen Kaffee, weil ich müde bin.");
+assert.equal(germanConnected[3].german, "Ich trinke jeden Morgen einen Kaffee, obwohl ich Tee lieber mag.");
+assert.ok(getExercisePool({ level: "B1", topic: topics[2], format: "connected" })[2].german.endsWith(
+  ", weil ich Geld sparen möchte."));
+assert.ok(getExercisePool({ level: "B2", topic: topics[1], format: "connected" })[2].german.endsWith(
+  ", weil die Preise kurz danach gestiegen sind."));
+assert.ok(getExercisePool({ level: "C1", topic: topics[3], format: "connected" })[2].german.endsWith(
+  ", weil die verfügbaren Studien einander widersprechen."));
+const chineseConnected = getExercisePool({ language: "chinese", level: "A1", topic: topics[0], format: "connected" });
+assert.equal(chineseConnected[3].german, "Suīrán wǒ gèng xǐhuan kāfēi, dànshì wǒ měitiān zǎoshang hē chá.");
+console.log("PASS: 288 German and 216 Chinese exercises, four explicit connector meanings per connected pool, complete word meanings and no early repeats");
 
 // The AI constructor throws if reached. This proves questions and exact checks
 // do not call the provider, while alternative answers retain the AI path.
@@ -105,9 +134,11 @@ for (const level of levels) {
       const response = await call("sentence", settings);
       assert.equal(response.status, 200);
       const item = await response.json();
-      const check = await call("check", settings, { english: item.english, answer: item.german });
-      assert.equal(check.status, 200);
-      assert.equal((await check.json()).correct, true);
+      for (const exercise of getExercisePool(settings)) {
+        const check = await call("check", settings, { english: exercise.english, answer: exercise.german });
+        assert.equal(check.status, 200);
+        assert.equal((await check.json()).correct, true);
+      }
     }
   }
 }
@@ -117,13 +148,17 @@ for (const level of levels) for (const topic of topics) for (const format of ["s
   const response = await call("sentence", chineseSettings);
   assert.equal(response.status, 200);
   const item = await response.json();
-  const answer = item.german.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toUpperCase();
-  const check = await call("check", chineseSettings, { english: item.english, answer });
-  assert.equal(check.status, 200);
-  const feedback = await check.json();
-  assert.equal(feedback.correct, true);
-  assert.deepEqual(feedback.corrections, []);
-  assert.ok(feedback.vocabulary.every((word) => word.language === "chinese"));
+  for (const exercise of getExercisePool(chineseSettings)) {
+    const answer = exercise.german.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toUpperCase();
+    const check = await call("check", chineseSettings, { english: exercise.english, answer });
+    assert.equal(check.status, 200);
+    const feedback = await check.json();
+    assert.equal(feedback.correct, true);
+    assert.equal(feedback.corrected, exercise.german, "Show the tone-marked model, even for unmarked input");
+    assertEveryWord({ german: feedback.corrected, vocabulary: feedback.vocabulary });
+    assert.deepEqual(feedback.corrections, []);
+    assert.ok(feedback.vocabulary.every((word) => word.language === "chinese"));
+  }
 }
 assert.equal((await call("sentence", { ...settings, language: "klingon" })).status, 400);
 assert.equal((await call("sentence", { ...settings, level: "D1" })).status, 400);
@@ -132,7 +167,7 @@ assert.equal((await call("check", settings, { english: starter.english, answer: 
 process.env.GEMINI_API_KEY = "test-only";
 assert.equal((await call("sentence", settings)).status, 200);
 assert.equal((await call("check", settings, { english: starter.english, answer: starter.german })).status, 200);
-console.log("PASS: German and 144 Chinese exercises; tone-free Chinese checks work without AI; alternatives use the AI path; invalid input rejected");
+console.log("PASS: German and Chinese checks work without AI; tone-free Chinese preserves tone-marked models; alternatives use AI; invalid input rejected");
 
 // Capture the provider request to verify the rules also reach alternative
 // translation checking and conversation, rather than only exact matches.
@@ -166,6 +201,10 @@ const alternativeCheck = await aiPOST(new Request("http://localhost/api/practice
 assert.equal(alternativeCheck.status, 200);
 assert.equal((await alternativeCheck.json()).vocabulary[0].language, "chinese");
 assert.match(globalThis.fluenTestRequest.config.systemInstruction, /NEVER penalize missing or incorrect tones/);
+assert.match(globalThis.fluenTestRequest.config.systemInstruction, /Always write the correct tone marks/);
+assert.match(globalThis.fluenTestRequest.config.systemInstruction, /EVEN when correct=true/);
+assert.match(globalThis.fluenTestRequest.config.systemInstruction, /Wǒ xiǎng hē chá/);
+assert.match(globalThis.fluenTestRequest.contents, /every word of the corrected answer/);
 assert.match(globalThis.fluenTestRequest.config.systemInstruction, /Never output Chinese characters/);
 assert.match(globalThis.fluenTestRequest.contents, /ignoring all tone differences/);
 globalThis.fluenTestResult = {
@@ -179,7 +218,28 @@ const chatResponse = await aiPOST(new Request("http://localhost/api/practice", {
 assert.equal(chatResponse.status, 200);
 assert.equal((await chatResponse.json()).feedback.vocabulary[0].language, "chinese");
 assert.match(globalThis.fluenTestRequest.contents, /regardless of tone marks or tone numbers/);
-globalThis.fluenTestResult.reply = "你好";
+assert.match(globalThis.fluenTestRequest.contents, /every word of your reply/);
+assert.match(globalThis.fluenTestRequest.contents, /every word of feedback.corrected/);
+// The server derives the required relationship from its own exercise bank.
+// A wrong "and" answer to a "because" task must reach AI instead of passing
+// the exact-answer shortcut, and the evaluator receives the specific meaning.
+for (const language of ["german", "chinese"]) {
+  const connectedSettings = { ...settings, language, format: "connected" };
+  const exercise = getExercisePool(connectedSettings).find(item => item.connector.english === "because");
+  const wrongAnswer = exercise.german.replace(exercise.connector.target, language === "german" ? "und" : "érqiě");
+  globalThis.fluenTestResult = { ...mockFeedback, correct: false, corrected: exercise.german };
+  const response = await aiPOST(new Request("http://localhost/api/practice", {
+    method: "POST", body: JSON.stringify({ action: "check", settings: connectedSettings,
+      english: exercise.english, answer: wrongAnswer }),
+  }));
+  assert.equal(response.status, 200);
+  assert.equal((await response.json()).correct, false);
+  assert.match(globalThis.fluenTestRequest.contents, /the meaning "because"/);
+  assert.match(globalThis.fluenTestRequest.contents, /do not accept a different relationship/);
+}
+globalThis.fluenTestResult = {
+  reply: "你好", translation: "Hello", feedback: null, vocabulary: [],
+};
 const characterResponse = await aiPOST(new Request("http://localhost/api/practice", {
   method: "POST", body: JSON.stringify({ action: "chat", settings: chineseSettings, messages: [] }),
 }));

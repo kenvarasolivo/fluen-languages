@@ -33,7 +33,7 @@ export function Words({ words, language = "german" }: { words: Vocabulary[]; lan
   return (
     <div className="vocabulary">
       <div className="vocab-heading">
-        <span>A few words to take with you</span>
+        <span>Every word to take with you</span>
         <span>Save the words you want to practice.</span>
       </div>
       <div className="word-chips">

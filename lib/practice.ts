@@ -24,11 +24,20 @@ export type Settings = {
 };
 // Keep the existing text key so previously saved words remain readable.
 export type Vocabulary = { german: string; english: string; language?: Language };
+// Gloss the actual sentence forms, including pronouns, articles and particles.
+// Meanings are authored in sentence order, so ambiguous words retain context.
+export function sentenceVocabulary(text: string, glosses: string, language: Language = "german"): Vocabulary[] {
+  const words = text.match(/[\p{L}\p{M}]+(?:[-'’][\p{L}\p{M}]+)*/gu) ?? [];
+  const meanings = glosses.split("|");
+  if (words.length !== meanings.length) throw new Error(`Incomplete word meanings: ${text}`);
+  return words.map((german, i) => ({ german, english: meanings[i], language }));
+}
 export type Exercise = {
   english: string;
   german: string;
   hint: string;
   vocabulary: Vocabulary[];
+  connector?: { english: string; target: string };
 };
 export type Correction = {
   original: string;
@@ -64,10 +73,7 @@ export const starter: Exercise = {
   english: "I drink a coffee every morning.",
   german: "Ich trinke jeden Morgen einen Kaffee.",
   hint: "Start with ‘Ich’. Remember: Kaffee is masculine.",
-  vocabulary: [
-    { german: "jeden Morgen", english: "every morning" },
-    { german: "der Kaffee", english: "coffee" },
-  ],
+  vocabulary: sentenceVocabulary("Ich trinke jeden Morgen einen Kaffee.", "I|drink|every|morning|a|coffee"),
 };
 export async function request<T>(
   action: string,

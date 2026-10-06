@@ -179,7 +179,7 @@ export function WritingPractice() {
               </div>
               {settings.format === "connected" && (
                 <p className="connector-note">
-                  Combine both ideas in {target} using a suitable connector.
+                  Combine both ideas in {target} using “{exercise.connector?.english ?? "and"}”.
                 </p>
               )}
               <form
