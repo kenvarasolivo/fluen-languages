@@ -24,7 +24,7 @@ import {
   Settings,
   starter,
 } from "@/lib/practice";
-import { pickExercise } from "@/lib/question-bank";
+import { localAnswerFeedback, pickExercise } from "@/lib/question-bank";
 import { ChallengeResult } from "./challenge-result";
 
 export function WritingPractice() {
@@ -57,8 +57,11 @@ export function WritingPractice() {
       });
   }, [feedback, revealed]);
   function retry() {
+    controller.current?.abort();
+    setBusy(null);
     setFeedback(null);
     setRevealed(false);
+    setAnswer("");
     setError("");
     setHint(false);
     requestAnimationFrame(() => input.current?.focus());
@@ -81,7 +84,24 @@ export function WritingPractice() {
     if (busy || feedback || revealed) return;
     setError("");
     setHint(false);
-    setRevealed(true);
+    const matched = localAnswerFeedback(exercise, answer, language);
+    if (matched) {
+      setFeedback(matched);
+      setAttempt((value) => value + 1);
+    } else {
+      setRevealed(true);
+    }
+  }
+  function markCorrect() {
+    setRevealed(false);
+    setFeedback({
+      correct: true,
+      corrected: exercise.german,
+      explanation: "You marked your translation as correct after comparing it with the model answer.",
+      corrections: [],
+      vocabulary: exercise.vocabulary,
+    });
+    setAttempt((value) => value + 1);
   }
   async function checkWithAI() {
     if (!answer.trim() || busy || feedback || revealed) return;
@@ -256,6 +276,7 @@ export function WritingPractice() {
                   </button>
                   {feedback && !feedback.correct ? (
                     <button
+                      key="retry"
                       type="button"
                       className="button primary"
                       onClick={(event) => {
@@ -266,9 +287,12 @@ export function WritingPractice() {
                       <RotateCcw size={17} /> Try again
                     </button>
                   ) : feedback || revealed ? (
-                    <div className="check-options">
+                    <div key="result-actions" className="check-options">
                       {revealed && (
-                        <button type="button" className="button secondary" onClick={retry}>
+                        <button type="button" className="button secondary" onClick={(event) => {
+                          event.preventDefault();
+                          retry();
+                        }}>
                           <RotateCcw size={17} /> Try again
                         </button>
                       )}
@@ -282,7 +306,7 @@ export function WritingPractice() {
                       </button>
                     </div>
                   ) : (
-                    <div className="check-options">
+                    <div key="check-actions" className="check-options">
                       <button type="submit" className="button primary" disabled={!!busy}>
                         <Check size={18} /> Check myself
                       </button>
@@ -306,7 +330,7 @@ export function WritingPractice() {
                   )}
                 </div>
               </form>
-              <p className="gentle-note">Check myself reveals a model answer for you to compare. Check with AI gives feedback on your writing.</p>
+              <p className="gentle-note">Check myself celebrates matching answers or reveals a model answer for you to compare. Check with AI gives feedback on your writing.</p>
               {hint && (
                 <div className="hint-box">
                   <Lightbulb size={17} />
@@ -346,6 +370,11 @@ export function WritingPractice() {
                   meaning, grammar and word order. Other translations can also
                   be correct. You decide how you did.
                 </p>
+                {answer.trim() && (
+                  <button type="button" className="button primary" onClick={markCorrect}>
+                    <Check size={18} /> I got it right
+                  </button>
+                )}
                 <Words key={exercise.english} words={exercise.vocabulary} language={language} />
               </section>
             )}
