@@ -14,6 +14,7 @@ import {
   Waves,
 } from "lucide-react";
 import { Header, Footer } from "./header";
+import { GuestSaveNotice } from "./guest-save-notice";
 import { PracticeSettings } from "./settings";
 import { useLanguage } from "./language-provider";
 import { FeedbackCard, Words, speak } from "./feedback";
@@ -215,6 +216,7 @@ export function Conversation() {
             <RotateCcw size={15} /> New conversation
           </button>
         </div>
+        <GuestSaveNotice />
         <div className="practice-grid">
           <div>
             <PracticeSettings
@@ -267,8 +269,8 @@ export function Conversation() {
               <div className="chat-log" aria-live="polite">
                 {messages.length === 0 ? (
                   <div className="conversation-empty">
-                    <div className="mascot-art">
-                      <Image src="/illustrations/fluen-shape-friends.png" alt="Your friendly Fluen practice companions" width={1774} height={887} />
+                    <div className="mascot-art conversation-mascot-art">
+                      <Image src="/illustrations/conversation-mics.webp" alt="The three Fluen friends chatting into microphones" width={768} height={384} sizes="(max-width: 760px) 260px, 320px" priority />
                       <span className="mascot-greeting">{greeting}!</span>
                     </div>
                     <span className="eyebrow">

@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import { LanguageProvider } from "@/components/language-provider";
+import { AccountProvider } from "@/components/account-provider";
 export const metadata: Metadata = {
   title: "Fluen — Language in action",
   description:
@@ -13,7 +14,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body><LanguageProvider>{children}</LanguageProvider></body>
+      <body><AccountProvider><LanguageProvider>{children}</LanguageProvider></AccountProvider></body>
     </html>
   );
 }

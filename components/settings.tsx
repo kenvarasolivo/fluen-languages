@@ -4,6 +4,7 @@ import { ChevronDown, SlidersHorizontal } from "lucide-react";
 import { useEffect, useState } from "react";
 import type { Progress, ProgressGroup } from "@/lib/writing-progress";
 import { GroupProgress } from "./group-progress";
+import { TopicIllustration } from "./topic-illustration";
 export function PracticeSettings({
   settings,
   onChange,
@@ -78,7 +79,7 @@ export function PracticeSettings({
           }
         </p>
       </fieldset>
-      <label className="select-label">
+      {conversation && <label className="select-label">
         Your topic
         <div className="select-wrap">
           <select
@@ -93,7 +94,8 @@ export function PracticeSettings({
           <ChevronDown size={16} />
         </div>
         {progress && <GroupProgress label={settings.topic} progress={progress({ topic: settings.topic })} />}
-      </label>
+      </label>}
+      {conversation && <TopicIllustration topic={settings.topic} />}
       {!conversation && (
         <fieldset disabled={disabled}>
           <legend>Sentence style</legend>

@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { ArrowRight, BookOpen, Search, Trash2, Volume2 } from "lucide-react";
@@ -7,31 +7,20 @@ import { Header, Footer } from "@/components/header";
 import { Vocabulary, languageNames, languageTag } from "@/lib/practice";
 import { speak } from "@/components/feedback";
 import { useLanguage } from "@/components/language-provider";
+import { useAccount } from "@/components/account-provider";
+import { GuestSaveNotice } from "@/components/guest-save-notice";
 export default function WordsPage() {
   const { language } = useLanguage();
-  const [words, setWords] = useState<Vocabulary[]>([]),
-    [query, setQuery] = useState("");
-  useEffect(() => {
-    try {
-      const stored = JSON.parse(localStorage.getItem("fluen:words") || "[]");
-      if (Array.isArray(stored))
-        setWords(
-          stored.filter(
-            (w) =>
-              w &&
-              typeof w.german === "string" &&
-              typeof w.english === "string",
-          ),
-        );
-    } catch {}
-  }, []);
-  function remove(word: Vocabulary) {
-    const next = words.filter((w) => w.german !== word.german || (w.language ?? "german") !== (word.language ?? "german"));
-    setWords(next);
-    try {
-      localStorage.setItem("fluen:words", JSON.stringify(next));
-      window.dispatchEvent(new Event("fluen:words"));
-    } catch {}
+  const { words, removeWord, user, loading } = useAccount();
+  const [query, setQuery] = useState("");
+  const [error, setError] = useState("");
+  const [removing, setRemoving] = useState<string[]>([]);
+  async function remove(word: Vocabulary) {
+    const key = `${word.language}:${word.german}`;
+    setRemoving(previous => [...previous, key]); setError("");
+    try { await removeWord(word); }
+    catch (e) { setError(e instanceof Error ? e.message : "Could not remove this word. Please try again."); }
+    finally { setRemoving(previous => previous.filter(w => w !== key)); }
   }
   const languageWords = words.filter((word) => (word.language ?? "german") === language);
   const filtered = languageWords.filter((w) =>
@@ -49,12 +38,14 @@ export default function WordsPage() {
             <h1>Words for your next conversation.</h1>
             <p>
               Revisit what you’ve learned, then use it in your next sentence.
-              Saved in this browser.
+              {user ? " Saved to your account." : " Your guest collection is saved in this browser."}
             </p>
           </div>
           <span className="session-count">{languageWords.length} {languageNames[language]} words collected</span>
         </div>
-        {languageWords.length === 0 ? (
+        <GuestSaveNotice />
+        {error && <p role="alert">{error}</p>}
+        {loading ? <p role="status">Loading your saved words…</p> : languageWords.length === 0 ? (
           <section className="words-empty">
             <div className="mascot-art">
               <Image src="/illustrations/fluen-shape-friends.png" alt="Fluen companions ready to collect new words with you" width={1774} height={887} />
@@ -99,6 +90,7 @@ export default function WordsPage() {
                     <button
                       className="icon-button"
                       onClick={() => remove(w)}
+                      disabled={removing.includes(`${w.language}:${w.german}`)}
                       aria-label={`Remove ${w.german}`}
                     >
                       <Trash2 size={16} />

@@ -1,8 +1,9 @@
 "use client";
 import Link from "next/link";
-import { ArrowUpRight, AudioLines, PenLine, BookOpen, ChevronDown } from "lucide-react";
+import { ArrowUpRight, ArrowLeft, AudioLines, PenLine, BookOpen, ChevronDown } from "lucide-react";
 import { languages, languageNames } from "@/lib/practice";
 import { useLanguage } from "./language-provider";
+import { AccountMenu } from "./account-menu";
 export function Logo() {
   return (
     <Link href="/" className="logo" aria-label="Fluen home">
@@ -13,16 +14,16 @@ export function Logo() {
     </Link>
   );
 }
-export function Header({ active }: { active?: string }) {
+export function Header({ active, account = false }: { active?: string; account?: boolean }) {
   const { language, setLanguage } = useLanguage();
   return (
-    <header className={`header${active ? " practice-header" : ""}`}>
+    <header className={`header${active ? " practice-header" : ""}${account ? " account-header" : ""}`}>
       <div className="brand-lockup">
         <Logo />
         <span>Language in action.</span>
       </div>
       <nav aria-label="Main navigation">
-        {active ? (
+        {account ? <Link className="account-back" href="/write"><ArrowLeft size={16} /> Back to practice</Link> : active ? (
           <>
             <Link
               aria-current={active === "write" ? "page" : undefined}
@@ -56,7 +57,7 @@ export function Header({ active }: { active?: string }) {
           </>
         )}
       </nav>
-      {active && (
+      {!account && <div className="header-tools">{active && (
         <label className="language-pill header-language">
           {language === "german" && <span className="german-flag" />}
           {language === "chinese" && <span className="chinese-flag">★</span>}
@@ -66,6 +67,7 @@ export function Header({ active }: { active?: string }) {
           <ChevronDown size={14} aria-hidden="true" />
         </label>
       )}
+      <AccountMenu /></div>}
     </header>
   );
 }

@@ -10,3 +10,4 @@ out/
 *.tsbuildinfo
 next-env.d.ts
 CLAUDE.md
+.local-backups/

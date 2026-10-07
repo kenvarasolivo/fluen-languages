@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 import { Header, Footer } from "./header";
 import { PracticeSettings } from "./settings";
+import { TopicIllustration } from "./topic-illustration";
 import { FeedbackCard, Words, speak } from "./feedback";
 import {
   defaults,
@@ -27,12 +28,14 @@ import {
 import { localAnswerFeedback, pickExercise } from "@/lib/question-bank";
 import { ChallengeResult } from "./challenge-result";
 import { useLanguage } from "./language-provider";
-import { exerciseProgressKey, groupProgress, progressStorageKey, readWritingProgress } from "@/lib/writing-progress";
+import { exerciseProgressKey, groupProgress } from "@/lib/writing-progress";
+import { useAccount } from "./account-provider";
 import { GroupProgress } from "./group-progress";
+import { GuestSaveNotice } from "./guest-save-notice";
 
 export function WritingPractice() {
   const { language: selectedLanguage, setLanguage } = useLanguage();
-  const [completed, setCompleted] = useState<Set<string>>(() => new Set());
+  const { completed, recordCorrect: saveCorrect, loading: accountLoading } = useAccount();
   const [settings, setSettings] = useState<Settings>(defaults),
     [exercise, setExercise] = useState<Exercise>(starter),
     [answer, setAnswer] = useState(""),
@@ -52,20 +55,9 @@ export function WritingPractice() {
   const controller = useRef<AbortController | null>(null);
   const resultPanel = useRef<HTMLDivElement>(null);
   const review = completed.has(exerciseProgressKey(settings, exercise));
-  useEffect(() => {
-    setCompleted(readWritingProgress());
-    function sync(event: StorageEvent) {
-      if (event.key === progressStorageKey || event.key === null) setCompleted(readWritingProgress());
-    }
-    window.addEventListener("storage", sync);
-    return () => window.removeEventListener("storage", sync);
-  }, []);
   function recordCorrect() {
     const key = exerciseProgressKey(settings, exercise);
-    const updated = new Set([...readWritingProgress(), ...completed, key]);
-    setCompleted(updated);
-    try { localStorage.setItem(progressStorageKey, JSON.stringify([...updated])); }
-    catch { /* Keep progress for this session if storage is unavailable. */ }
+    void saveCorrect(key);
   }
   useEffect(() => {
     if (current.current.language !== selectedLanguage) {
@@ -107,7 +99,7 @@ export function WritingPractice() {
     requestAnimationFrame(() => input.current?.focus());
   }
   function checkMyself() {
-    if (busy || feedback || revealed) return;
+    if (busy || feedback || revealed || accountLoading) return;
     setError("");
     setHint(false);
     const matched = localAnswerFeedback(exercise, answer, language);
@@ -120,6 +112,7 @@ export function WritingPractice() {
     }
   }
   function markCorrect() {
+    if (accountLoading) return;
     recordCorrect();
     setRevealed(false);
     setFeedback({
@@ -132,7 +125,7 @@ export function WritingPractice() {
     setAttempt((value) => value + 1);
   }
   async function checkWithAI() {
-    if (!answer.trim() || busy || feedback || revealed) return;
+    if (!answer.trim() || busy || feedback || revealed || accountLoading) return;
     setError("");
     setBusy("check");
     const abort = new AbortController();
@@ -176,6 +169,7 @@ export function WritingPractice() {
             </p>
           </div>
         </div>
+        <GuestSaveNotice />
         <div className="practice-grid">
           <PracticeSettings
             settings={settings}
@@ -184,6 +178,13 @@ export function WritingPractice() {
             progress={(group) => groupProgress(completed, language, group)}
           />
           <div className="exercise-column">
+            <TopicIllustration
+              topic={settings.topic}
+              banner
+              onTopicChange={(topic) => change({ ...settings, topic })}
+              disabled={!!busy}
+              progress={(group) => groupProgress(completed, language, group)}
+            />
             <section
               className={`exercise-card challenge-card ${feedback ? (feedback.correct ? "is-won" : "is-lost") : ""}`}
               aria-busy={!!busy}
@@ -341,13 +342,13 @@ export function WritingPractice() {
                     </div>
                   ) : (
                     <div key="check-actions" className="check-options">
-                      <button type="submit" className="button primary" disabled={!!busy}>
+                      <button type="submit" className="button primary" disabled={!!busy || accountLoading}>
                         <Check size={18} /> Check myself
                       </button>
                       <button
                         type="button"
                         className="button secondary"
-                        disabled={!answer.trim() || !!busy}
+                        disabled={!answer.trim() || !!busy || accountLoading}
                         onClick={() => void checkWithAI()}
                       >
                         {busy === "check" ? (
@@ -405,7 +406,7 @@ export function WritingPractice() {
                   be correct. You decide how you did.
                 </p>
                 {answer.trim() && (
-                  <button type="button" className="button primary" onClick={markCorrect}>
+                  <button type="button" className="button primary" disabled={accountLoading} onClick={markCorrect}>
                     <Check size={18} /> I got it right
                   </button>
                 )}

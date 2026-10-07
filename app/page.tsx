@@ -2,6 +2,8 @@ import Link from "next/link";
 import Image from "next/image";
 import { ArrowRight, ArrowUpRight, AudioLines, Check, Coffee, Heart, MessageCircle, PenLine, Sparkles, Sprout } from "lucide-react";
 import { Header, Footer } from "@/components/header";
+import { PracticeSaveHint } from "@/components/guest-save-notice";
+import { SentenceLearning } from "@/components/sentence-learning";
 
 export default function Home() {
   return <>
@@ -15,7 +17,7 @@ export default function Home() {
             <Link href="/write" className="button primary">Start practicing <ArrowRight size={19} /></Link>
             <Link href="/speak" className="hero-chat"><AudioLines size={20} /> Or, let’s talk</Link>
           </div>
-          <div className="hero-reassurance"><Check size={16} /> No account needed <span>•</span> Your pace. Your words.</div>
+          <PracticeSaveHint />
 
         </div>
         <div className="hero-characters">
@@ -40,6 +42,7 @@ export default function Home() {
         </div>
       </section>
       <div className="belief-strip"><span><Sprout size={21} /> Less memorizing. <strong>More making.</strong></span><span><PenLine size={19} /> Your own sentences</span><span><MessageCircle size={19} /> Conversations at your level</span><span><Heart size={19} /> Helpful, gentle feedback</span></div>
+      <SentenceLearning />
       <section className="play-modes" id="practice">
         <div className="section-heading"><div><span className="section-kicker">FIND YOUR KIND OF PRACTICE</span><h2>Small starts. Big “I said that!” energy.</h2></div><p>Pick a little adventure.<br />There’s no perfect place to begin.</p></div>
         <div className="mode-grid">

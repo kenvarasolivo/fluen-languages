@@ -1,7 +1,9 @@
 "use client";
 import { CheckCheck, BookmarkPlus, Volume2, Sparkles } from "lucide-react";
-import { Feedback, Language, languageTag, Vocabulary, getSavedWords, saveWords } from "@/lib/practice";
-import { useEffect, useState } from "react";
+import { Feedback, Language, languageTag, Vocabulary } from "@/lib/practice";
+import { useState } from "react";
+import { useAccount } from "./account-provider";
+import Link from "next/link";
 export function speak(text: string, language: Language = "german") {
   if (language === "chinese") return;
   if (typeof window !== "undefined" && "speechSynthesis" in window) {
@@ -17,24 +19,16 @@ export function speak(text: string, language: Language = "german") {
   }
 }
 export function Words({ words, language = "german" }: { words: Vocabulary[]; language?: Language }) {
-  const [saved, setSaved] = useState<string[]>([]);
+  const { words: savedWords, saveWord, loading, user } = useAccount();
+  const saved = savedWords.filter(word => (word.language ?? "german") === language).map(word => word.german);
+  const [saving, setSaving] = useState<string[]>([]);
   const [error, setError] = useState("");
-  useEffect(() => {
-    const syncSaved = () => setSaved(getSavedWords().filter((word) => (word.language ?? "german") === language).map((word) => word.german));
-    syncSaved();
-    window.addEventListener("fluen:words", syncSaved);
-    window.addEventListener("storage", syncSaved);
-    return () => {
-      window.removeEventListener("fluen:words", syncSaved);
-      window.removeEventListener("storage", syncSaved);
-    };
-  }, [language]);
   if (!words.length) return null;
   return (
     <div className="vocabulary">
       <div className="vocab-heading">
         <span>Every word to take with you</span>
-        <span>Save the words you want to practice.</span>
+        <span>{user ? "Save the words you want to practice." : <>Guest words stay in this browser. <Link href="/login">Sign in to save to your account.</Link></>}</span>
       </div>
       <div className="word-chips">
         {words.map((word, i) => (
@@ -44,14 +38,17 @@ export function Words({ words, language = "german" }: { words: Vocabulary[]; lan
             <button
               type="button"
               className="small-button word-save"
-              aria-label={saved.includes(word.german) ? `${word.german} is saved` : `Save ${word.german}`}
-              disabled={saved.includes(word.german)}
-              onClick={() => {
-                setError(saveWords([{ ...word, language }]) ? "" : "Couldn’t save this word. Please try again.");
+              aria-label={saved.includes(word.german) ? `${word.german} is saved${user ? "" : " in this browser"}` : `Save ${word.german}${user ? "" : " in this browser"}`}
+              disabled={loading || saved.includes(word.german) || saving.includes(word.german)}
+              onClick={async () => {
+                setSaving(previous => [...previous, word.german]); setError("");
+                try { await saveWord({ ...word, language }); }
+                catch (e) { setError(e instanceof Error ? e.message : "Couldn’t save this word. Please try again."); }
+                finally { setSaving(previous => previous.filter(w => w !== word.german)); }
               }}
             >
               {saved.includes(word.german) ? <CheckCheck size={14} /> : <BookmarkPlus size={14} />}
-              {saved.includes(word.german) ? "Saved" : "Save"}
+              {saving.includes(word.german) ? "Saving…" : saved.includes(word.german) ? user ? "Saved" : "Saved locally" : user ? "Save" : "Save locally"}
             </button>
           </span>
         ))}
