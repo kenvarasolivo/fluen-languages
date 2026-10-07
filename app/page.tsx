@@ -1,273 +1,54 @@
 import Link from "next/link";
 import Image from "next/image";
-import {
-  ArrowRight,
-  ArrowUpRight,
-  AudioLines,
-  BookOpen,
-  Check,
-  CheckCheck,
-  MessageCircle,
-  Mic,
-  PenLine,
-  Sparkles,
-} from "lucide-react";
+import { ArrowRight, ArrowUpRight, AudioLines, Check, Coffee, Heart, MessageCircle, PenLine, Sparkles, Sprout } from "lucide-react";
 import { Header, Footer } from "@/components/header";
 
 export default function Home() {
-  return (
-    <>
-      <Header />
-      <main className="home-main">
-        <section className="output-hero">
-          <div className="output-copy">
-            <div className="eyebrow">
-              <span className="brand-status" /> THE OUTPUT-FIRST LANGUAGE APP
-            </div>
-            <h1>
-              Learn a language
-              <br />
-              <span>by using it.</span>
-            </h1>
-            <p>
-              Turn what you know into what you can say. Learn a language by
-              writing your own sentences and having real conversations, with AI
-              feedback that helps you improve.
-            </p>
-            <div className="hero-actions">
-              <Link href="/write" className="button primary">
-                Start writing <ArrowUpRight size={19} />
-              </Link>
-              <Link href="/speak" className="button secondary">
-                <AudioLines size={19} /> Try a conversation
-              </Link>
-            </div>
-            <div className="output-note">
-              <Check size={15} /> No account needed <span>·</span> Output first
-            </div>
-            <div className="language-availability">
-              <span>
-                <span className="german-flag" /> German & Chinese (pinyin) · A1–C2
-              </span>
-              <span>More languages coming soon</span>
-            </div>
-            <div className="output-principle">
-              <span className="principle-icon">
-                <MessageCircle size={20} />
-              </span>
-              <p>
-                Every session starts with <strong>something you create.</strong>
-                <br />A sentence. An opinion. A conversation.
-              </p>
-            </div>
+  return <>
+    <Header />
+    <main className="play-home">
+      <section className="play-hero">
+        <div className="play-copy">
+          <h1>Learn a language<br />by <span className="using-word">using it.</span></h1>
+          <p>Practice writing and talking about your day.<br className="desktop-break" /> Put the words you know to use, with feedback along the way.</p>
+          <div className="play-actions">
+            <Link href="/write" className="button primary">Start practicing <ArrowRight size={19} /></Link>
+            <Link href="/speak" className="hero-chat"><AudioLines size={20} /> Or, let’s talk</Link>
           </div>
-          <div className="hero-visual">
-            <Image
-              className="hero-illustration"
-              src="/illustrations/language-in-action.png"
-              alt="Friendly speech-bubble characters sharing ideas with a pencil and notebook"
-              width={1536}
-              height={1024}
-              priority
-            />
-            <div
-              className="practice-preview"
-              aria-label="German example of writing practice and feedback"
-            >
-              <div className="preview-top">
-                <span className="preview-brand">
-                  <AudioLines size={18} /> YOUR PRACTICE SPACE
-                </span>
-                <span className="preview-example">German example</span>
-              </div>
-              <div className="preview-tabs">
-                <span className="selected">
-                  <PenLine size={15} /> Writing
-                </span>
-                <span>
-                  <AudioLines size={15} /> Conversation
-                </span>
-              </div>
-              <div className="preview-body">
-                <div className="preview-meta">
-                  <span>A1 · Everyday life</span>
-                  <span>WRITE IT YOURSELF</span>
-                </div>
-                <p className="preview-label">PUT THIS INTO YOUR OWN WORDS</p>
-                <h2>“I drink a coffee every morning.”</h2>
-                <div className="preview-input">
-                  <span className="preview-label">YOUR GERMAN</span>
-                  <p lang="de">
-                    Ich trinke <strong>einen</strong> Kaffee jeden Morgen.
-                    <span className="preview-cursor" />
-                  </p>
-                </div>
-                <div className="preview-feedback">
-                  <div className="preview-feedback-title">
-                    <Sparkles size={17} />
-                    <strong>Yes! You made it yours.</strong>
-                  </div>
-                  <p lang="de">
-                    Ich trinke <strong>einen</strong> Kaffee jeden Morgen.
-                  </p>
-                  <small>
-                    You built the sentence yourself. That’s something to take
-                    into your next conversation.
-                  </small>
-                </div>
-                <div className="preview-bottom">
-                  <span>
-                    <CheckCheck size={16} /> Write. Learn. Use it again.
-                  </span>
-                  <Link href="/write" aria-label="Try this writing exercise">
-                    <ArrowRight size={19} />
-                  </Link>
-                </div>
-              </div>
-              <div className="preview-voice">
-                <span className="voice-icon">
-                  <Mic size={19} />
-                </span>
-                <div>
-                  <strong>Your voice belongs here, too.</strong>
-                  <p>Speak or type. Keep the conversation going.</p>
-                </div>
-                <Link href="/speak" aria-label="Try conversation practice">
-                  <ArrowUpRight size={20} />
-                </Link>
-              </div>
-            </div>
-          </div>
-        </section>
-        <div className="output-strip">
-          <span>LESSON LEARNED → LANGUAGE USED</span>
-          <p>
-            <PenLine size={18} /> Create your own sentences
-          </p>
-          <p>
-            <MessageCircle size={18} /> Understand your mistakes
-          </p>
-          <p>
-            <BookOpen size={18} /> Take new words with you
-          </p>
+          <div className="hero-reassurance"><Check size={16} /> No account needed <span>•</span> Your pace. Your words.</div>
+
         </div>
-        <section className="practice-modes" id="practice">
-          <div className="modes-heading">
-            <div>
-              <div className="eyebrow">YOUR LANGUAGE. IN ACTION.</div>
-              <h2>Two ways to find your voice.</h2>
-            </div>
-            <p>
-              Choose how you want to express yourself.
-              <br />
-              We’ll help you take the next step.
-            </p>
+        <div className="hero-characters">
+          <Image src="/illustrations/fluen-shape-friends.png" width={1774} height={887} className="shape-friends" alt="Three cheerful shape friends: a lavender pebble, a yellow arch, and a coral trapezoid, each with a tiny smiling face" priority />
+        </div>
+      </section>
+      <section className="practice-demo" aria-labelledby="demo-title">
+        <div className="demo-copy">
+          <span className="section-kicker">A LITTLE LOOK AT HOW IT WORKS</span>
+          <h2 id="demo-title">Practice here.<br />Order your next coffee.</h2>
+          <p>A coffee order today. A conversation tomorrow. Write a sentence, get helpful feedback, and take it into your day.</p>
+          <div className="language-row"><span className="language-chip"><span className="german-flag" /> German</span><span className="language-chip"><span className="chinese-flag">★</span> Chinese <small>(pinyin)</small></span><span className="level-note">A1–C2 <Sparkles size={13} /></span></div>
+        </div>
+        <div className="demo-preview" aria-label="Example of German writing practice and feedback">
+          <div className="mini-practice">
+            <div className="mini-heading"><span><PenLine size={15} /> A LITTLE WRITING MOMENT</span><span className="mini-level">A1</span></div>
+            <p className="mini-prompt">How would you say...</p><h2>“I would like a coffee, please.” <Coffee size={21} /></h2>
+            <div className="mini-answer" lang="de">Ich möchte einen Kaffee, bitte.<span className="typing-caret" /></div>
+            <div className="mini-success"><span className="success-check"><Check size={16} /></span><div><strong>Look at you, using German!</strong><p>One sentence closer to your next coffee.</p></div><Sparkles size={19} /></div>
+            <Link href="/write" className="mini-bottom">Your turn? <ArrowRight size={17} /></Link>
           </div>
-          <div className="output-modes">
-            <Link href="/write" className="output-mode">
-              <div className="output-mode-top">
-                <span className="output-mode-icon">
-                  <PenLine size={26} />
-                </span>
-                <span>01 / WRITING</span>
-                <ArrowUpRight size={24} />
-              </div>
-              <h3>Put your thoughts into words.</h3>
-              <p>
-                Build your own sentences instead of choosing from a list. Get
-                clear corrections, understand the why, and put what you learn
-                into your next attempt.
-              </p>
-              <div className="output-tags">
-                <span>A1–C2</span>
-                <span>Topics you choose</span>
-                <span>Feedback that teaches</span>
-              </div>
-              <span className="output-mode-link">
-                Try writing practice <ArrowRight size={18} />
-              </span>
-            </Link>
-            <Link href="/speak" className="output-mode conversation-mode">
-              <div className="output-mode-top">
-                <span className="output-mode-icon">
-                  <AudioLines size={27} />
-                </span>
-                <span>02 / CONVERSATION</span>
-                <ArrowUpRight size={24} />
-              </div>
-              <h3>Give your words a voice.</h3>
-              <p>
-                Have a back-and-forth with your AI companion. Speak or type your
-                replies, explore a topic, and learn from feedback as you go.
-              </p>
-              <div className="output-tags">
-                <span>Speak or type</span>
-                <span>Read-aloud</span>
-                <span>Corrections as you go</span>
-              </div>
-              <span className="output-mode-link">
-                Start a conversation <ArrowRight size={18} />
-              </span>
-            </Link>
-          </div>
-        </section>
-        <section className="output-method" id="how-it-works">
-          <div className="method-intro">
-            <div className="eyebrow">THE FLUEN WAY</div>
-            <h2>
-              Make it.
-              <br />
-              Improve it.
-              <br />
-              <span>Use it again.</span>
-            </h2>
-            <p>
-              Recognition is a starting point. Fluen gives you a space to
-              practice producing the language yourself.
-            </p>
-          </div>
-          <div className="method-steps">
-            {[
-              {
-                number: "01",
-                title: "Choose your starting point",
-                text: "Choose your level and a topic that matters to you. Choose German or Chinese in pinyin; more languages are coming soon.",
-              },
-              {
-                number: "02",
-                title: "Make the first move",
-                text: "Write a sentence or reply in a conversation. Try what you know, even when you’re unsure.",
-              },
-              {
-                number: "03",
-                title: "Turn feedback into your next attempt",
-                text: "Understand the corrections, save useful vocabulary, and bring it into what you say next.",
-              },
-            ].map((step) => (
-              <div key={step.number}>
-                <span>{step.number}</span>
-                <div>
-                  <h3>{step.title}</h3>
-                  <p>{step.text}</p>
-                </div>
-              </div>
-            ))}
-          </div>
-        </section>
-        <section className="output-cta">
-          <div>
-            <span className="eyebrow">
-              FROM “I KNOW THIS” TO “I CAN SAY THIS.”
-            </span>
-            <h2>Your next sentence starts here.</h2>
-            <p>Bring the words you know. Leave with something you can use.</p>
-          </div>
-          <Link href="/write" className="button">
-            Let’s practice <ArrowUpRight size={20} />
-          </Link>
-        </section>
-      </main>
-      <Footer />
-    </>
-  );
+        </div>
+      </section>
+      <div className="belief-strip"><span><Sprout size={21} /> Less memorizing. <strong>More making.</strong></span><span><PenLine size={19} /> Your own sentences</span><span><MessageCircle size={19} /> Conversations at your level</span><span><Heart size={19} /> Helpful, gentle feedback</span></div>
+      <section className="play-modes" id="practice">
+        <div className="section-heading"><div><span className="section-kicker">FIND YOUR KIND OF PRACTICE</span><h2>Small starts. Big “I said that!” energy.</h2></div><p>Pick a little adventure.<br />There’s no perfect place to begin.</p></div>
+        <div className="mode-grid">
+          <Link href="/write" className="play-mode writing-mode"><div className="mode-top"><span className="mode-icon"><PenLine size={27} /></span><span className="mode-tag">THINK IT. WRITE IT.</span><ArrowUpRight size={25} /></div><h3>A thought becomes<br />a sentence.</h3><p>Make something with the words you know. Get clear corrections, learn the why, and give it another go.</p><div className="mode-bottom"><span>Let’s write <ArrowRight size={19} /></span><span className="mode-detail">Your ideas, in a new language</span></div></Link>
+          <Link href="/speak" className="play-mode talking-mode"><div className="mode-top"><span className="mode-icon"><AudioLines size={28} /></span><span className="mode-tag">SAY IT. KEEP IT GOING.</span><ArrowUpRight size={25} /></div><h3>Start with hello.<br />See where it goes.</h3><p>Chat with your AI companion about your day, a big idea, or absolutely anything. Speak or type. You’ve got this.</p><div className="mode-bottom"><span>Let’s talk <ArrowRight size={19} /></span><span className="mode-detail">A friendly space to find your voice</span></div></Link>
+        </div>
+      </section>
+      <section className="play-method" id="how-it-works"><div className="method-heading"><span className="section-kicker">THE FLUEN WAY</span><h2>Try. Tweak. <span>Try again.</span></h2><p>You don’t need all the words. Just a place to start using them.</p></div><div className="play-steps">{[{n:"01",title:"Make it yours",text:"Choose your language, level, and a topic you actually want to talk about.",icon:PenLine},{n:"02",title:"Give it a go",text:"Write your own sentence or start a conversation. A little unsure is welcome here.",icon:MessageCircle},{n:"03",title:"Take it with you",text:"Learn from feedback, save useful words, and bring them into your next attempt.",icon:Sprout}].map(({n,title,text,icon:Icon})=><div className="play-step" key={n}><div><span>{n}</span><Icon size={24} /></div><h3>{title}</h3><p>{text}</p></div>)}</div></section>
+      <section className="play-cta"><span className="cta-spark" aria-hidden="true">✳</span><div><span className="section-kicker">FROM “I KNOW THIS” TO “I CAN SAY THIS”</span><h2>Your next little leap starts here.</h2><p>Bring the words you know. Make something that’s yours.</p></div><Link href="/write" className="button primary">Let’s give it a go <ArrowRight size={19} /></Link></section>
+    </main><Footer />
+  </>;
 }

@@ -1,5 +1,6 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
+import Image from "next/image";
 import {
   AudioLines,
   Languages,
@@ -259,10 +260,10 @@ export function Conversation() {
               <div className="chat-log" aria-live="polite">
                 {messages.length === 0 ? (
                   <div className="conversation-empty">
-                    <span className="empty-art">
-                      <Waves size={45} />
-                      <span>{greeting}!</span>
-                    </span>
+                    <div className="mascot-art">
+                      <Image src="/illustrations/fluen-shape-friends.png" alt="Your friendly Fluen practice companions" width={1774} height={887} />
+                      <span className="mascot-greeting">{greeting}!</span>
+                    </div>
                     <span className="eyebrow">
                       {settings.level} · {settings.topic}
                     </span>

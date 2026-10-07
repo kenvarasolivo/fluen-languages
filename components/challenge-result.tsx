@@ -19,7 +19,7 @@ export function ChallengeResult({ correct }: { correct: boolean }) {
       <span className="result-medal" aria-hidden="true">
         {correct ? (
           <Image
-            src="/illustrations/you-said-it.png"
+            src="/illustrations/fluen-shape-friends.png"
             alt=""
             width={96}
             height={80}

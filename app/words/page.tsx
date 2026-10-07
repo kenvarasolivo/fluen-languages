@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { ArrowRight, BookOpen, Search, Trash2, Volume2 } from "lucide-react";
 import { Header, Footer } from "@/components/header";
 import { Vocabulary, languageNames, languageTag } from "@/lib/practice";
@@ -52,9 +53,9 @@ export default function WordsPage() {
         </div>
         {words.length === 0 ? (
           <section className="words-empty">
-            <span className="empty-art">
-              <BookOpen size={40} />
-            </span>
+            <div className="mascot-art">
+              <Image src="/illustrations/fluen-shape-friends.png" alt="Fluen companions ready to collect new words with you" width={1774} height={887} />
+            </div>
             <h2>Make your vocabulary work for you.</h2>
             <p>
               Save vocabulary from your writing feedback or conversations.
