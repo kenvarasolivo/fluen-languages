@@ -14,8 +14,9 @@ async function compile(path, replacements = {}) {
 }
 const practiceUrl = await compile("../lib/practice.ts");
 const connectedUrl = await compile("../lib/connected-bank.ts", { "./practice": practiceUrl });
-const chineseUrl = await compile("../lib/chinese-bank.ts", { "./practice": practiceUrl, "./connected-bank": connectedUrl });
-const bankUrl = await compile("../lib/question-bank.ts", { "./practice": practiceUrl, "./chinese-bank": chineseUrl, "./connected-bank": connectedUrl });
+const extraUrl = await compile("../lib/extra-sentences.ts", { "./practice": practiceUrl });
+const chineseUrl = await compile("../lib/chinese-bank.ts", { "./practice": practiceUrl, "./connected-bank": connectedUrl, "./extra-sentences": extraUrl });
+const bankUrl = await compile("../lib/question-bank.ts", { "./practice": practiceUrl, "./chinese-bank": chineseUrl, "./connected-bank": connectedUrl, "./extra-sentences": extraUrl });
 const { levels, topics, starter } = await import(practiceUrl);
 const { getExercisePool, pickExercise, normalizeAnswer } = await import(bankUrl);
 function assertEveryWord(item) {
@@ -33,7 +34,7 @@ for (const level of levels) {
     for (const format of ["single", "connected"]) {
       const settings = { level, topic, format };
       const pool = getExercisePool(settings);
-      assert.equal(pool.length, 4);
+      assert.equal(pool.length, format === "single" ? 5 : 4);
       if (format === "connected") assert.deepEqual(pool.map(item => item.connector.english), ["and", "but", "because", "although"]);
       assert.equal(new Set(pool.map((item) => item.english)).size, pool.length);
       for (const item of pool) {
@@ -43,7 +44,7 @@ for (const level of levels) {
         if (format === "connected") {
           assert.ok(item.english.includes(`, ${item.connector.english} `));
           assert.ok(item.german.includes(`, ${item.connector.target} `));
-          assert.ok(item.hint.includes(`${item.connector.target} (${item.connector.english})`));
+          assert.equal(item.hint, item.german.replace(/[\p{L}\p{M}]+(?:[-'’][\p{L}\p{M}]+)*/gu, word => [...word].map((letter, index) => index ? "_".repeat(letter.length) : letter).join("")));
         }
       }
       const history = [];
@@ -59,10 +60,11 @@ for (const level of levels) {
     }
   }
 }
-assert.equal(total, 288);
+assert.equal(total, 324);
 assert.ok(getExercisePool({ level: "A1", topic: topics[0], format: "single" })
   .some((item) => item.english === starter.english && item.german === starter.german));
 assert.equal(normalizeAnswer("  Ich   trinke einen Kaffee! "), normalizeAnswer("Ich trinke einen Kaffee."));
+assert.equal(normalizeAnswer("Ich möchte Grüße aus Köln."), normalizeAnswer("Ich moechte Gruesse aus Koeln."));
 assert.notEqual(normalizeAnswer("Ich hatte Zeit."), normalizeAnswer("Ich hätte Zeit."));
 for (const answer of ["ni hao", "NÍ HÀO!", "ni3 hao3", "nihao", "nǐ hǎo".normalize("NFD")]) {
   assert.equal(normalizeAnswer(answer, "chinese"), normalizeAnswer("Nǐ hǎo.", "chinese"));
@@ -75,7 +77,7 @@ let chineseTotal = 0;
 for (const level of levels) for (const topic of topics) for (const format of ["single", "connected"]) {
   const settings = { language: "chinese", level, topic, format };
   const pool = getExercisePool(settings);
-  assert.equal(pool.length, format === "single" ? 2 : 4);
+  assert.equal(pool.length, format === "single" ? 3 : 4);
   if (format === "connected") assert.deepEqual(pool.map(item => item.connector.english), ["and", "but", "because", "although"]);
   assert.equal(new Set(pool.map((item) => item.english)).size, pool.length);
   const history = [];
@@ -91,7 +93,7 @@ for (const level of levels) for (const topic of topics) for (const format of ["s
   assert.equal(pickExercise(settings, history).english, history[0]);
   chineseTotal += pool.length;
 }
-assert.equal(chineseTotal, 216);
+assert.equal(chineseTotal, 252);
 const germanConnected = getExercisePool({ level: "A1", topic: topics[0], format: "connected" });
 assert.equal(germanConnected[2].german, "Ich trinke jeden Morgen einen Kaffee, weil ich müde bin.");
 assert.equal(germanConnected[3].german, "Ich trinke jeden Morgen einen Kaffee, obwohl ich Tee lieber mag.");
@@ -103,7 +105,7 @@ assert.ok(getExercisePool({ level: "C1", topic: topics[3], format: "connected" }
   ", weil die verfügbaren Studien einander widersprechen."));
 const chineseConnected = getExercisePool({ language: "chinese", level: "A1", topic: topics[0], format: "connected" });
 assert.equal(chineseConnected[3].german, "Suīrán wǒ gèng xǐhuan kāfēi, dànshì wǒ měitiān zǎoshang hē chá.");
-console.log("PASS: 288 German and 216 Chinese exercises, four explicit connector meanings per connected pool, complete word meanings and no early repeats");
+console.log("PASS: 324 German and 252 Chinese exercises, four connector meanings per connected pool, complete word meanings and no early repeats");
 
 // The AI constructor throws if reached. This proves questions and exact checks
 // do not call the provider. Alternatives require explicit AI opt-in.

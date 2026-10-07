@@ -93,11 +93,11 @@ export function PracticeSettings({
           <legend>Sentence style</legend>
           <div className="format-picker">
             <button
-              aria-pressed={settings.format === "single"}
-              onClick={() => onChange({ ...settings, format: "single" })}
+              aria-pressed={settings.format === "mixed"}
+              onClick={() => onChange({ ...settings, format: "mixed" })}
             >
-              <strong>One sentence</strong>
-              <span>One idea at a time</span>
+              <strong>Mostly one sentence</strong>
+              <span>About 70% one idea, 30% connected ideas</span>
             </button>
             <button
               aria-pressed={settings.format === "connected"}

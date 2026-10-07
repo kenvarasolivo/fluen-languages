@@ -1,6 +1,7 @@
-import { Exercise, Language, Level, Settings, topics, sentenceVocabulary } from "./practice";
+import { Exercise, Language, Level, Settings, topics, sentenceVocabulary, firstLetterHint } from "./practice";
 import { getChineseExercisePool } from "./chinese-bank";
 import { connectedExercises } from "./connected-bank";
+import { extraSentenceRows } from "./extra-sentences";
 
 // Four authored situations per topic and level, plus four connected exercises
 // per pool with explicit addition, contrast, reason and concession.
@@ -249,7 +250,7 @@ function single(row: Sentence, level: Level): Exercise {
   return {
     english: row[0],
     german: row[1],
-    hint: `${levelHints[level]} Useful expression: ${row[2]} (${row[3]}).`,
+    hint: firstLetterHint(row[1]),
     vocabulary: sentenceVocabulary(row[1], row[4]),
   };
 }
@@ -258,8 +259,13 @@ export function getExercisePool(settings: Settings): Exercise[] {
   if (settings.language === "chinese") return getChineseExercisePool(settings);
   const rows = sentences[settings.level][topics.indexOf(settings.topic as (typeof topics)[number])];
   if (!rows) throw new Error("Choose valid practice settings.");
-  if (settings.format === "single") return rows.map((row) => single(row, settings.level));
-  return connectedExercises(settings, single(rows[0], settings.level), single(rows[1], settings.level));
+  const allRows = [...rows, ...extraSentenceRows("german", settings.level, settings.topic).map(([english, german, glosses]) => [english, german, "", "", glosses] as Sentence)];
+  const singles = allRows.map((row) => single(row, settings.level));
+  if (settings.format === "single") return singles;
+  const connected = connectedExercises(settings, singles[0], singles[1]);
+  if (settings.format === "connected") return connected;
+  const singleWeight = Math.round(7 * connected.length / (3 * singles.length));
+  return [...Array.from({ length: singleWeight }, () => singles).flat(), ...connected];
 }
 
 export function pickExercise(settings: Settings, previous: string[] = []): Exercise {
@@ -293,5 +299,6 @@ export function normalizeAnswer(answer: string, language: Language = "german") {
       .replace(/[\s.,!?;:'’“”"，。！？；：]+/g, "");
   }
   return answer.normalize("NFC").trim().toLocaleLowerCase("de")
+    .replace(/ä/g, "ae").replace(/ö/g, "oe").replace(/ü/g, "ue").replace(/ß/g, "ss")
     .replace(/[.!?]+$/, "").replace(/\s+/g, " ");
 }

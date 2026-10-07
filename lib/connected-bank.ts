@@ -1,4 +1,4 @@
-import { Exercise, Level, Settings, sentenceVocabulary, topics } from "./practice";
+import { Exercise, Level, Settings, sentenceVocabulary, topics, firstLetterHint } from "./practice";
 
 // Each topic/level supplies a reason and a contrasting fact that fit the first
 // authored sentence. The optional finite-verb indices describe German clauses
@@ -136,7 +136,7 @@ export function connectedExercises(settings: Settings, main: Exercise, addition:
   const make = (meaning: keyof typeof connectors, english: string, text: string, words: Exercise["vocabulary"]): Exercise => ({
     english,
     german: text,
-    hint: `Use ${connectors[meaning]} (${meaning}). ${isChinese ? meaning === "although" ? "Use suīrán … dànshì … for although … . Tone marks are optional." : "Keep subject–verb–object order. Tone marks are optional." : ["because", "although"].includes(meaning) ? "Put the conjugated verb at the end of the clause after the connector." : "Keep the usual verb position in each clause."}`,
+    hint: firstLetterHint(text),
     connector: { english: meaning, target: connectors[meaning] },
     vocabulary: words,
   });

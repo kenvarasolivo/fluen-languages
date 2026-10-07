@@ -179,9 +179,7 @@ export function WritingPractice() {
                   {settings.level} · {settings.topic}
                 </span>
                 <span className="exercise-kind">
-                  {settings.format === "single"
-                    ? "One sentence"
-                    : "Connect two ideas"}
+                  {exercise.connector ? "Connect two ideas" : "One sentence"}
                 </span>
               </div>
               <div className="demo-caption">
@@ -212,7 +210,7 @@ export function WritingPractice() {
                   Different sentence
                 </button>
               </div>
-              {settings.format === "connected" && (
+              {exercise.connector && (
                 <p className="connector-note">
                   Combine both ideas in {target} using “{exercise.connector?.english ?? "and"}”.
                 </p>

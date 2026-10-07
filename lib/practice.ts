@@ -20,7 +20,7 @@ export type Settings = {
   language?: Language;
   level: Level;
   topic: string;
-  format: "single" | "connected";
+  format: "single" | "connected" | "mixed";
 };
 // Keep the existing text key so previously saved words remain readable.
 export type Vocabulary = { german: string; english: string; language?: Language };
@@ -31,6 +31,11 @@ export function sentenceVocabulary(text: string, glosses: string, language: Lang
   const meanings = glosses.split("|");
   if (words.length !== meanings.length) throw new Error(`Incomplete word meanings: ${text}`);
   return words.map((german, i) => ({ german, english: meanings[i], language }));
+}
+export function firstLetterHint(text: string): string {
+  return text.replace(/[\p{L}\p{M}]+(?:[-'’][\p{L}\p{M}]+)*/gu, (word) =>
+    [...word].map((letter, index) => index === 0 ? letter : "_".repeat(letter.length)).join(""),
+  );
 }
 export type Exercise = {
   english: string;
@@ -69,12 +74,12 @@ export const defaults: Settings = {
   language: "german",
   level: "A1",
   topic: topics[0],
-  format: "single",
+  format: "mixed",
 };
 export const starter: Exercise = {
   english: "I drink a coffee every morning.",
   german: "Ich trinke jeden Morgen einen Kaffee.",
-  hint: "Start with ‘Ich’. Remember: Kaffee is masculine.",
+  hint: firstLetterHint("Ich trinke jeden Morgen einen Kaffee."),
   vocabulary: sentenceVocabulary("Ich trinke jeden Morgen einen Kaffee.", "I|drink|every|morning|a|coffee"),
 };
 export async function request<T>(

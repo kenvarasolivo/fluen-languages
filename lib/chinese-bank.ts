@@ -1,5 +1,6 @@
-import { Exercise, Level, Settings, topics, sentenceVocabulary } from "./practice";
+import { Exercise, Level, Settings, topics, sentenceVocabulary, firstLetterHint } from "./practice";
 import { connectedExercises } from "./connected-bank";
+import { extraSentenceRows } from "./extra-sentences";
 
 type Sentence = [english: string, pinyin: string, word: string, meaning: string, glosses: string];
 // Mandarin, entirely in pinyin. Each level has two situations per topic.
@@ -174,10 +175,15 @@ const hints: Record<Level, string> = {
 export function getChineseExercisePool(settings: Settings): Exercise[] {
   const rows = sentences[settings.level]?.[topics.indexOf(settings.topic as (typeof topics)[number])];
   if (!rows) throw new Error("Choose valid practice settings.");
-  const exercises = rows.map((row) => ({
+  const allRows = [...rows, ...extraSentenceRows("chinese", settings.level, settings.topic).map(([english, pinyin, glosses]) => [english, pinyin, "", "", glosses] as Sentence)];
+  const exercises = allRows.map((row) => ({
     english: row[0], german: row[1],
-    hint: `${hints[settings.level]} Useful expression: ${row[2]} (${row[3]}). Tone marks are optional.`,
+    hint: firstLetterHint(row[1]),
     vocabulary: sentenceVocabulary(row[1], row[4], "chinese"),
   }));
-  return settings.format === "single" ? exercises : connectedExercises(settings, exercises[0], exercises[1]);
+  if (settings.format === "single") return exercises;
+  const connected = connectedExercises(settings, exercises[0], exercises[1]);
+  if (settings.format === "connected") return connected;
+  const singleWeight = Math.round(7 * connected.length / (3 * exercises.length));
+  return [...Array.from({ length: singleWeight }, () => exercises).flat(), ...connected];
 }
