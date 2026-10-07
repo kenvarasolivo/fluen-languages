@@ -89,6 +89,10 @@ export async function POST(req: Request) {
     const language = settings.language ?? "german";
     const chinese = language === "chinese";
     const target = chinese ? "Mandarin Chinese in pinyin" : "German";
+    const direction = body.direction ?? "target";
+    const writingEnglish = action === "check" && direction === "english";
+    if (action === "check" && !["target", "english"].includes(direction))
+      return NextResponse.json({ error: "Choose a valid writing direction." }, { status: 400 });
     if (action === "sentence") {
       const previous = Array.isArray(body.previous)
         ? body.previous.filter((s: unknown) => typeof s === "string").slice(-576)
@@ -103,11 +107,13 @@ export async function POST(req: Request) {
         body.english.length > 2000
       )
         return NextResponse.json(
-          { error: `Write an answer in ${target} first (up to 4,000 characters).` },
+          { error: `Write an answer in ${writingEnglish ? "English" : target} first (up to 4,000 characters).` },
           { status: 400 },
         );
       reference = getExercisePool(settings).find((item) => item.english === body.english);
-      const local = reference && localAnswerFeedback(reference, body.answer, language);
+      if (writingEnglish && !reference)
+        return NextResponse.json({ error: "Choose a sentence from the practice bank." }, { status: 400 });
+      const local = reference && localAnswerFeedback(reference, body.answer, language, direction);
       if (local) return NextResponse.json(local);
       // Provider calls require an explicit opt-in, even for unknown exercises.
       if (body.useAI !== true) return NextResponse.json({ needsAI: true });
@@ -122,7 +128,9 @@ export async function POST(req: Request) {
     let prompt: string;
     let schema;
     if (action === "check") {
-      prompt = `Evaluate this learner translation. ${reference?.connector ? `The exercise asks to connect both ideas using the meaning "${reference.connector.english}" (model connector: ${reference.connector.target}). Accept equivalent connectors that preserve this relationship, but do not accept a different relationship, such as "and" in a "because" exercise. Include feedback on whether this requirement is met.` : ""} Input: ${JSON.stringify({ english: body.english, answer: body.answer })}. Set correct=true only if meaning, grammar and the exercise requirement are correct${chinese ? ", ignoring all tone differences and pinyin spacing" : ""}. Give the closest correct version of their attempt, a brief encouraging explanation, specific corrections (empty if correct), and vocabulary covering every word of the corrected answer, even when correct=true. Explain word order or missing meaning where relevant.`;
+      prompt = writingEnglish
+        ? `Evaluate this beginner's English translation of a ${target} sentence. Input: ${JSON.stringify({ source: reference!.german, modelEnglish: reference!.english, answer: body.answer })}. The answer, corrected answer and correction replacements must be in English. Judge understanding of the source meaning; accept natural alternative English translations and equivalent connectors. Preserve both ideas and their relationship when present. Do not require the exact model wording. Set correct=true for a meaning-preserving translation. Give the closest correct English version of their attempt, a brief encouraging explanation in English and specific corrections (empty if correct). The vocabulary must gloss the SOURCE ${target} sentence, with target-language words in german and English meanings in english; do not put English answer words in german.`
+        : `Evaluate this learner translation. ${reference?.connector ? `The exercise asks to connect both ideas using the meaning "${reference.connector.english}" (model connector: ${reference.connector.target}). Accept equivalent connectors that preserve this relationship, but do not accept a different relationship, such as "and" in a "because" exercise. Include feedback on whether this requirement is met.` : ""} Input: ${JSON.stringify({ english: body.english, answer: body.answer })}. Set correct=true only if meaning, grammar and the exercise requirement are correct${chinese ? ", ignoring all tone differences and pinyin spacing" : ""}. Give the closest correct version of their attempt, a brief encouraging explanation, specific corrections (empty if correct), and vocabulary covering every word of the corrected answer, even when correct=true. Explain word order or missing meaning where relevant.`;
       schema = feedback;
     } else {
       if (
@@ -153,7 +161,7 @@ export async function POST(req: Request) {
         model,
         contents: prompt,
         config: {
-          systemInstruction: context,
+          systemInstruction: context + (writingEnglish ? " For this reverse translation exercise, corrected answers and correction replacements must be English. Pinyin and German spelling rules apply only to source-language vocabulary, never to the English answer. Vocabulary explains the source sentence, not the English corrected answer. Prioritize the beginner's understanding of the source." : ""),
           responseMimeType: "application/json",
           responseSchema: schema,
           temperature: action === "check" ? 0.2 : 0.9,
@@ -202,6 +210,7 @@ export async function POST(req: Request) {
             validWords(result.vocabulary) &&
             (result.feedback === null || validFeedback(result.feedback));
     if (!valid) throw new Error("INVALID_AI_RESPONSE");
+    if (writingEnglish) result.vocabulary = reference!.vocabulary;
     if (chinese) {
       const hasCharacters = (value: unknown): boolean =>
         typeof value === "string" ? /\p{Script=Han}/u.test(value)

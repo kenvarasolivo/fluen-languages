@@ -2,6 +2,7 @@ export const levels = ["A1", "A2", "B1", "B2", "C1", "C2"] as const;
 export type Level = (typeof levels)[number];
 export const languages = ["german", "chinese"] as const;
 export type Language = (typeof languages)[number];
+export type WritingDirection = "target" | "english";
 export const languageNames: Record<Language, string> = {
   german: "German",
   chinese: "Chinese (pinyin)",

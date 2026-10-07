@@ -235,6 +235,31 @@ assert.equal((await call("sentence", settings)).status, 200);
 assert.equal((await call("check", settings, { english: starter.english, answer: starter.german })).status, 200);
 assert.equal((await call("check", settings, { english: starter.english, answer: starter.german, useAI: true })).status, 200);
 for (const language of ["german", "chinese"]) {
+  const reverseSettings = { ...settings, language };
+  for (const format of ["single", "connected"]) {
+    const selectedSettings = { ...reverseSettings, format };
+    const exercise = getExercisePool(selectedSettings)[0];
+    const response = await call("check", selectedSettings, {
+      english: exercise.english, answer: exercise.english.toUpperCase(), direction: "english",
+    });
+    assert.equal(response.status, 200);
+    const result = await response.json();
+    assert.equal(result.correct, true);
+    assert.equal(result.corrected, exercise.english);
+    assert.deepEqual(result.vocabulary, exercise.vocabulary);
+    assert.equal(localAnswerFeedback(exercise, exercise.german, language, "english"), null);
+    assert.equal((await call("check", selectedSettings, {
+      english: exercise.english, answer: "An alternative translation", direction: "english",
+    })).status, 200);
+  }
+}
+assert.equal((await call("check", settings, {
+  english: starter.english, answer: starter.english, direction: "invalid",
+})).status, 400);
+assert.equal((await call("check", settings, {
+  english: "Unknown sentence", answer: "English answer", direction: "english",
+})).status, 400);
+for (const language of ["german", "chinese"]) {
   for (const useAI of [undefined, false, "true", 1]) {
     const local = await call("check", { ...settings, language }, { english: starter.english, answer: "Unknown wording", useAI });
     assert.deepEqual(await local.json(), { needsAI: true });
@@ -261,6 +286,26 @@ const aiRouteUrl = await compile("../app/api/practice/route.ts", {
   "next/server": nextUrl,
 });
 const { POST: aiPOST } = await import(aiRouteUrl);
+for (const language of ["german", "chinese"]) {
+  const reverseSettings = { ...settings, language };
+  const exercise = getExercisePool(reverseSettings)[0];
+  globalThis.fluenTestResult = {
+    correct: true, corrected: "An alternative English translation.",
+    explanation: "You understood the meaning.", corrections: [], vocabulary: [],
+  };
+  const response = await aiPOST(new Request("http://localhost/api/practice", {
+    method: "POST", body: JSON.stringify({ action: "check", settings: reverseSettings,
+      english: exercise.english, answer: "An alternative English translation.", direction: "english", useAI: true }),
+  }));
+  assert.equal(response.status, 200);
+  const result = await response.json();
+  assert.equal(result.corrected, "An alternative English translation.");
+  assert.deepEqual(result.vocabulary, exercise.vocabulary);
+  assert.match(globalThis.fluenTestRequest.contents, /beginner's English translation/);
+  assert.ok(globalThis.fluenTestRequest.contents.includes(JSON.stringify(exercise.german)));
+  assert.match(globalThis.fluenTestRequest.config.systemInstruction, /corrected answers and correction replacements must be English/);
+}
+console.log("PASS: English answers work for both languages and formats; reverse AI checks use the bank source and preserve source vocabulary");
 const chineseSettings = { ...settings, language: "chinese" };
 const mockFeedback = {
   correct: true, corrected: "Wǒ zǎoshang měitiān hē chá.", explanation: "Good work!",

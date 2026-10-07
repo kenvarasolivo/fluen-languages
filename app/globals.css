@@ -1835,6 +1835,13 @@ h1,h2,h3,.logo { font-family:"Trebuchet MS", "Segoe UI", sans-serif; }
 .hint-button,.reveal-button { color:#566583; min-height:44px; }
 .exercise-actions { flex-wrap:wrap; }
 .check-options { flex-wrap:wrap; }
+.writing-direction { margin:20px 0 24px; }
+.direction-options { display:flex; flex-wrap:wrap; gap:10px; }
+.direction-options button { flex:1; min-width:180px; min-height:64px; padding:12px 16px; text-align:left; border:1px solid #c6d2eb; border-radius:12px; background:#f4f6fd; color:var(--ink); font:inherit; font-weight:700; cursor:pointer; }
+.direction-options button span { display:block; margin-top:4px; font-size:12px; font-weight:400; color:var(--muted); }
+.direction-options button[aria-pressed="true"] { background:var(--blue); border-color:#20459c; color:white; }
+.direction-options button[aria-pressed="true"] span { color:#e5ebff; }
+.writing-direction > p { margin:10px 0 0; font-size:12px; color:var(--muted); }
 .challenge-card.is-won { border-color:#99b67a; }
 .challenge-card.is-lost { border-color:#e4b59f; }
 .challenge-win,.feedback-card.correct { background:#eef6df; border-color:#b7ce98; color:#48632f; }

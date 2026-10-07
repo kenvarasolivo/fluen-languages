@@ -17,12 +17,14 @@ import { TopicIllustration } from "./topic-illustration";
 import { FeedbackCard, Words, speak } from "./feedback";
 import {
   defaults,
+  firstLetterHint,
   languageNames,
   languageTag,
   Exercise,
   Feedback,
   request,
   Settings,
+  WritingDirection,
   starter,
 } from "@/lib/practice";
 import { localAnswerFeedback, pickExercise } from "@/lib/question-bank";
@@ -37,6 +39,7 @@ export function WritingPractice() {
   const { language: selectedLanguage, setLanguage } = useLanguage();
   const { completed, recordCorrect: saveCorrect, loading: accountLoading } = useAccount();
   const [settings, setSettings] = useState<Settings>(defaults),
+    [direction, setDirection] = useState<WritingDirection>("english"),
     [exercise, setExercise] = useState<Exercise>(starter),
     [answer, setAnswer] = useState(""),
     [feedback, setFeedback] = useState<Feedback | null>(null),
@@ -49,6 +52,12 @@ export function WritingPractice() {
   const language = settings.language ?? "german";
   const chinese = language === "chinese";
   const target = languageNames[language];
+  const writingEnglish = direction === "english";
+  const answerLanguage = writingEnglish ? "english" : language;
+  const answerTag = writingEnglish ? "en" : languageTag(language);
+  const modelAnswer = writingEnglish ? exercise.english : exercise.german;
+  const promptSentence = writingEnglish ? exercise.german : exercise.english;
+  const answerName = writingEnglish ? "English" : target;
   const history = useRef<string[]>([starter.english]);
   const input = useRef<HTMLTextAreaElement>(null);
   const current = useRef(settings);
@@ -102,7 +111,7 @@ export function WritingPractice() {
     if (busy || feedback || revealed || accountLoading) return;
     setError("");
     setHint(false);
-    const matched = localAnswerFeedback(exercise, answer, language);
+    const matched = localAnswerFeedback(exercise, answer, language, direction);
     if (matched) {
       recordCorrect();
       setFeedback(matched);
@@ -117,7 +126,7 @@ export function WritingPractice() {
     setRevealed(false);
     setFeedback({
       correct: true,
-      corrected: exercise.german,
+      corrected: modelAnswer,
       explanation: "You marked your translation as correct after comparing it with the model answer.",
       corrections: [],
       vocabulary: exercise.vocabulary,
@@ -133,7 +142,7 @@ export function WritingPractice() {
     try {
       const result = await request<Feedback>(
         "check",
-        { settings: current.current, english: exercise.english, answer, useAI: true },
+        { settings: current.current, english: exercise.english, answer, direction, useAI: true },
         abort.signal,
       );
       if (abort.signal.aborted) return;
@@ -164,8 +173,8 @@ export function WritingPractice() {
             </div>
             <h1>Make the next sentence yours.</h1>
             <p>
-              Write it in {target}, learn from the feedback, and try what you’ve
-              learned.
+              Start by understanding {target} in English, or switch to writing
+              in {target}. Learn at your own pace.
             </p>
           </div>
         </div>
@@ -211,16 +220,37 @@ export function WritingPractice() {
                 <span>{settings.level} · {settings.topic} · {settings.format === "single" ? "One sentence" : "Connect two ideas"}</span>
                 <GroupProgress label="Selected group" progress={groupProgress(completed, language, settings)} />
               </div>
+              <div className="writing-direction" role="group" aria-label="Choose which language to write">
+                <div className="direction-options">
+                  {(["english", "target"] as const).map((value) => (
+                    <button
+                      key={value}
+                      type="button"
+                      aria-pressed={direction === value}
+                      onClick={() => {
+                        if (direction === value) return;
+                        setDirection(value);
+                        retry();
+                      }}
+                    >
+                      Write {value === "english" ? "English" : target}
+                      <span>{value === "english" ? `See ${target} · Beginner friendly` : "See English · Practice recall"}</span>
+                    </button>
+                  ))}
+                </div>
+                <p>Switch anytime. Switching clears your current attempt.</p>
+              </div>
               <div className="demo-caption">
-                HOW WOULD YOU SAY THIS IN {target.toUpperCase()}?
+                HOW WOULD YOU SAY THIS IN {answerName.toUpperCase()}?
               </div>
               <h2
                 key={roll}
                 className={`english-sentence${exercise.connector ? " connected-sentence" : ""}${roll ? " sentence-reroll" : ""}`}
                 aria-live="polite"
                 aria-atomic="true"
+                lang={writingEnglish ? languageTag(language) : "en"}
               >
-                “{exercise.english}”
+                “{promptSentence}”
               </h2>
               <div className="question-tools">
                 <span>Every sentence is a chance to express yourself.</span>
@@ -241,7 +271,7 @@ export function WritingPractice() {
               </div>
               {exercise.connector && (
                 <p className="connector-note">
-                  Combine both ideas in {target} using “{exercise.connector?.english ?? "and"}”.
+                  {writingEnglish ? "Keep both ideas and their connection in your English translation." : `Combine both ideas in ${target} using “${exercise.connector.english}”.`}
                 </p>
               )}
               <form
@@ -251,18 +281,18 @@ export function WritingPractice() {
                 }}
               >
                 <label className="answer-label" htmlFor="answer">
-                  YOUR TURN <span>{chinese ? "Pinyin, please. Tone marks optional." : "Deutsch, bitte."}</span>
+                  YOUR TURN <span>{writingEnglish ? "English, please. Take your time." : chinese ? "Pinyin, please. Tone marks optional." : "Deutsch, bitte."}</span>
                 </label>
                 <textarea
                   ref={input}
                   id="answer"
-                  lang={languageTag(language)}
+                  lang={answerTag}
                   value={answer}
                   onChange={(e) => {
                     setAnswer(e.target.value);
                     setError("");
                   }}
-                  placeholder={chinese ? "Your pinyin goes here… e.g. wo xiang he cha" : "Your German goes here…"}
+                  placeholder={writingEnglish ? "What does this sentence mean in English?" : chinese ? "Your pinyin goes here… e.g. wo xiang he cha" : "Your German goes here…"}
                   maxLength={4000}
                   disabled={!!busy || !!feedback || revealed}
                   onKeyDown={(e) => {
@@ -274,7 +304,7 @@ export function WritingPractice() {
                 />
                 <div className="umlaut-row">
                   <div>
-                    {(chinese ? [] : ["ä", "ö", "ü", "ß"]).map((letter) => (
+                    {(writingEnglish || chinese ? [] : ["ä", "ö", "ü", "ß"]).map((letter) => (
                       <button
                         key={letter}
                         type="button"
@@ -369,7 +399,7 @@ export function WritingPractice() {
               {hint && (
                 <div className="hint-box">
                   <Lightbulb size={17} />
-                  <p>{exercise.hint}</p>
+                  <p>{writingEnglish ? firstLetterHint(exercise.english) : exercise.hint}</p>
                 </div>
               )}
               {error && (
@@ -381,7 +411,7 @@ export function WritingPractice() {
             {feedback && (
               <div ref={resultPanel} key={`${roll}-${attempt}`}>
                 <ChallengeResult correct={feedback.correct} />
-                <FeedbackCard feedback={feedback} language={language} />
+                <FeedbackCard feedback={feedback} language={language} answerLanguage={answerLanguage} />
               </div>
             )}
             {revealed && (
@@ -391,11 +421,11 @@ export function WritingPractice() {
                   <h3 role="status">Compare with the model answer.</h3>
                 </div>
                 <div className="corrected-answer">
-                  <p lang={languageTag(language)}>{exercise.german}</p>
-                  {!chinese && <button
+                  <p lang={answerTag}>{modelAnswer}</p>
+                  {answerLanguage !== "chinese" && <button
                     className="icon-button"
-                    aria-label="Listen to the German translation"
-                    onClick={() => speak(exercise.german, language)}
+                    aria-label={`Listen to the ${answerName} translation`}
+                    onClick={() => speak(modelAnswer, answerLanguage)}
                   >
                     <Volume2 size={18} />
                   </button>}

@@ -276,18 +276,24 @@ export function pickExercise(settings: Settings, previous: string[] = []): Exerc
   );
 }
 
-export function localAnswerFeedback(exercise: Exercise, answer: string, language: Language = "german") {
-  if (normalizeAnswer(answer, language) !== normalizeAnswer(exercise.german, language)) return null;
+export function localAnswerFeedback(exercise: Exercise, answer: string, language: Language = "german", direction: "target" | "english" = "target") {
+  const model = direction === "english" ? exercise.english : exercise.german;
+  const answerLanguage = direction === "english" ? "english" : language;
+  if (normalizeAnswer(answer, answerLanguage) !== normalizeAnswer(model, answerLanguage)) return null;
   return {
     correct: true,
-    corrected: exercise.german,
+    corrected: model,
     explanation: "Nicely done! Your translation matches the model answer.",
     corrections: [],
     vocabulary: exercise.vocabulary,
   };
 }
 
-export function normalizeAnswer(answer: string, language: Language = "german") {
+export function normalizeAnswer(answer: string, language: Language | "english" = "german") {
+  if (language === "english") {
+    return answer.normalize("NFC").trim().toLowerCase()
+      .replace(/’/g, "'").replace(/[.!?]+$/, "").replace(/\s+/g, " ");
+  }
   if (language === "chinese") {
     return answer.toLowerCase().normalize("NFD")
       .replace(/u\u0308/g, "v").replace(/u:/g, "v")

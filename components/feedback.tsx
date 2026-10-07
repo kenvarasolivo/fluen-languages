@@ -4,16 +4,16 @@ import { Feedback, Language, languageTag, Vocabulary } from "@/lib/practice";
 import { useState } from "react";
 import { useAccount } from "./account-provider";
 import Link from "next/link";
-export function speak(text: string, language: Language = "german") {
+export function speak(text: string, language: Language | "english" = "german") {
   if (language === "chinese") return;
   if (typeof window !== "undefined" && "speechSynthesis" in window) {
     window.speechSynthesis.cancel();
     const utterance = new SpeechSynthesisUtterance(text);
-    utterance.lang = "de-DE";
+    utterance.lang = language === "english" ? "en-US" : "de-DE";
     utterance.rate = 0.88;
     const voice = window.speechSynthesis
       .getVoices()
-      .find((v) => v.lang.startsWith("de"));
+      .find((v) => v.lang.startsWith(language === "english" ? "en" : "de"));
     if (voice) utterance.voice = voice;
     window.speechSynthesis.speak(utterance);
   }
@@ -57,7 +57,8 @@ export function Words({ words, language = "german" }: { words: Vocabulary[]; lan
     </div>
   );
 }
-export function FeedbackCard({ feedback, language = "german" }: { feedback: Feedback; language?: Language }) {
+export function FeedbackCard({ feedback, language = "german", answerLanguage = language }: { feedback: Feedback; language?: Language; answerLanguage?: Language | "english" }) {
+  const answerTag = answerLanguage === "english" ? "en" : languageTag(answerLanguage);
   return (
     <section
       className={`feedback-card ${feedback.correct ? "correct" : "learning"}`}
@@ -72,11 +73,11 @@ export function FeedbackCard({ feedback, language = "german" }: { feedback: Feed
         </h3>
       </div>
       <div className="corrected-answer">
-        <p lang={languageTag(language)}>{feedback.corrected}</p>
-        {language === "german" && <button
+        <p lang={answerTag}>{feedback.corrected}</p>
+        {answerLanguage !== "chinese" && <button
           className="icon-button"
-          aria-label="Listen to the corrected German"
-          onClick={() => speak(feedback.corrected)}
+          aria-label={`Listen to the corrected ${answerLanguage === "english" ? "English" : "German"}`}
+          onClick={() => speak(feedback.corrected, answerLanguage)}
         >
           <Volume2 size={18} />
         </button>}
@@ -87,7 +88,7 @@ export function FeedbackCard({ feedback, language = "german" }: { feedback: Feed
           <div>
             <del>{correction.original}</del>
             <span>→</span>
-            <strong lang={languageTag(language)}>{correction.corrected}</strong>
+            <strong lang={answerTag}>{correction.corrected}</strong>
           </div>
           <p>{correction.explanation}</p>
         </div>
