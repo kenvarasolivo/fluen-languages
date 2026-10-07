@@ -182,8 +182,5 @@ export function getChineseExercisePool(settings: Settings): Exercise[] {
     vocabulary: sentenceVocabulary(row[1], row[4], "chinese"),
   }));
   if (settings.format === "single") return exercises;
-  const connected = connectedExercises(settings, exercises[0], exercises[1]);
-  if (settings.format === "connected") return connected;
-  const singleWeight = Math.round(7 * connected.length / (3 * exercises.length));
-  return [...Array.from({ length: singleWeight }, () => exercises).flat(), ...connected];
+  return connectedExercises(settings, exercises[0], exercises[1]);
 }

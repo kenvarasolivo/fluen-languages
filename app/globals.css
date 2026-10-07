@@ -484,6 +484,9 @@ h2 {
   margin-top: 15px;
   line-height: 1.5;
 }
+.english-sentence.connected-sentence {
+  white-space: pre-line;
+}
 .connector-note {
   font-size: 11px;
   color: #7592a5;
@@ -2004,4 +2007,45 @@ h1,h2,h3,.logo { font-family:"Trebuchet MS", "Segoe UI", sans-serif; }
   .demo-copy > p { max-width: 370px; margin: 14px auto 0; }
   .demo-copy .language-row { justify-content: center; margin-top: 20px; }
   .demo-preview .mini-practice { padding: 17px 15px 0; }
+}
+.group-progress {
+  display: block;
+  margin-top: 7px;
+}
+.group-progress .group-progress-caption {
+  display: block;
+  margin: 0 0 4px;
+  font-size: 10px;
+  font-weight: 600;
+  color: #53617b;
+}
+.group-progress progress {
+  display: block;
+  width: 100%;
+  height: 5px;
+  appearance: none;
+  border: 0;
+  border-radius: 999px;
+  overflow: hidden;
+  background: #c5d4ef;
+}
+.group-progress progress::-webkit-progress-bar { background: #c5d4ef; border-radius: 999px; }
+.group-progress progress::-webkit-progress-value { background: #247861; border-radius: 999px; }
+.group-progress progress::-moz-progress-bar { background: #247861; border-radius: 999px; }
+.level-picker button[aria-pressed="true"] .group-progress-caption,
+.format-picker button[aria-pressed="true"] .group-progress-caption { color: inherit; }
+.current-group-progress {
+  margin: 0 0 24px;
+  color: var(--muted);
+  font-size: 11px;
+}
+.review-label {
+  display: inline-block;
+  margin-right: 8px;
+  padding: 4px 8px;
+  border-radius: 999px;
+  background: #d5f0e4;
+  color: #24634f;
+  font-size: 11px;
+  font-weight: 600;
 }

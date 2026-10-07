@@ -27,9 +27,12 @@ import {
 import { localAnswerFeedback, pickExercise } from "@/lib/question-bank";
 import { ChallengeResult } from "./challenge-result";
 import { useLanguage } from "./language-provider";
+import { exerciseProgressKey, groupProgress, progressStorageKey, readWritingProgress } from "@/lib/writing-progress";
+import { GroupProgress } from "./group-progress";
 
 export function WritingPractice() {
   const { language: selectedLanguage, setLanguage } = useLanguage();
+  const [completed, setCompleted] = useState<Set<string>>(() => new Set());
   const [settings, setSettings] = useState<Settings>(defaults),
     [exercise, setExercise] = useState<Exercise>(starter),
     [answer, setAnswer] = useState(""),
@@ -48,6 +51,22 @@ export function WritingPractice() {
   const current = useRef(settings);
   const controller = useRef<AbortController | null>(null);
   const resultPanel = useRef<HTMLDivElement>(null);
+  const review = completed.has(exerciseProgressKey(settings, exercise));
+  useEffect(() => {
+    setCompleted(readWritingProgress());
+    function sync(event: StorageEvent) {
+      if (event.key === progressStorageKey || event.key === null) setCompleted(readWritingProgress());
+    }
+    window.addEventListener("storage", sync);
+    return () => window.removeEventListener("storage", sync);
+  }, []);
+  function recordCorrect() {
+    const key = exerciseProgressKey(settings, exercise);
+    const updated = new Set([...readWritingProgress(), ...completed, key]);
+    setCompleted(updated);
+    try { localStorage.setItem(progressStorageKey, JSON.stringify([...updated])); }
+    catch { /* Keep progress for this session if storage is unavailable. */ }
+  }
   useEffect(() => {
     if (current.current.language !== selectedLanguage) {
       change({ ...current.current, language: selectedLanguage });
@@ -93,6 +112,7 @@ export function WritingPractice() {
     setHint(false);
     const matched = localAnswerFeedback(exercise, answer, language);
     if (matched) {
+      recordCorrect();
       setFeedback(matched);
       setAttempt((value) => value + 1);
     } else {
@@ -100,6 +120,7 @@ export function WritingPractice() {
     }
   }
   function markCorrect() {
+    recordCorrect();
     setRevealed(false);
     setFeedback({
       correct: true,
@@ -123,6 +144,7 @@ export function WritingPractice() {
         abort.signal,
       );
       if (abort.signal.aborted) return;
+      if (result.correct) recordCorrect();
       setFeedback(result);
       setAttempt((value) => value + 1);
     } catch (e) {
@@ -159,6 +181,7 @@ export function WritingPractice() {
             settings={settings}
             onChange={change}
             disabled={!!busy}
+            progress={(group) => groupProgress(completed, language, group)}
           />
           <div className="exercise-column">
             <section
@@ -179,15 +202,20 @@ export function WritingPractice() {
                   {settings.level} · {settings.topic}
                 </span>
                 <span className="exercise-kind">
+                  {review && <span className="review-label">Review</span>}
                   {exercise.connector ? "Connect two ideas" : "One sentence"}
                 </span>
+              </div>
+              <div className="current-group-progress" aria-live="polite">
+                <span>{settings.level} · {settings.topic} · {settings.format === "single" ? "One sentence" : "Connect two ideas"}</span>
+                <GroupProgress label="Selected group" progress={groupProgress(completed, language, settings)} />
               </div>
               <div className="demo-caption">
                 HOW WOULD YOU SAY THIS IN {target.toUpperCase()}?
               </div>
               <h2
                 key={roll}
-                className={`english-sentence${roll ? " sentence-reroll" : ""}`}
+                className={`english-sentence${exercise.connector ? " connected-sentence" : ""}${roll ? " sentence-reroll" : ""}`}
                 aria-live="polite"
                 aria-atomic="true"
               >

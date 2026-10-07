@@ -262,10 +262,7 @@ export function getExercisePool(settings: Settings): Exercise[] {
   const allRows = [...rows, ...extraSentenceRows("german", settings.level, settings.topic).map(([english, german, glosses]) => [english, german, "", "", glosses] as Sentence)];
   const singles = allRows.map((row) => single(row, settings.level));
   if (settings.format === "single") return singles;
-  const connected = connectedExercises(settings, singles[0], singles[1]);
-  if (settings.format === "connected") return connected;
-  const singleWeight = Math.round(7 * connected.length / (3 * singles.length));
-  return [...Array.from({ length: singleWeight }, () => singles).flat(), ...connected];
+  return connectedExercises(settings, singles[0], singles[1]);
 }
 
 export function pickExercise(settings: Settings, previous: string[] = []): Exercise {

@@ -80,7 +80,7 @@ export async function POST(req: Request) {
       (settings.language !== undefined && !languages.includes(settings.language)) ||
       !levels.includes(settings.level) ||
       !topics.includes(settings.topic) ||
-      !["single", "connected", "mixed"].includes(settings.format)
+      !["single", "connected"].includes(settings.format)
     )
       return NextResponse.json(
           { error: "Choose valid practice settings." },

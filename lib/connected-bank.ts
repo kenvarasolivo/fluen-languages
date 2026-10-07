@@ -142,6 +142,8 @@ export function connectedExercises(settings: Settings, main: Exercise, addition:
   });
   const start = main.german.replace(/[.!?]$/, "");
   const englishStart = main.english.replace(/[.!?]$/, "");
+  // Include the relationship in the prompt as well as the instruction so
+  // contrast and concession remain distinct exercises during checks.
   const englishJoin = (meaning: string, end: string) => `${englishStart}, ${meaning} ${/^I\b/.test(end) ? end : end[0].toLowerCase() + end.slice(1)}`;
   const word = (meaning: keyof typeof connectors) => ({ german: connectors[meaning], english: meaning === "and" && isChinese ? "and also" : meaning, language });
   return [

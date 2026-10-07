@@ -18,7 +18,44 @@ const extraUrl = await compile("../lib/extra-sentences.ts", { "./practice": prac
 const chineseUrl = await compile("../lib/chinese-bank.ts", { "./practice": practiceUrl, "./connected-bank": connectedUrl, "./extra-sentences": extraUrl });
 const bankUrl = await compile("../lib/question-bank.ts", { "./practice": practiceUrl, "./chinese-bank": chineseUrl, "./connected-bank": connectedUrl, "./extra-sentences": extraUrl });
 const { levels, topics, starter } = await import(practiceUrl);
-const { getExercisePool, pickExercise, normalizeAnswer } = await import(bankUrl);
+const { getExercisePool, pickExercise, normalizeAnswer, localAnswerFeedback } = await import(bankUrl);
+const progressUrl = await compile("../lib/writing-progress.ts", { "./practice": practiceUrl, "./question-bank": bankUrl });
+const { exerciseProgressKey, groupProgress, readWritingProgress, progressStorageKey } = await import(progressUrl);
+const progressSettings = { language: "german", level: "A1", topic: topics[0], format: "single" };
+const progressPool = getExercisePool(progressSettings);
+const completed = new Set();
+assert.deepEqual(groupProgress(completed, "german", progressSettings), { correct: 0, total: progressPool.length, percent: 0 });
+completed.add(exerciseProgressKey(progressSettings, progressPool[0]));
+completed.add(exerciseProgressKey(progressSettings, progressPool[0]));
+assert.equal(groupProgress(completed, "german", progressSettings).correct, 1, "Repeated correct answers count once");
+assert.equal(groupProgress(completed, "german", { level: "A1" }).correct, 1);
+assert.equal(groupProgress(completed, "german", { topic: topics[0] }).correct, 1);
+assert.equal(groupProgress(completed, "german", { format: "single" }).correct, 1);
+assert.equal(groupProgress(completed, "german", { format: "connected" }).correct, 0);
+assert.equal(groupProgress(completed, "chinese", { level: "A1" }).correct, 0);
+for (const item of progressPool) completed.add(exerciseProgressKey(progressSettings, item));
+assert.equal(groupProgress(completed, "german", progressSettings).percent, 100);
+assert.ok(groupProgress(completed, "german", { level: "A1" }).percent < 100);
+const historyAtCompletion = progressPool.map(item => item.english);
+assert.equal(pickExercise(progressSettings, historyAtCompletion).english, progressPool[0].english,
+  "Completed sentences remain available for review");
+for (const level of levels) for (const topic of topics) for (const format of ["single", "connected"]) {
+  const settings = { language: "german", level, topic, format };
+  for (const exercise of getExercisePool(settings)) completed.add(exerciseProgressKey(settings, exercise));
+}
+for (const level of levels) assert.equal(groupProgress(completed, "german", { level }).percent, 100);
+for (const topic of topics) assert.equal(groupProgress(completed, "german", { topic }).percent, 100);
+for (const format of ["single", "connected"]) assert.equal(groupProgress(completed, "german", { format }).percent, 100);
+globalThis.localStorage = { getItem: key => key === progressStorageKey ? JSON.stringify([...completed]) : null };
+assert.deepEqual(readWritingProgress(), completed, "Progress survives reloading storage");
+globalThis.localStorage = { getItem: () => "invalid JSON" };
+assert.equal(readWritingProgress().size, 0);
+globalThis.localStorage = { getItem: () => JSON.stringify([null, 2, "valid"]) };
+assert.deepEqual([...readWritingProgress()], ["valid"]);
+globalThis.localStorage = { getItem: () => { throw new Error("Storage unavailable"); } };
+assert.equal(readWritingProgress().size, 0);
+delete globalThis.localStorage;
+console.log("PASS: unique correct answers, independent groups and languages, 100% completion, review selection and persistent progress");
 function assertEveryWord(item) {
   const words = item.german.match(/[\p{L}\p{M}]+(?:[-'’][\p{L}\p{M}]+)*/gu) ?? [];
   assert.deepEqual(item.vocabulary.map((word) => word.german), words,
@@ -63,6 +100,13 @@ for (const level of levels) {
 assert.equal(total, 324);
 assert.ok(getExercisePool({ level: "A1", topic: topics[0], format: "single" })
   .some((item) => item.english === starter.english && item.german === starter.german));
+const flexibleSchedule = getExercisePool({ level: "B2", topic: topics[0], format: "single" })
+  .find(item => item.german === "Ein flexibler Zeitplan erleichtert es, Arbeit und Familie zu vereinbaren.");
+assert.deepEqual(flexibleSchedule.vocabulary.map(word => [word.german, word.english]), [
+  ["Ein", "a"], ["flexibler", "flexible"], ["Zeitplan", "schedule"],
+  ["erleichtert", "makes easier"], ["es", "it"], ["Arbeit", "work"],
+  ["und", "and"], ["Familie", "family"], ["zu", "to"], ["vereinbaren", "reconcile"],
+]);
 assert.equal(normalizeAnswer("  Ich   trinke einen Kaffee! "), normalizeAnswer("Ich trinke einen Kaffee."));
 assert.equal(normalizeAnswer("Ich möchte Grüße aus Köln."), normalizeAnswer("Ich moechte Gruesse aus Koeln."));
 assert.notEqual(normalizeAnswer("Ich hatte Zeit."), normalizeAnswer("Ich hätte Zeit."));
@@ -83,6 +127,10 @@ for (const level of levels) for (const topic of topics) for (const format of ["s
   const history = [];
   for (const item of pool) {
     assertEveryWord(item);
+    if (format === "connected") {
+      assert.ok(item.english.includes(`, ${item.connector.english} `));
+      assert.ok(item.vocabulary.some(word => word.german.toLowerCase() === item.connector.target));
+    }
     assert.ok(item.english && item.german && item.hint && item.vocabulary.length);
     assert.ok(!/\p{Script=Han}/u.test(JSON.stringify(item)));
     assert.ok(item.vocabulary.every((word) => word.language === "chinese"));
@@ -105,6 +153,17 @@ assert.ok(getExercisePool({ level: "C1", topic: topics[3], format: "connected" }
   ", weil die verfügbaren Studien einander widersprechen."));
 const chineseConnected = getExercisePool({ language: "chinese", level: "A1", topic: topics[0], format: "connected" });
 assert.equal(chineseConnected[3].german, "Suīrán wǒ gèng xǐhuan kāfēi, dànshì wǒ měitiān zǎoshang hē chá.");
+// The same two ideas with different conjunctions must resolve to the intended
+// reference answer, and dropping the conjunction cannot pass the local check.
+for (const language of ["german", "chinese"]) {
+  const pool = getExercisePool({ language, level: "A1", topic: topics[0], format: "connected" });
+  assert.notEqual(pool[1].english, pool[3].english);
+  for (const exercise of pool) {
+    assert.equal(localAnswerFeedback(exercise, exercise.german, language)?.correct, true);
+    assert.equal(localAnswerFeedback(exercise,
+      exercise.german.replace(new RegExp(exercise.connector.target, "i"), ""), language), null);
+  }
+}
 console.log("PASS: 324 German and 252 Chinese exercises, four connector meanings per connected pool, complete word meanings and no early repeats");
 
 // The AI constructor throws if reached. This proves questions and exact checks

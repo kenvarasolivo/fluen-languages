@@ -2,16 +2,20 @@
 import { Level, levels, topics, Settings, languages, languageNames, Language } from "@/lib/practice";
 import { ChevronDown, SlidersHorizontal } from "lucide-react";
 import { useEffect, useState } from "react";
+import type { Progress, ProgressGroup } from "@/lib/writing-progress";
+import { GroupProgress } from "./group-progress";
 export function PracticeSettings({
   settings,
   onChange,
   disabled,
   conversation = false,
+  progress,
 }: {
   settings: Settings;
   onChange: (settings: Settings) => void;
   disabled?: boolean;
   conversation?: boolean;
+  progress?: (group: ProgressGroup) => Progress;
 }) {
   const [expanded, setExpanded] = useState(true);
   useEffect(
@@ -57,6 +61,7 @@ export function PracticeSettings({
               onClick={() => onChange({ ...settings, level: level as Level })}
             >
               {level}
+              {progress && <GroupProgress label={level} progress={progress({ level })} />}
             </button>
           ))}
         </div>
@@ -82,22 +87,24 @@ export function PracticeSettings({
             onChange={(e) => onChange({ ...settings, topic: e.target.value })}
           >
             {topics.map((topic) => (
-              <option key={topic}>{topic}</option>
+              <option key={topic} value={topic}>{topic}{progress ? ` · ${progress({ topic }).percent}%` : ""}</option>
             ))}
           </select>
           <ChevronDown size={16} />
         </div>
+        {progress && <GroupProgress label={settings.topic} progress={progress({ topic: settings.topic })} />}
       </label>
       {!conversation && (
         <fieldset disabled={disabled}>
           <legend>Sentence style</legend>
           <div className="format-picker">
             <button
-              aria-pressed={settings.format === "mixed"}
-              onClick={() => onChange({ ...settings, format: "mixed" })}
+              aria-pressed={settings.format === "single"}
+              onClick={() => onChange({ ...settings, format: "single" })}
             >
-              <strong>Mostly one sentence</strong>
-              <span>About 70% one idea, 30% connected ideas</span>
+              <strong>One sentence</strong>
+              <span>One idea per prompt</span>
+              {progress && <GroupProgress label="One sentence" progress={progress({ format: "single" })} />}
             </button>
             <button
               aria-pressed={settings.format === "connected"}
@@ -105,6 +112,7 @@ export function PracticeSettings({
             >
               <strong>Connect two ideas</strong>
               <span>Two sentences → use a connector</span>
+              {progress && <GroupProgress label="Connect two ideas" progress={progress({ format: "connected" })} />}
             </button>
           </div>
         </fieldset>

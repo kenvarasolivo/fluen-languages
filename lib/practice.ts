@@ -20,7 +20,7 @@ export type Settings = {
   language?: Language;
   level: Level;
   topic: string;
-  format: "single" | "connected" | "mixed";
+  format: "single" | "connected";
 };
 // Keep the existing text key so previously saved words remain readable.
 export type Vocabulary = { german: string; english: string; language?: Language };
@@ -74,7 +74,7 @@ export const defaults: Settings = {
   language: "german",
   level: "A1",
   topic: topics[0],
-  format: "mixed",
+  format: "single",
 };
 export const starter: Exercise = {
   english: "I drink a coffee every morning.",
