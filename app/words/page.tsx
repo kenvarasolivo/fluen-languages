@@ -6,7 +6,9 @@ import { ArrowRight, BookOpen, Search, Trash2, Volume2 } from "lucide-react";
 import { Header, Footer } from "@/components/header";
 import { Vocabulary, languageNames, languageTag } from "@/lib/practice";
 import { speak } from "@/components/feedback";
+import { useLanguage } from "@/components/language-provider";
 export default function WordsPage() {
+  const { language } = useLanguage();
   const [words, setWords] = useState<Vocabulary[]>([]),
     [query, setQuery] = useState("");
   useEffect(() => {
@@ -31,7 +33,8 @@ export default function WordsPage() {
       window.dispatchEvent(new Event("fluen:words"));
     } catch {}
   }
-  const filtered = words.filter((w) =>
+  const languageWords = words.filter((word) => (word.language ?? "german") === language);
+  const filtered = languageWords.filter((w) =>
     (w.german + " " + w.english).toLowerCase().includes(query.toLowerCase()),
   );
   return (
@@ -49,9 +52,9 @@ export default function WordsPage() {
               Saved in this browser.
             </p>
           </div>
-          <span className="session-count">{words.length} words collected</span>
+          <span className="session-count">{languageWords.length} {languageNames[language]} words collected</span>
         </div>
-        {words.length === 0 ? (
+        {languageWords.length === 0 ? (
           <section className="words-empty">
             <div className="mascot-art">
               <Image src="/illustrations/fluen-shape-friends.png" alt="Fluen companions ready to collect new words with you" width={1774} height={887} />

@@ -1929,6 +1929,31 @@ h1,h2,h3,.logo { font-family:"Trebuchet MS", "Segoe UI", sans-serif; }
 .practice-heading p, .gentle-note, .voice-info, .voice-info p, .session-count { color:#e2ebff; }
 .practice-heading .reset-button { background:#dce9ff; border-color:#adc6f5; }
 .language-pill { background:#dce9ff; color:#233454; border-color:#adc6f5; }
+.practice-header { display:grid; grid-template-columns:minmax(0,1fr) 390px minmax(0,1fr); }
+.practice-header nav { gap:12px; }
+.practice-header nav a { padding:10px 14px; border-radius:13px; justify-content:center; }
+.practice-header nav { display:grid; grid-template-columns:repeat(3,1fr); }
+.practice-header nav .active { padding:10px 14px; }
+.practice-header .language-pill { justify-self:end; white-space:nowrap; }
+.header-language { position:relative; width:183px; min-height:44px; cursor:pointer; }
+.header-language select { appearance:none; position:absolute; inset:0; width:100%; padding:10px 27px 10px 39px; border:0; border-radius:30px; background:transparent; color:var(--ink); cursor:pointer; font-size:11px; }
+.header-language > svg { margin-left:auto; pointer-events:none; }
+.header-language > .german-flag, .header-language > .chinese-flag { pointer-events:none; }
+.header-language select option { color:var(--ink); background:#edf3ff; }
+@media (min-width:761px) and (max-width:900px) {
+  .practice-header { grid-template-columns:minmax(0,1fr) 350px minmax(0,1fr); gap:12px; }
+  .practice-header nav { gap:6px; }
+  .practice-header nav a, .practice-header nav .active { padding:10px 8px; font-size:11px; }
+  .practice-header .header-language { width:167px; }
+}
+@media (max-width:760px) {
+  .practice-header { display:grid; grid-template-columns:1fr auto; }
+  .header.practice-header .brand-lockup { width:auto; }
+  .header.practice-header nav { grid-column:1 / -1; grid-row:2; width:100%; gap:8px; }
+  .header.practice-header .header-language { display:flex; grid-column:2; grid-row:1; width:167px; padding:10px 12px; }
+  .header-language select { font-size:10px; }
+  .practice-header nav a, .practice-header nav .active { padding:8px 10px; }
+}
 
 /* A quiet hero, with the product demonstration in its own section below. */
 .play-hero {

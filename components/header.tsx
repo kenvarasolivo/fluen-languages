@@ -1,6 +1,8 @@
+"use client";
 import Link from "next/link";
-import { ArrowUpRight, AudioLines, PenLine, BookOpen } from "lucide-react";
-import { Language, languageNames } from "@/lib/practice";
+import { ArrowUpRight, AudioLines, PenLine, BookOpen, ChevronDown } from "lucide-react";
+import { languages, languageNames } from "@/lib/practice";
+import { useLanguage } from "./language-provider";
 export function Logo() {
   return (
     <Link href="/" className="logo" aria-label="Fluen home">
@@ -11,9 +13,10 @@ export function Logo() {
     </Link>
   );
 }
-export function Header({ active, language }: { active?: string; language?: Language }) {
+export function Header({ active }: { active?: string }) {
+  const { language, setLanguage } = useLanguage();
   return (
-    <header className="header">
+    <header className={`header${active ? " practice-header" : ""}`}>
       <div className="brand-lockup">
         <Logo />
         <span>Language in action.</span>
@@ -53,11 +56,15 @@ export function Header({ active, language }: { active?: string; language?: Langu
           </>
         )}
       </nav>
-      {active && language && (
-        <span className="language-pill">
-          {language === "german" && <span className="german-flag" />} {languageNames[language]}{" "}
-          <span className="online-dot" />
-        </span>
+      {active && (
+        <label className="language-pill header-language">
+          {language === "german" && <span className="german-flag" />}
+          {language === "chinese" && <span className="chinese-flag">★</span>}
+          <select aria-label="Practice language" value={language} onChange={(event) => setLanguage(event.target.value === "chinese" ? "chinese" : "german")}>
+            {languages.map((value) => <option key={value} value={value}>{languageNames[value]}</option>)}
+          </select>
+          <ChevronDown size={14} aria-hidden="true" />
+        </label>
       )}
     </header>
   );

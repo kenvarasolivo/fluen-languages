@@ -26,8 +26,10 @@ import {
 } from "@/lib/practice";
 import { localAnswerFeedback, pickExercise } from "@/lib/question-bank";
 import { ChallengeResult } from "./challenge-result";
+import { useLanguage } from "./language-provider";
 
 export function WritingPractice() {
+  const { language: selectedLanguage, setLanguage } = useLanguage();
   const [settings, setSettings] = useState<Settings>(defaults),
     [exercise, setExercise] = useState<Exercise>(starter),
     [answer, setAnswer] = useState(""),
@@ -46,6 +48,11 @@ export function WritingPractice() {
   const current = useRef(settings);
   const controller = useRef<AbortController | null>(null);
   const resultPanel = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (current.current.language !== selectedLanguage) {
+      change({ ...current.current, language: selectedLanguage });
+    }
+  }, [selectedLanguage]);
   useEffect(() => () => controller.current?.abort(), []);
   useEffect(() => {
     if (feedback || revealed)
@@ -126,13 +133,14 @@ export function WritingPractice() {
     }
   }
   function change(value: Settings) {
+    setLanguage(value.language ?? "german");
     current.current = value;
     setSettings(value);
     void next(value);
   }
   return (
     <>
-      <Header active="write" language={language} />
+      <Header active="write" />
       <main className="practice-main writing-main">
         <div className="practice-heading">
           <div>

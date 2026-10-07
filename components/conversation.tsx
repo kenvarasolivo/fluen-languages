@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 import { Header, Footer } from "./header";
 import { PracticeSettings } from "./settings";
+import { useLanguage } from "./language-provider";
 import { FeedbackCard, Words, speak } from "./feedback";
 import {
   defaults,
@@ -49,6 +50,7 @@ type SpeechWindow = Window & {
   webkitSpeechRecognition?: new () => Recognition;
 };
 export function Conversation() {
+  const { language: selectedLanguage, setLanguage } = useLanguage();
   const [settings, setSettings] = useState<Settings>(defaults),
     [messages, setMessages] = useState<Message[]>([]),
     [text, setText] = useState(""),
@@ -80,6 +82,9 @@ export function Conversation() {
     if (messages.length)
       bottom.current?.scrollIntoView({ behavior: "smooth", block: "nearest" });
   }, [messages, busy]);
+  useEffect(() => {
+    if (language !== selectedLanguage) reset({ ...settings, language: selectedLanguage });
+  }, [selectedLanguage, language, settings]);
   async function send(message = text) {
     const value = message.trim();
     if (busy || listening || (messages.length > 0 && !value)) return;
@@ -97,6 +102,7 @@ export function Conversation() {
         { settings, messages: next.slice(-30) },
         abort.signal,
       );
+      if (abort.signal.aborted) return;
       const updated: Message[] = value
         ? [
             ...messages,
@@ -129,6 +135,7 @@ export function Conversation() {
     }
   }
   function reset(value = settings) {
+    setLanguage(value.language ?? "german");
     controller.current?.abort();
     recognition.current?.abort();
     window.speechSynthesis?.cancel();
@@ -187,7 +194,7 @@ export function Conversation() {
   }
   return (
     <>
-      <Header active="speak" language={language} />
+      <Header active="speak" />
       <main className="practice-main">
         <div className="practice-heading">
           <div>
