@@ -1836,12 +1836,22 @@ h1,h2,h3,.logo { font-family:"Trebuchet MS", "Segoe UI", sans-serif; }
 .exercise-actions { flex-wrap:wrap; }
 .check-options { flex-wrap:wrap; }
 .writing-direction { margin:20px 0 24px; }
-.direction-options { display:flex; flex-wrap:wrap; gap:10px; }
-.direction-options button { flex:1; min-width:180px; min-height:64px; padding:12px 16px; text-align:left; border:1px solid #c6d2eb; border-radius:12px; background:#f4f6fd; color:var(--ink); font:inherit; font-weight:700; cursor:pointer; }
+.direction-trigger { display:flex; align-items:center; justify-content:space-between; gap:18px; min-width:220px; min-height:48px; padding:10px 14px; border:1px solid #c6d2eb; border-radius:12px; background:#f4f6fd; color:var(--ink); font:inherit; text-align:left; cursor:pointer; }
+.direction-trigger strong { color:var(--blue); }
+.direction-trigger:hover { background:#e6ecfc; }
+.direction-options { display:flex; flex-direction:column; gap:10px; }
+.direction-options button { width:100%; min-height:64px; padding:12px 16px; text-align:left; border:1px solid #c6d2eb; border-radius:12px; background:#f4f6fd; color:var(--ink); font:inherit; font-weight:700; cursor:pointer; }
 .direction-options button span { display:block; margin-top:4px; font-size:12px; font-weight:400; color:var(--muted); }
-.direction-options button[aria-pressed="true"] { background:var(--blue); border-color:#20459c; color:white; }
-.direction-options button[aria-pressed="true"] span { color:#e5ebff; }
+.direction-options button.is-selected { background:var(--blue); border-color:#20459c; color:white; }
+.direction-options button.is-selected span { color:#e5ebff; }
 .writing-direction > p { margin:10px 0 0; font-size:12px; color:var(--muted); }
+.direction-dialog { width:min(480px, calc(100% - 32px)); max-width:none; margin:auto; padding:24px; border:1px solid #c6d2eb; border-radius:20px; background:#f1f5ff; color:#132f62; box-shadow:0 16px 48px #132f6233; }
+.direction-dialog::backdrop { background:#101c36a6; }
+.direction-dialog-header { display:flex; align-items:flex-start; justify-content:space-between; gap:18px; margin-bottom:22px; }
+.direction-dialog-header h2 { margin:8px 0 0; font-size:22px; line-height:1.2; letter-spacing:-.4px; }
+.direction-dialog .direction-options button { background:white; }
+.direction-dialog .direction-options button.is-selected { background:var(--blue); }
+.direction-trigger:focus-visible,.direction-options button:focus-visible { outline:3px solid #315dcc; outline-offset:3px; }
 .challenge-card.is-won { border-color:#99b67a; }
 .challenge-card.is-lost { border-color:#e4b59f; }
 .challenge-win,.feedback-card.correct { background:#eef6df; border-color:#b7ce98; color:#48632f; }

@@ -1,8 +1,9 @@
 "use client";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 import {
   ArrowRight,
   Check,
+  ChevronDown,
   Lightbulb,
   LoaderCircle,
   PenLine,
@@ -10,6 +11,7 @@ import {
   Shuffle,
   Sparkles,
   Volume2,
+  X,
 } from "lucide-react";
 import { Header, Footer } from "./header";
 import { PracticeSettings } from "./settings";
@@ -63,6 +65,8 @@ export function WritingPractice() {
   const current = useRef(settings);
   const controller = useRef<AbortController | null>(null);
   const resultPanel = useRef<HTMLDivElement>(null);
+  const directionDialog = useRef<HTMLDialogElement>(null);
+  const directionTitleId = useId();
   const review = completed.has(exerciseProgressKey(settings, exercise));
   function recordCorrect() {
     const key = exerciseProgressKey(settings, exercise);
@@ -220,25 +224,60 @@ export function WritingPractice() {
                 <span>{settings.level} · {settings.topic} · {settings.format === "single" ? "One sentence" : "Connect two ideas"}</span>
                 <GroupProgress label="Selected group" progress={groupProgress(completed, language, settings)} />
               </div>
-              <div className="writing-direction" role="group" aria-label="Choose which language to write">
-                <div className="direction-options">
-                  {(["english", "target"] as const).map((value) => (
+              <div className="writing-direction">
+                <button
+                  type="button"
+                  className="direction-trigger"
+                  onClick={() => directionDialog.current?.showModal()}
+                  aria-haspopup="dialog"
+                >
+                  <span>Writing in <strong>{writingEnglish ? "English" : target}</strong></span>
+                  <ChevronDown size={18} aria-hidden="true" />
+                </button>
+                <p>Switching clears your current attempt. The sentence updates to match your choice.</p>
+                <dialog ref={directionDialog} className="direction-dialog" aria-labelledby={directionTitleId}>
+                  <div className="direction-dialog-header">
+                    <div>
+                      <span className="topic-banner-kicker">Choose your direction</span>
+                      <h2 id={directionTitleId}>Which language do you want to write in?</h2>
+                    </div>
                     <button
-                      key={value}
                       type="button"
-                      aria-pressed={direction === value}
-                      onClick={() => {
-                        if (direction === value) return;
-                        setDirection(value);
-                        retry();
-                      }}
+                      className="topic-picker-close"
+                      aria-label="Close language picker"
+                      onClick={() => directionDialog.current?.close()}
                     >
-                      Write {value === "english" ? "English" : target}
-                      <span>{value === "english" ? `See ${target} · Beginner friendly` : "See English · Practice recall"}</span>
+                      <X size={22} />
                     </button>
-                  ))}
-                </div>
-                <p>Switch anytime. Switching clears your current attempt.</p>
+                  </div>
+                  <div className="direction-options">
+                    {(["english", "target"] as const).map((value) => {
+                      const selected = direction === value;
+                      const languageName = value === "english" ? "English" : target;
+                      return (
+                        <button
+                          key={value}
+                          type="button"
+                          className={selected ? "is-selected" : ""}
+                          aria-pressed={selected}
+                          onClick={() => {
+                            directionDialog.current?.close();
+                            if (selected) return;
+                            setDirection(value);
+                            retry();
+                          }}
+                        >
+                          Write in {languageName}
+                          <span>
+                            {value === "english"
+                              ? `Translate the ${target} sentence into English`
+                              : `Translate the English sentence into ${target}`}
+                          </span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </dialog>
               </div>
               <div className="demo-caption">
                 HOW WOULD YOU SAY THIS IN {answerName.toUpperCase()}?
