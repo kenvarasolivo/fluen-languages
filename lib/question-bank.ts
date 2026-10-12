@@ -2,9 +2,10 @@ import { Exercise, Language, Level, Settings, topics, sentenceVocabulary, firstL
 import { getChineseExercisePool } from "./chinese-bank";
 import { connectedExercises } from "./connected-bank";
 import { extraSentenceRows } from "./extra-sentences";
+import { practicalSentenceRows } from "./practical-sentences";
 
-// Four authored situations per topic and level, plus four connected exercises
-// per pool with explicit addition, contrast, reason and concession.
+// Authored situations per topic and level, expanded with practical prompts,
+// plus four connected exercises with addition, contrast, reason and concession.
 type Sentence = [english: string, german: string, word: string, meaning: string, glosses: string];
 const sentences: Record<Level, Sentence[][]> = {
   A1: [
@@ -259,7 +260,8 @@ export function getExercisePool(settings: Settings): Exercise[] {
   if (settings.language === "chinese") return getChineseExercisePool(settings);
   const rows = sentences[settings.level][topics.indexOf(settings.topic as (typeof topics)[number])];
   if (!rows) throw new Error("Choose valid practice settings.");
-  const allRows = [...rows, ...extraSentenceRows("german", settings.level, settings.topic).map(([english, german, glosses]) => [english, german, "", "", glosses] as Sentence)];
+  const additional = [...extraSentenceRows("german", settings.level, settings.topic), ...practicalSentenceRows(settings.level, settings.topic)];
+  const allRows = [...rows, ...additional.map(([english, german, glosses]) => [english, german, "", "", glosses] as Sentence)];
   const singles = allRows.map((row) => single(row, settings.level));
   if (settings.format === "single") return singles;
   return connectedExercises(settings, singles[0], singles[1]);

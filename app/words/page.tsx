@@ -44,6 +44,7 @@ export default function WordsPage() {
           <span className="session-count">{languageWords.length} {languageNames[language]} words collected</span>
         </div>
         <GuestSaveNotice />
+        <p className="gentle-note">Starting from zero? <Link href="/learn-words">Learn your first everyday words <ArrowRight size={14} /></Link></p>
         {error && <p role="alert">{error}</p>}
         {loading ? <p role="status">Loading your saved words…</p> : languageWords.length === 0 ? (
           <section className="words-empty">

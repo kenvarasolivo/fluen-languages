@@ -4,6 +4,7 @@ import { ArrowUpRight, ArrowLeft, AudioLines, PenLine, BookOpen, ChevronDown } f
 import { languages, languageNames } from "@/lib/practice";
 import { useLanguage } from "./language-provider";
 import { AccountMenu } from "./account-menu";
+import { InstallApp } from "./pwa";
 export function Logo() {
   return (
     <Link href="/" className="logo" aria-label="Fluen home">
@@ -30,7 +31,7 @@ export function Header({ active, account = false }: { active?: string; account?:
               className={active === "write" ? "active" : ""}
               href="/write"
             >
-              <PenLine size={16} /> Writing
+              <PenLine size={16} /> Sentences
             </Link>
             <Link
               aria-current={active === "speak" ? "page" : undefined}
@@ -38,6 +39,9 @@ export function Header({ active, account = false }: { active?: string; account?:
               href="/speak"
             >
               <AudioLines size={16} /> Conversation
+            </Link>
+            <Link href="/learn-words" className={active === "learn-words" ? "active" : ""} aria-current={active === "learn-words" ? "page" : undefined}>
+              <BookOpen size={16} /> Learn words
             </Link>
             <Link
               aria-current={active === "words" ? "page" : undefined}
@@ -77,6 +81,7 @@ export function Footer() {
       <Logo />
       <span>Learn a language by putting it into words.</span>
       <span>German and Chinese (pinyin). More languages coming soon.</span>
+      <InstallApp />
     </footer>
   );
 }

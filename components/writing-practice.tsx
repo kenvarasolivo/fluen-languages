@@ -41,7 +41,7 @@ export function WritingPractice() {
   const { language: selectedLanguage, setLanguage } = useLanguage();
   const { completed, recordCorrect: saveCorrect, loading: accountLoading } = useAccount();
   const [settings, setSettings] = useState<Settings>(defaults),
-    [direction, setDirection] = useState<WritingDirection>("english"),
+    [direction, setDirection] = useState<WritingDirection>("target"),
     [exercise, setExercise] = useState<Exercise>(starter),
     [answer, setAnswer] = useState(""),
     [feedback, setFeedback] = useState<Feedback | null>(null),
@@ -177,8 +177,8 @@ export function WritingPractice() {
             </div>
             <h1>Make the next sentence yours.</h1>
             <p>
-              Start by understanding {target} in English, or switch to writing
-              in {target}. Learn at your own pace.
+              Read a useful sentence in English and write it in {target}.
+              Practice language you can take into your day.
             </p>
           </div>
         </div>

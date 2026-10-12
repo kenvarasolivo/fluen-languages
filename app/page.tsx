@@ -18,6 +18,7 @@ export default function Home() {
             <Link href="/speak" className="hero-chat"><AudioLines size={20} /> Or, let’s talk</Link>
           </div>
           <PracticeSaveHint />
+          <p className="beginner-entry">Completely new? <Link href="/learn-words">Start with everyday words <ArrowRight size={15} /></Link></p>
 
         </div>
         <div className="hero-characters">

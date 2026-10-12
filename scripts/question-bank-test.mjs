@@ -15,8 +15,9 @@ async function compile(path, replacements = {}) {
 const practiceUrl = await compile("../lib/practice.ts");
 const connectedUrl = await compile("../lib/connected-bank.ts", { "./practice": practiceUrl });
 const extraUrl = await compile("../lib/extra-sentences.ts", { "./practice": practiceUrl });
+const practicalUrl = await compile("../lib/practical-sentences.ts", { "./practice": practiceUrl });
 const chineseUrl = await compile("../lib/chinese-bank.ts", { "./practice": practiceUrl, "./connected-bank": connectedUrl, "./extra-sentences": extraUrl });
-const bankUrl = await compile("../lib/question-bank.ts", { "./practice": practiceUrl, "./chinese-bank": chineseUrl, "./connected-bank": connectedUrl, "./extra-sentences": extraUrl });
+const bankUrl = await compile("../lib/question-bank.ts", { "./practice": practiceUrl, "./chinese-bank": chineseUrl, "./connected-bank": connectedUrl, "./extra-sentences": extraUrl, "./practical-sentences": practicalUrl });
 const { levels, topics, starter } = await import(practiceUrl);
 const { getExercisePool, pickExercise, normalizeAnswer, localAnswerFeedback } = await import(bankUrl);
 const progressUrl = await compile("../lib/writing-progress.ts", { "./practice": practiceUrl, "./question-bank": bankUrl });
@@ -71,7 +72,7 @@ for (const level of levels) {
     for (const format of ["single", "connected"]) {
       const settings = { level, topic, format };
       const pool = getExercisePool(settings);
-      assert.equal(pool.length, format === "single" ? 5 : 4);
+      assert.equal(pool.length, format === "single" ? (level === "A1" || level === "A2" ? 15 : 8) : 4);
       if (format === "connected") assert.deepEqual(pool.map(item => item.connector.english), ["and", "but", "because", "although"]);
       assert.equal(new Set(pool.map((item) => item.english)).size, pool.length);
       for (const item of pool) {
@@ -97,7 +98,7 @@ for (const level of levels) {
     }
   }
 }
-assert.equal(total, 324);
+assert.equal(total, 516);
 assert.ok(getExercisePool({ level: "A1", topic: topics[0], format: "single" })
   .some((item) => item.english === starter.english && item.german === starter.german));
 const flexibleSchedule = getExercisePool({ level: "B2", topic: topics[0], format: "single" })
@@ -164,7 +165,36 @@ for (const language of ["german", "chinese"]) {
       exercise.german.replace(new RegExp(exercise.connector.target, "i"), ""), language), null);
   }
 }
-console.log("PASS: 324 German and 252 Chinese exercises, four connector meanings per connected pool, complete word meanings and no early repeats");
+console.log("PASS: 516 German and 252 Chinese exercises, four connector meanings per connected pool, complete word meanings and no early repeats");
+
+const wordsUrl = await compile("../lib/beginner-words.ts", { "./practice": practiceUrl, "./question-bank": bankUrl });
+const { beginnerWords, matchesWord, wordCategories, wordProgressKey } = await import(wordsUrl);
+const wordKeys = new Set();
+for (const language of ["german", "chinese"]) for (const category of wordCategories) {
+  const words = beginnerWords(language, category);
+  assert.equal(words.length, 8);
+  for (const word of words) {
+    assert.ok(word.english && word.german);
+    assert.equal(matchesWord(word, word.german), true);
+    assert.equal(matchesWord(word, "unrelated answer"), false);
+    assert.equal(matchesWord(word, ""), false);
+    for (const answer of word.accepted) assert.equal(matchesWord(word, answer.toUpperCase()), true);
+    if (language === "chinese") {
+      assert.ok(!/\p{Script=Han}/u.test(word.german));
+      assert.equal(matchesWord(word, word.german.normalize("NFD").replace(/[\u0300-\u036f]/g, "")), true);
+    }
+    const key = wordProgressKey(word);
+    assert.ok(!wordKeys.has(key)); wordKeys.add(key);
+    assert.ok(!completed.has(key), "Word mastery stays separate from sentence mastery");
+  }
+}
+assert.equal(wordKeys.size, 96);
+const water = beginnerWords("german", "Food & drink")[0];
+assert.equal(matchesWord(water, "Wasser"), true);
+assert.equal(matchesWord(water, "der Wasser"), false);
+const writingSource = await readFile(new URL("../components/writing-practice.tsx", import.meta.url), "utf8");
+assert.match(writingSource, /setDirection\] = useState<WritingDirection>\("target"\)/);
+console.log("PASS: 48 beginner words per language, articles, umlauts, tone-free pinyin, separate progress and English-to-target default");
 
 // The AI constructor throws if reached. This proves questions and exact checks
 // do not call the provider. Alternatives require explicit AI opt-in.
