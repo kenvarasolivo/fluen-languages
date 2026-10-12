@@ -47,7 +47,7 @@ Select Chinese (pinyin) in practice settings for Mandarin written entirely in La
 
 ## Supabase setup
 
-Set `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_ANON_KEY` in `.env.local`. The browser uses the anon key and the signed-in user's token. Row-level security restricts every record to its owner. Keep the service-role key server-side; never give it a `NEXT_PUBLIC_` prefix.
+Set `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` in `.env.local` (the legacy `NEXT_PUBLIC_SUPABASE_ANON_KEY` is also supported). The browser uses the public API key and the signed-in user's token. Row-level security restricts every record to its owner. Keep the service-role key server-side; never give it a `NEXT_PUBLIC_` prefix.
 
 Run `supabase/migrations/202610070001_fluen.sql` in Supabase SQL Editor to create the two Fluen tables and access policies. Enable Email authentication and configure the Site URL and allowed redirect URLs for the app's addresses, including `http://localhost:3000/login` in development. With email confirmation enabled, new users confirm their email before signing in.
 
