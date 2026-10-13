@@ -11,8 +11,8 @@ export function AccountMenu() {
   const pathname = usePathname();
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
-  const next = ["/write", "/speak", "/words"].includes(pathname) ? `?next=${encodeURIComponent(pathname)}` : "";
-  if (!user) return <Link className="header-sign-in" href={`/login${next}`}><LogIn size={16} /><span>Sign in</span></Link>;
+  const next = ["/write", "/speak", "/learn-words", "/words"].includes(pathname) ? `?next=${encodeURIComponent(pathname)}` : "";
+  if (!user) return <Link className="header-sign-in" aria-label="Sign in" href={`/login${next}`}><LogIn size={16} /><span>Sign in</span></Link>;
   return <details className="account-menu">
     <summary aria-label="Account menu"><span className="account-avatar">{user.email?.charAt(0).toUpperCase() ?? "F"}</span><span className="account-menu-label">My account</span><ChevronDown size={14} /></summary>
     <div className="account-dropdown">

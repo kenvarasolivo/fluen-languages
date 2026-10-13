@@ -281,12 +281,13 @@ export function pickExercise(settings: Settings, previous: string[] = []): Exerc
 export function localAnswerFeedback(exercise: Exercise, answer: string, language: Language = "german", direction: "target" | "english" = "target") {
   const model = direction === "english" ? exercise.english : exercise.german;
   const answerLanguage = direction === "english" ? "english" : language;
-  if (normalizeAnswer(answer, answerLanguage) !== normalizeAnswer(model, answerLanguage)) return null;
+  if (!answersMatch(answer, model, answerLanguage)) return null;
+  const corrections = answerLanguage === "german" ? germanSpellingCorrections(answer, model) : [];
   return {
     correct: true,
     corrected: model,
-    explanation: "Nicely done! Your translation matches the model answer.",
-    corrections: [],
+    explanation: corrections.length ? "Correct! Just a small spelling detail: remember the umlaut marks. This still counts toward your progress." : "Nicely done! Your translation matches the model answer.",
+    corrections,
     vocabulary: exercise.vocabulary,
   };
 }
@@ -303,7 +304,36 @@ export function normalizeAnswer(answer: string, language: Language | "english" =
       .replace(/([a-z])[1-5]/g, "$1")
       .replace(/[\s.,!?;:'’“”"，。！？；：]+/g, "");
   }
+  return normalizeGermanSpelling(answer);
+}
+
+// Only relax vowels where the model actually contains an umlaut. Folding
+// every "ue" would also incorrectly accept "neu" for "neue", for example.
+export function answersMatch(answer: string, model: string, language: Language | "english" = "german") {
+  if (normalizeAnswer(answer, language) === normalizeAnswer(model, language)) return true;
+  if (language !== "german") return false;
+  const clean = (value: string) => value.normalize("NFC").trim().toLocaleLowerCase("de")
+    .replace(/[.!?]+$/, "").replace(/\s+/g, " ");
+  const alternatives: Record<string, string> = { ä: "(?:ä|ae|a)", ö: "(?:ö|oe|o)", ü: "(?:ü|ue|u)", ß: "(?:ß|ss)" };
+  const pattern = [...clean(model)].map(letter => alternatives[letter] ?? letter.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")).join("");
+  return new RegExp(`^${pattern}$`, "u").test(clean(answer));
+}
+
+// Preserve umlauts in the strict form so accepted answers can still get a
+// spelling note. Keyboard alternatives (ae/oe/ue/ss) are standard spellings.
+function normalizeGermanSpelling(answer: string) {
   return answer.normalize("NFC").trim().toLocaleLowerCase("de")
     .replace(/ä/g, "ae").replace(/ö/g, "oe").replace(/ü/g, "ue").replace(/ß/g, "ss")
     .replace(/[.!?]+$/, "").replace(/\s+/g, " ");
+}
+
+export function germanSpellingCorrections(answer: string, model: string) {
+  if (!answersMatch(answer, model)) return [];
+  const originalWords = answer.trim().split(/\s+/);
+  const modelWords = model.trim().split(/\s+/);
+  return modelWords.flatMap((corrected, index) => {
+    const original = originalWords[index];
+    if (!original || normalizeGermanSpelling(original) === normalizeGermanSpelling(corrected)) return [];
+    return [{ original, corrected, explanation: "Small spelling error: use the umlaut shown here. Your answer still counts as correct." }];
+  });
 }

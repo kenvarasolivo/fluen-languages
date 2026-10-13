@@ -1,6 +1,6 @@
 "use client";
 import Link from "next/link";
-import { ArrowUpRight, ArrowLeft, AudioLines, PenLine, BookOpen, ChevronDown } from "lucide-react";
+import { ArrowUpRight, ArrowLeft, AudioLines, PenLine, BookOpen, Bookmark, ChevronDown } from "lucide-react";
 import { languages, languageNames } from "@/lib/practice";
 import { useLanguage } from "./language-provider";
 import { AccountMenu } from "./account-menu";
@@ -31,24 +31,24 @@ export function Header({ active, account = false }: { active?: string; account?:
               className={active === "write" ? "active" : ""}
               href="/write"
             >
-              <PenLine size={16} /> Sentences
+              <PenLine size={16} /><span>Sentences</span>
             </Link>
             <Link
               aria-current={active === "speak" ? "page" : undefined}
               className={active === "speak" ? "active" : ""}
               href="/speak"
             >
-              <AudioLines size={16} /> Conversation
+              <AudioLines size={16} /><span>Conversation</span>
             </Link>
             <Link href="/learn-words" className={active === "learn-words" ? "active" : ""} aria-current={active === "learn-words" ? "page" : undefined}>
-              <BookOpen size={16} /> Learn words
+              <BookOpen size={16} /><span>Learn words</span>
             </Link>
             <Link
               aria-current={active === "words" ? "page" : undefined}
               className={active === "words" ? "active" : ""}
               href="/words"
             >
-              <BookOpen size={16} /> My words
+              <Bookmark size={16} /><span>My words</span>
             </Link>
           </>
         ) : (

@@ -10,8 +10,8 @@ export function GuestSaveNotice() {
   if (user || loading) return null;
   return <aside className="guest-save-notice" aria-label="Save your learning to an account">
     <span className="guest-save-icon"><Cloud size={22} /></span>
-    <div><strong>Make your progress a keeper.</strong><p>You’re practicing as a guest. Words and progress stay in this browser. Sign in to save new learning to your account.</p></div>
-    <Link href={`/login?next=${encodeURIComponent(pathname)}`}>Sign in to save <ArrowRight size={16} /></Link>
+    <div><strong>Make your progress a keeper.</strong><p className="guest-detail">You’re practicing as a guest. Words and progress stay in this browser. Sign in to save new learning to your account.</p><p className="guest-mobile-message">Guest mode. Progress stays in this browser.</p></div>
+    <Link href={`/login?next=${encodeURIComponent(pathname)}`}><span className="guest-detail">Sign in to save</span><span className="guest-mobile-message">Sign in</span><ArrowRight size={16} /></Link>
   </aside>;
 }
 

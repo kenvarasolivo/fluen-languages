@@ -10,6 +10,7 @@ import { GuestSaveNotice } from "./guest-save-notice";
 import { speak } from "./feedback";
 import { firstLetterHint, Language, languageNames, languageTag } from "@/lib/practice";
 import { beginnerWords, matchesWord, wordCategories, WordCategory, wordProgressKey } from "@/lib/beginner-words";
+import { answersMatch, germanSpellingCorrections } from "@/lib/question-bank";
 
 function WordSession({ language, category }: { language: Language; category: WordCategory }) {
   const { completed, recordCorrect, saveWord, words: saved, loading } = useAccount();
@@ -24,6 +25,8 @@ function WordSession({ language, category }: { language: Language; category: Wor
   const word = pool[index];
   const correct = pool.filter(item => completed.has(wordProgressKey(item))).length;
   const isSaved = saved.some(item => (item.language ?? "german") === language && item.german === word.german);
+  const matchedModel = word.accepted.find(model => answersMatch(answer, model, language));
+  const spellingNote = language === "german" && matchedModel && germanSpellingCorrections(answer, matchedModel).length > 0;
 
   function check() {
     if (!answer.trim() || loading || result === "revealed" || result === "correct") return;
@@ -74,6 +77,7 @@ function WordSession({ language, category }: { language: Language; category: Wor
     {(result === "correct" || result === "revealed") && <div className="word-result" role="status">
       <span>{result === "correct" ? "You’ve got it!" : "Meet your new word. Try writing it from memory."}</span>
       <strong lang={languageTag(language)}>{word.german}</strong>
+      {result === "correct" && spellingNote && <p className="spelling-note">Small spelling error: remember the umlaut marks. This word still counts as learned.</p>}
       <div className="word-actions">
         {result === "revealed" && <button type="button" className="button secondary" onClick={retry}>Try again</button>}
         {language === "german" && <button type="button" className="button secondary" onClick={() => speak(word.german)}><Volume2 size={17} /> Listen</button>}

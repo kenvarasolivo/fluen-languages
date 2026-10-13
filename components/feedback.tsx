@@ -68,7 +68,7 @@ export function FeedbackCard({ feedback, language = "german", answerLanguage = l
         {feedback.correct ? <CheckCheck size={21} /> : <Sparkles size={21} />}
         <h3>
           {feedback.correct
-            ? "Correct! That’s language in action."
+            ? feedback.corrections.length ? "Correct! Just a small spelling detail." : "Correct! That’s language in action."
             : "A little polish. A little progress."}
         </h3>
       </div>

@@ -32,6 +32,7 @@ export function PracticeSettings({
       <summary className="settings-title">
         <SlidersHorizontal size={18} />
         <h2>Practice settings</h2>
+        <span className="settings-current">{settings.level} · {settings.format === "connected" && !conversation ? "Connected" : conversation ? "Chat" : "Single"}</span>
         <ChevronDown className="settings-chevron" size={15} />
       </summary>
       <label className="select-label">

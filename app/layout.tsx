@@ -11,7 +11,7 @@ export const metadata: Metadata = {
   description:
     "The output-first language learning app. Turn what you know into what you can say through writing, conversation, and clear AI feedback. German and Chinese (pinyin) available now.",
 };
-export const viewport: Viewport = { themeColor: "#72d1f4" };
+export const viewport: Viewport = { themeColor: "#72d1f4", viewportFit: "cover" };
 export default function RootLayout({
   children,
 }: {

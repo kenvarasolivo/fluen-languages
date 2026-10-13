@@ -1,5 +1,5 @@
 import { Language, Vocabulary } from "./practice";
-import { normalizeAnswer } from "./question-bank";
+import { answersMatch } from "./question-bank";
 
 export const wordCategories = ["First words", "Food & drink", "Getting around", "Everyday essentials", "People", "Useful verbs"] as const;
 export type WordCategory = (typeof wordCategories)[number];
@@ -58,5 +58,5 @@ export function wordProgressKey(word: BeginnerWord): string {
 }
 
 export function matchesWord(word: BeginnerWord, answer: string): boolean {
-  return word.accepted.some(model => normalizeAnswer(answer, word.language) === normalizeAnswer(model, word.language));
+  return word.accepted.some(model => answersMatch(answer, model, word.language));
 }

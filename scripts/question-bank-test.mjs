@@ -111,6 +111,21 @@ assert.deepEqual(flexibleSchedule.vocabulary.map(word => [word.german, word.engl
 assert.equal(normalizeAnswer("  Ich   trinke einen Kaffee! "), normalizeAnswer("Ich trinke einen Kaffee."));
 assert.equal(normalizeAnswer("Ich möchte Grüße aus Köln."), normalizeAnswer("Ich moechte Gruesse aus Koeln."));
 assert.notEqual(normalizeAnswer("Ich hatte Zeit."), normalizeAnswer("Ich hätte Zeit."));
+assert.equal(localAnswerFeedback({ ...starter, german: "Ich hätte Zeit." }, "Ich hatte Zeit.").correct, true, "Missing umlauts are minor spelling errors");
+assert.equal(localAnswerFeedback({ ...starter, german: "Eine neue Idee." }, "Eine neu Idee."), null, "Ordinary vowel sequences must preserve word endings");
+const umlautExercise = { ...starter, german: "Ich möchte Grüße aus Köln." };
+for (const answer of ["ICH MÖCHTE GRÜSSE AUS KÖLN!", "Ich moechte Gruesse aus Koeln.", "Ich möchte Grüße aus Köln.".normalize("NFD")]) {
+  const feedback = localAnswerFeedback(umlautExercise, answer);
+  assert.equal(feedback.correct, true);
+  assert.deepEqual(feedback.corrections, [], "Capitalization and keyboard spellings need no correction");
+}
+const minorFeedback = localAnswerFeedback(umlautExercise, "Ich mochte Grusse aus Koln.");
+assert.equal(minorFeedback.correct, true);
+assert.equal(minorFeedback.corrected, umlautExercise.german);
+assert.equal(minorFeedback.corrections.length, 3);
+assert.match(minorFeedback.explanation, /small spelling/);
+assert.equal(localAnswerFeedback(umlautExercise, "Ich möchte nicht Grüße aus Köln."), null, "Missing or extra meaning is still checked");
+assert.notEqual(normalizeAnswer("schon", "english"), normalizeAnswer("schön", "english"), "German tolerance must not affect English grading");
 for (const answer of ["ni hao", "NÍ HÀO!", "ni3 hao3", "nihao", "nǐ hǎo".normalize("NFD")]) {
   assert.equal(normalizeAnswer(answer, "chinese"), normalizeAnswer("Nǐ hǎo.", "chinese"));
 }
@@ -316,6 +331,20 @@ const aiRouteUrl = await compile("../app/api/practice/route.ts", {
   "next/server": nextUrl,
 });
 const { POST: aiPOST } = await import(aiRouteUrl);
+globalThis.fluenTestResult = {
+  correct: false, corrected: "Ich möchte Grüße aus Köln.",
+  explanation: "Remember the umlauts.",
+  corrections: [{ original: "mochte", corrected: "möchte", explanation: "Use an umlaut." }], vocabulary: [],
+};
+const umlautResponse = await aiPOST(new Request("http://localhost/api/practice", {
+  method: "POST", body: JSON.stringify({ action: "check", settings,
+    english: starter.english, answer: "Ich mochte Grusse aus Koln.", useAI: true }),
+}));
+assert.equal(umlautResponse.status, 200);
+const umlautResult = await umlautResponse.json();
+assert.equal(umlautResult.correct, true, "AI must not fail an answer solely for missing umlauts");
+assert.equal(umlautResult.corrections.length, 3);
+assert.match(globalThis.fluenTestRequest.config.systemInstruction, /small spelling errors/);
 for (const language of ["german", "chinese"]) {
   const reverseSettings = { ...settings, language };
   const exercise = getExercisePool(reverseSettings)[0];

@@ -2365,3 +2365,127 @@ body:has(.topic-picker-dialog[open]) { overflow: hidden; }
   .header.practice-header nav a { font-size: 10px; padding: 9px 3px; }
   .header.practice-header nav a > svg { display: none; }
 }
+
+/* Comfortable controls and a quieter, consistent practice surface. */
+.practice-main .exercise-card,
+.practice-main .conversation-card,
+.word-lesson,
+.saved-words article {
+  box-shadow: 0 8px 24px #102d6814, 0 2px 0 #193e9226;
+}
+.practice-main .exercise-card { background: #f8faff; }
+.practice-main .settings-card { box-shadow: 0 4px 16px #102d6810; }
+.exercise-card .gentle-note, .conversation-card .voice-info, .conversation-card .voice-info p { color: #596b89; }
+.practice-main .button { min-height: 48px; }
+.spelling-note { color: #74521b; background: #fff5dc; border: 1px solid #ead29a; border-radius: 12px; padding: 12px 14px; font-size: 13px; line-height: 1.6; margin-bottom: 20px; }
+.correct .correction { background: #fff8e7; border-color: #ead29a; }
+.correct .correction del { color: #825821; }
+.settings-card:not([open]) .settings-title { margin-bottom: 0; }
+.settings-current { margin-left: auto; font-size: 11px; color: #53617b; font-weight: 600; }
+.settings-card[open] .settings-current { display: none; }
+.settings-title .settings-chevron { margin-left: 8px; }
+.settings-card[open] .settings-chevron { margin-left: auto; }
+.guest-mobile-message { display: none; }
+.practice-heading .button.secondary { background: #edf3ff; color: #233454; border: 1px solid #c6d5f0; }
+
+@media (max-width: 760px) {
+  html { scroll-padding-bottom: 100px; }
+  body:has(.practice-header) { padding-bottom: calc(88px + env(safe-area-inset-bottom, 0px)); }
+  .header.practice-header {
+    min-height: 76px;
+    padding: calc(12px + env(safe-area-inset-top, 0px)) 18px 12px;
+    gap: 10px;
+    border-bottom: 1px solid #ffffff24;
+  }
+  .header.practice-header nav {
+    position: fixed;
+    inset: auto 0 0;
+    z-index: 40;
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    width: auto;
+    margin: 0;
+    padding: 8px max(8px, env(safe-area-inset-right, 0px)) calc(8px + env(safe-area-inset-bottom, 0px)) max(8px, env(safe-area-inset-left, 0px));
+    gap: 4px;
+    background: #f8faff;
+    border-top: 1px solid #ced9ed;
+    box-shadow: 0 -4px 24px #102d681a;
+    border-radius: 20px 20px 0 0;
+  }
+  .header.practice-header nav a,
+  .header.practice-header nav a.active {
+    flex-direction: column;
+    justify-content: center;
+    gap: 5px;
+    min-height: 58px;
+    padding: 8px 2px;
+    border-radius: 14px;
+    font-size: 10px;
+    line-height: 1.2;
+    color: #596b89;
+    background: transparent;
+    border: 0;
+    box-shadow: none;
+    letter-spacing: 0;
+  }
+  .header.practice-header nav a.active { background: #e4edff; color: #244eb2; }
+  .header.practice-header nav a > svg { display: block; width: 22px; height: 22px; }
+  .header.practice-header nav a:focus-visible { outline-offset: -3px; }
+  .practice-main { padding: 26px 16px 36px; min-height: auto; }
+  .practice-heading { gap: 12px; margin-bottom: 22px; }
+  .practice-heading h1 { font-size: clamp(28px, 7.5vw, 36px); letter-spacing: -1.1px; margin-top: 10px; }
+  .practice-heading p { font-size: 14px; line-height: 1.65; }
+  .practice-grid { gap: 16px; }
+  .settings-card { padding: 16px; border-radius: 18px; }
+  .settings-title { min-height: 28px; }
+  .practice-main .exercise-card { border-radius: 22px; padding: 22px 18px; }
+  .practice-main .challenge-banner { margin: -22px -18px 22px; padding: 16px 18px; }
+  .exercise-card textarea, .chat-composer textarea, .select-wrap select,
+  .header-tools .header-language select { font-size: 16px; }
+  .header.practice-header .header-tools .header-language { width: 132px; min-height: 44px; }
+  .header-tools .header-language select { padding-left: 32px; padding-right: 20px; font-size: 16px; }
+  .header-language > svg { width: 12px; }
+  .header-sign-in { min-height: 44px; }
+  .exercise-card textarea { min-height: 140px; line-height: 1.65; scroll-margin-bottom: 110px; }
+  .answer-label { flex-wrap: wrap; gap: 5px; line-height: 1.6; }
+  .umlaut-row button { min-width: 44px; min-height: 44px; font-size: 17px; }
+  .umlaut-row > span { display: none; }
+  .exercise-actions { flex-wrap: wrap; gap: 14px; }
+  .hint-button { min-height: 44px; font-size: 13px; }
+  .exercise-actions .check-options { width: 100%; display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .exercise-actions .check-options .button { white-space: normal; padding: 12px 8px; min-height: 52px; }
+  .exercise-actions .check-options > .button:only-child { grid-column: 1 / -1; }
+  .gentle-note { font-size: 12px; line-height: 1.7; }
+  .feedback-card { border-radius: 20px; }
+  .feedback-heading { align-items: flex-start; }
+  .corrected-answer p, .message-bubble p { overflow-wrap: anywhere; }
+  .correction > div { flex-wrap: wrap; }
+  .word-categories { display: flex; flex-wrap: nowrap; overflow-x: auto; padding: 2px 0 10px; gap: 8px; scrollbar-width: none; }
+  .word-categories::-webkit-scrollbar { display: none; }
+  .word-categories button { flex-shrink: 0; min-height: 44px; }
+  .word-lesson { border-radius: 22px; padding: 24px 18px; }
+  .word-actions { gap: 10px; }
+  .word-actions .button { flex: 1 1 120px; white-space: normal; }
+  .word-result { padding: 18px; }
+  .word-result > strong { overflow-wrap: anywhere; }
+  .account-dropdown { max-width: calc(100vw - 32px); z-index: 50; }
+  .guest-save-notice { flex-wrap: nowrap; gap: 12px; padding: 14px; margin-bottom: 20px; }
+  .guest-save-icon, .guest-save-notice .guest-detail { display: none; }
+  .guest-save-notice .guest-mobile-message { display: block; }
+  .guest-save-notice > div { min-width: 0; }
+  .guest-save-notice strong { font-size: 12px; }
+  .guest-save-notice p { font-size: 11px; line-height: 1.5; }
+  .guest-save-notice > a { margin-left: 0; padding: 10px; min-height: 44px; gap: 5px; }
+  .topic-picker-content { padding-top: calc(24px + env(safe-area-inset-top, 0px)); padding-bottom: calc(32px + env(safe-area-inset-bottom, 0px)); }
+  .footer { margin-inline: 16px; padding-block: 24px; }
+}
+
+@media (max-width: 360px) {
+  .header.practice-header { padding-inline: 12px; }
+  .header.practice-header .logo { font-size: 24px; gap: 7px; }
+  .header.practice-header .logo-mark { width: 27px; height: 29px; }
+  .header-sign-in > span { display: none; }
+  .header-sign-in svg { display: block; }
+  .header.practice-header .header-tools .header-language { width: 125px; }
+  .level-picker { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
