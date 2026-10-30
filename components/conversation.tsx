@@ -199,10 +199,7 @@ export function Conversation() {
       <main className="practice-main">
         <div className="practice-heading">
           <div>
-            <div className="eyebrow">
-              <AudioLines size={15} /> OUTPUT PRACTICE / CONVERSATION
-            </div>
-            <h1>Give your {target} a voice.</h1>
+            <h1>Conversation practice</h1>
             <p>
               Speak or type your own replies. Build confidence one conversation
               at a time.
@@ -213,7 +210,7 @@ export function Conversation() {
             disabled={busy || listening}
             onClick={() => reset()}
           >
-            <RotateCcw size={15} /> New conversation
+            <RotateCcw size={15} /><span>New conversation</span>
           </button>
         </div>
         <GuestSaveNotice />
@@ -270,21 +267,16 @@ export function Conversation() {
                 {messages.length === 0 ? (
                   <div className="conversation-empty">
                     <div className="mascot-art conversation-mascot-art">
-                      <Image src="/illustrations/conversation-mics.webp" alt="The three Fluen friends chatting into microphones" width={768} height={384} sizes="(max-width: 760px) 260px, 320px" priority />
-                      <span className="mascot-greeting">{greeting}!</span>
+                      <Image src="/illustrations/fluen-conversation-sculpture.png" alt="Sculptural speech bubbles saying hello in German and Chinese" width={1536} height={1024} sizes="(max-width: 760px) 240px, 300px" priority />
                     </div>
                     <span className="eyebrow">
                       {settings.level} · {settings.topic}
                     </span>
                     <h2>
-                      Every conversation
-                      <br />
-                      starts somewhere.
+                      A little hello goes a long way.
                     </h2>
                     <p>
-                      Talk about your day, share an idea, or find a new word.
-                      <br />
-                      Your companion will meet you at your level.
+                      Talk about your day or share an idea. Your companion meets you at your level.
                     </p>
                     <button
                       className="button primary"
@@ -433,7 +425,7 @@ export function Conversation() {
               </section>
             )}
             <p className="gentle-note">
-              ✦ AI feedback is a helping hand. Ask your companion when
+              AI feedback is a helping hand. Ask your companion when
               something’s unclear.
             </p>
           </div>

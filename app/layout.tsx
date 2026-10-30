@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
+import "./practice.css";
 import { LanguageProvider } from "@/components/language-provider";
 import { AccountProvider } from "@/components/account-provider";
 import { PwaRegistration } from "@/components/pwa";

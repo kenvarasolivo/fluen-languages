@@ -2,7 +2,7 @@
 
 import { useRef, useState } from "react";
 import Link from "next/link";
-import { ArrowRight, BookOpen, Check, Lightbulb, Volume2 } from "lucide-react";
+import { ArrowRight, Check, Lightbulb, Volume2 } from "lucide-react";
 import { Header, Footer } from "./header";
 import { useLanguage } from "./language-provider";
 import { useAccount } from "./account-provider";
@@ -54,7 +54,7 @@ function WordSession({ language, category }: { language: Language; category: Wor
   }
 
   return <section className="word-lesson" aria-label={`${category} word practice`}>
-    <div className="word-lesson-top"><span>BEGINNER · {category}</span><span>{correct} / {pool.length} learned</span></div>
+    <div className="word-lesson-top"><span>{category}</span><span>{correct} / {pool.length} learned</span></div>
     <progress value={correct} max={pool.length} aria-label="Words learned in this set" />
     <p className="word-prompt-label">How do you say this in {languageNames[language]}?</p>
     <h2 lang="en">{word.english}</h2>
@@ -95,8 +95,8 @@ export function WordLearning() {
   const { language } = useLanguage();
   const [category, setCategory] = useState<WordCategory>(wordCategories[0]);
   return <><Header active="learn-words" /><main className="practice-main beginner-main">
-    <div className="practice-heading"><div><div className="eyebrow"><BookOpen size={15} /> A FIRST STEP</div>
-      <h1>Start with words you’ll use.</h1>
+    <div className="practice-heading"><div>
+      <h1>Everyday words</h1>
       <p>Completely new? Learn a few everyday words, then start using them in whole sentences.</p>
     </div><Link href="/write" className="button secondary">Practice sentences <ArrowRight size={17} /></Link></div>
     <GuestSaveNotice />

@@ -6,7 +6,6 @@ import {
   ChevronDown,
   Lightbulb,
   LoaderCircle,
-  PenLine,
   RotateCcw,
   Shuffle,
   Sparkles,
@@ -172,13 +171,9 @@ export function WritingPractice() {
       <main className="practice-main writing-main">
         <div className="practice-heading">
           <div>
-            <div className="eyebrow">
-              <PenLine size={15} /> LEARN BY DOING / WRITING
-            </div>
-            <h1>Make the next sentence yours.</h1>
+            <h1>Writing practice</h1>
             <p>
-              Read a useful sentence in English and write it in {target}.
-              Practice language you can take into your day.
+              {writingEnglish ? `Read a sentence in ${target} and make it your own in English.` : `Your thoughts, in ${target}. One sentence is a good place to start.`}
             </p>
           </div>
         </div>
@@ -202,15 +197,6 @@ export function WritingPractice() {
               className={`exercise-card challenge-card ${feedback ? (feedback.correct ? "is-won" : "is-lost") : ""}`}
               aria-busy={!!busy}
             >
-              <div className="challenge-banner">
-                <span>
-                  <PenLine size={18} /> SENTENCE{" "}
-                  {String(roll + 1).padStart(2, "0")}
-                </span>
-                <span>
-                  <Sparkles size={15} /> Your words. Your progress.
-                </span>
-              </div>
               <div className="exercise-top">
                 <span className="pill">
                   {settings.level} · {settings.topic}
@@ -219,22 +205,23 @@ export function WritingPractice() {
                   {review && <span className="review-label">Review</span>}
                   {exercise.connector ? "Connect two ideas" : "One sentence"}
                 </span>
-              </div>
-              <div className="current-group-progress" aria-live="polite">
-                <span>{settings.level} · {settings.topic} · {settings.format === "single" ? "One sentence" : "Connect two ideas"}</span>
-                <GroupProgress label="Selected group" progress={groupProgress(completed, language, settings)} />
+                <div className="current-group-progress" aria-live="polite">
+                  <span>Progress in this set</span>
+                  <GroupProgress label="Selected group" progress={groupProgress(completed, language, settings)} />
+                </div>
               </div>
               <div className="writing-direction">
                 <button
                   type="button"
                   className="direction-trigger"
+                  aria-label={`Writing in ${writingEnglish ? "English" : target}. Change writing language`}
                   onClick={() => directionDialog.current?.showModal()}
                   aria-haspopup="dialog"
                 >
-                  <span>Writing in <strong>{writingEnglish ? "English" : target}</strong></span>
+                  <span><span className="direction-label">Writing in </span><strong>{writingEnglish ? "English" : target}</strong></span>
                   <ChevronDown size={18} aria-hidden="true" />
                 </button>
-                <p>Switching clears your current attempt. The sentence updates to match your choice.</p>
+                <p>Switch direction to practice translating the other way.</p>
                 <dialog ref={directionDialog} className="direction-dialog" aria-labelledby={directionTitleId}>
                   <div className="direction-dialog-header">
                     <div>
@@ -280,7 +267,7 @@ export function WritingPractice() {
                 </dialog>
               </div>
               <div className="demo-caption">
-                HOW WOULD YOU SAY THIS IN {answerName.toUpperCase()}?
+                How would you say this in {answerName}?
               </div>
               <h2
                 key={roll}
@@ -320,7 +307,7 @@ export function WritingPractice() {
                 }}
               >
                 <label className="answer-label" htmlFor="answer">
-                  YOUR TURN <span>{writingEnglish ? "English, please. Take your time." : chinese ? "Pinyin, please. Tone marks optional." : "Deutsch, bitte."}</span>
+                  Your sentence <span>{writingEnglish ? "English, please. Take your time." : chinese ? "Pinyin, please. Tone marks optional." : "Deutsch, bitte."}</span>
                 </label>
                 <textarea
                   ref={input}
@@ -483,7 +470,7 @@ export function WritingPractice() {
               </section>
             )}
             <p className="gentle-note">
-              ✦ You learn by trying. Every attempt gives you something to build
+              You learn by trying. Every attempt gives you something to build
               on.
             </p>
           </div>

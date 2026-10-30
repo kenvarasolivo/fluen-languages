@@ -2,7 +2,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { ArrowRight, BookOpen, Search, Trash2, Volume2 } from "lucide-react";
+import { ArrowRight, Search, Trash2, Volume2 } from "lucide-react";
 import { Header, Footer } from "@/components/header";
 import { Vocabulary, languageNames, languageTag } from "@/lib/practice";
 import { speak } from "@/components/feedback";
@@ -32,16 +32,13 @@ export default function WordsPage() {
       <main className="practice-main words-main">
         <div className="practice-heading">
           <div>
-            <div className="eyebrow">
-              <BookOpen size={15} /> YOUR ACTIVE VOCABULARY
-            </div>
-            <h1>Words for your next conversation.</h1>
+            <h1>Your word collection</h1>
             <p>
               Revisit what you’ve learned, then use it in your next sentence.
               {user ? " Saved to your account." : " Your guest collection is saved in this browser."}
             </p>
           </div>
-          <span className="session-count">{languageWords.length} {languageNames[language]} words collected</span>
+          <span className="session-count">{languageWords.length} {languageNames[language]} {languageWords.length === 1 ? "word" : "words"} collected</span>
         </div>
         <GuestSaveNotice />
         <p className="gentle-note">Starting from zero? <Link href="/learn-words">Learn your first everyday words <ArrowRight size={14} /></Link></p>

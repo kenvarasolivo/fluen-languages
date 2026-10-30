@@ -18,9 +18,9 @@ export function PracticeSettings({
   conversation?: boolean;
   progress?: (group: ProgressGroup) => Progress;
 }) {
-  const [expanded, setExpanded] = useState(true);
+  const [expanded, setExpanded] = useState(false);
   useEffect(
-    () => setExpanded(window.matchMedia("(min-width: 761px)").matches),
+    () => setExpanded(window.matchMedia("(min-width: 1151px)").matches),
     [],
   );
   return (
@@ -121,7 +121,6 @@ export function PracticeSettings({
         </fieldset>
       )}
       <div className="settings-tip">
-        <span>✦</span>
         <p>
           {conversation
             ? "A coffee chat or a big idea. There’s always something to talk about."
