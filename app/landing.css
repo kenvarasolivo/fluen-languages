@@ -24,7 +24,7 @@
 .hero-stage h1 { position: relative; width: 100%; z-index: 0; color: var(--landing-blue); text-align: center; font-size: clamp(90px, 15.6vw, 265px); font-weight: 900; letter-spacing: -.075em; line-height: .79; padding: 0 12px .06em; }
 .hero-stage h1 span { display: block; animation: landing-rise .9s both; }
 .hero-stage h1 span + span { animation-delay: .12s; }
-.hero-sculpture { position: absolute; z-index: 1; width: min(55vw, 840px); top: 50%; left: 50%; transform: translate(-50%, -50%); pointer-events: none; }
+.hero-sculpture { position: absolute; z-index: 1; width: min(49vw, 750px); top: 50%; left: 50%; transform: translate(-50%, -50%); pointer-events: none; }
 .hero-sculpture img { width: 100%; height: auto; display: block; animation: sculpture-float 7s ease-in-out infinite; }
 .hero-side-note { position: absolute; left: var(--landing-gutter); bottom: 2px; font-size: 14px; line-height: 1.5; }
 .hero-discover { position: absolute; right: var(--landing-gutter); bottom: 4px; width: 44px; height: 44px; border-radius: 100%; background: var(--landing-soft); display: grid; place-items: center; transition: transform .2s; }
@@ -96,6 +96,7 @@
 .fluen-landing .pwa-install p { font-size: 13px; }
 @keyframes landing-rise { from { opacity: 0; transform: translateY(25px); } to { opacity: 1; transform: translateY(0); } }
 @keyframes sculpture-float { 0%,100% { transform: translateY(-8px) rotate(-2deg); } 50% { transform: translateY(10px) rotate(1deg); } }
+@keyframes sculpture-float-mobile { 0%,100% { transform: translateY(-4px) rotate(-1deg); } 50% { transform: translateY(5px) rotate(.5deg); } }
 @keyframes landing-scroll-rise { from { transform: translateY(24px); } to { transform: translateY(0); } }
 @supports (animation-timeline: view()) {
   .method-intro > *, .method-art, .landing-demo, .practice-intro > *, .sheet-copy > *, .sheet-visual, .beginner-path > *, .landing-close > h2, .landing-close > div { animation: landing-scroll-rise linear both; animation-timeline: view(); animation-range: entry 0% entry 22%; }
@@ -117,22 +118,26 @@
   .example-slip { padding: 18px; }
 }
 @media (max-width: 700px) {
-  .fluen-landing .header { height: 80px; padding: 0 var(--landing-gutter); flex-wrap: nowrap; gap: 15px; }
+  .fluen-landing .header { height: 72px; padding: 0 var(--landing-gutter); flex-wrap: nowrap; gap: 15px; }
   .fluen-landing .header .logo { font-size: 29px; gap: 8px; }
   .fluen-landing .header .logo-mark { width: 31px; height: 33px; }
   .fluen-landing .header nav { display: none; }
   .fluen-landing .header .header-tools { display: flex; margin-left: auto; }
   .fluen-landing .header-sign-in { font-size: 14px; }
-  .landing-hero { min-height: calc(100svh - 80px); }
-  .hero-stage { height: 330px; min-height: 0; margin-top: 28px; }
-  .hero-stage h1 { font-size: 15.6vw; line-height: .9; align-self: start; padding-top: 20px; }
-  .hero-sculpture { width: 94%; top: 53%; }
-  .hero-side-note { bottom: 0; font-size: 13px; }
-  .hero-discover { width: 40px; height: 40px; bottom: 0; }
-  .hero-invitation { padding-top: 32px; padding-bottom: 26px; }
-  .hero-invitation > p { font-size: 18px; }
+  .landing-hero { min-height: calc(100svh - 72px); }
+  /* Give the title, artwork and caption their own rows on phones. */
+  .hero-stage { grid-template-columns: minmax(0, 1fr) auto; gap: 12px; height: auto; min-height: 0; margin-top: 12px; padding: 0 var(--landing-gutter); }
+  .hero-stage h1 { grid-column: 1 / -1; font-size: clamp(40px, 14.6vw, 92px); line-height: .94; padding: 0; }
+  .hero-sculpture { position: relative; grid-column: 1 / -1; width: min(80vw, 320px); top: auto; left: auto; transform: none; }
+  .hero-sculpture img { animation-name: sculpture-float-mobile; }
+  .hero-side-note { position: static; justify-self: start; font-size: 13px; }
+  .hero-discover { position: static; width: 44px; height: 44px; }
+  .hero-invitation { padding-top: 24px; padding-bottom: 24px; }
+  .hero-invitation > p { font-size: 16px; line-height: 1.5; max-width: 340px; margin-inline: auto; }
   .landing-button { min-height: 54px; padding: 15px 23px; }
-  .fluen-landing .hero-reassurance { font-size: 13px; max-width: 310px; margin-inline: auto; line-height: 1.6; }
+  .fluen-landing .hero-reassurance { font-size: 13px; max-width: 310px; margin-inline: auto; line-height: 1.6; gap: 4px 7px; }
+  .fluen-landing .hero-reassurance > span { display: none; }
+  .fluen-landing .hero-reassurance > a { flex-basis: 100%; min-height: 32px; display: grid; place-items: center; }
   .hero-bottom { font-size: 13px; gap: 12px; padding-top: 14px; }
   .hero-bottom > span:nth-child(2) { display: none; }
   .hero-bottom > span:last-child { text-align: right; }
