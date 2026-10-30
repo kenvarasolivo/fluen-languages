@@ -1,58 +1,45 @@
 import Link from "next/link";
 import Image from "next/image";
-import { ArrowRight, ArrowUpRight, AudioLines, Check, Coffee, Heart, MessageCircle, PenLine, Sparkles, Sprout } from "lucide-react";
+import { ArrowDown, ArrowRight, ArrowUpRight, AudioLines, PenLine } from "lucide-react";
 import { Header, Footer } from "@/components/header";
 import { PracticeSaveHint } from "@/components/guest-save-notice";
-import { SentenceLearning } from "@/components/sentence-learning";
+import { LandingDemo } from "@/components/landing-demo";
+import "./landing.css";
 
 export default function Home() {
-  return <>
+  return <div className="fluen-landing">
     <Header />
-    <main className="play-home">
-      <section className="play-hero">
-        <div className="play-copy">
-          <h1>Learn a language<br />by <span className="using-word">using it.</span></h1>
-          <p>Practice writing and talking about your day.<br className="desktop-break" /> Put the words you know to use, with feedback along the way.</p>
-          <div className="play-actions">
-            <Link href="/write" className="button primary">Start practicing <ArrowRight size={19} /></Link>
-            <Link href="/speak" className="hero-chat"><AudioLines size={20} /> Or, let’s talk</Link>
-          </div>
+    <main>
+      <section className="landing-hero" aria-labelledby="landing-title">
+        <div className="hero-stage">
+          <h1 id="landing-title"><span>LANGUAGE</span><span>IN ACTION.</span></h1>
+          <div className="hero-sculpture"><Image src="/illustrations/fluen-conversation-sculpture.png" alt="Glossy blue and orange speech bubbles saying Hallo! and 你好" width={1536} height={1024} priority sizes="(max-width: 700px) 100vw, 65vw" /></div>
+          <span className="hero-side-note">A little practice.<br />A whole new voice.</span>
+          <a href="#how-it-works" className="hero-discover" aria-label="Explore how Fluen works"><ArrowDown size={22} /></a>
+        </div>
+        <div className="hero-invitation">
+          <p>Learn a language by using it.<br />Your thoughts. Your words. Real conversations.</p>
+          <Link href="/write" className="landing-button">Start practicing <ArrowUpRight size={20} /></Link>
           <PracticeSaveHint />
-          <p className="beginner-entry">Completely new? <Link href="/learn-words">Start with everyday words <ArrowRight size={15} /></Link></p>
-
         </div>
-        <div className="hero-characters">
-          <Image src="/illustrations/fluen-shape-friends.png" width={1774} height={887} className="shape-friends" alt="Three cheerful shape friends: a lavender pebble, a yellow arch, and a coral trapezoid, each with a tiny smiling face" priority />
-        </div>
+        <div className="hero-bottom"><span>German &amp; Chinese (pinyin)</span><span>From your first words to your own voice.</span><span>A1–C2. At your pace.</span></div>
       </section>
-      <section className="practice-demo" aria-labelledby="demo-title">
-        <div className="demo-copy">
-          <span className="section-kicker">A LITTLE LOOK AT HOW IT WORKS</span>
-          <h2 id="demo-title">Practice here.<br />Order your next coffee.</h2>
-          <p>A coffee order today. A conversation tomorrow. Write a sentence, get helpful feedback, and take it into your day.</p>
-          <div className="language-row"><span className="language-chip"><span className="german-flag" /> German</span><span className="language-chip"><span className="chinese-flag">★</span> Chinese <small>(pinyin)</small></span><span className="level-note">A1–C2 <Sparkles size={13} /></span></div>
+      <section className="landing-method" id="how-it-works" aria-labelledby="method-title">
+        <div className="method-intro"><h2 id="method-title">You know more<br />than you think.</h2><p>A word you recognise is a start. A sentence you make is a little breakthrough. Fluen gives you a place to write, talk, and turn what you know into something you can say.</p></div>
+        <div className="method-demo-row">
+          <div className="method-art"><Image src="/illustrations/topic-food.webp" width={768} height={512} alt="An illustrated café, a place to put your new language into practice" sizes="(max-width: 700px) 90vw, 40vw" /><p>For the coffee you’ll order.<br />And the conversation after.</p></div>
+          <LandingDemo />
         </div>
-        <div className="demo-preview" aria-label="Example of German writing practice and feedback">
-          <div className="mini-practice">
-            <div className="mini-heading"><span><PenLine size={15} /> A LITTLE WRITING MOMENT</span><span className="mini-level">A1</span></div>
-            <p className="mini-prompt">How would you say...</p><h2>“I would like a coffee, please.” <Coffee size={21} /></h2>
-            <div className="mini-answer" lang="de">Ich möchte einen Kaffee, bitte.<span className="typing-caret" /></div>
-            <div className="mini-success"><span className="success-check"><Check size={16} /></span><div><strong>Look at you, using German!</strong><p>One sentence closer to your next coffee.</p></div><Sparkles size={19} /></div>
-            <Link href="/write" className="mini-bottom">Your turn? <ArrowRight size={17} /></Link>
-          </div>
-        </div>
+        <div className="method-outro"><span>Make a sentence.</span><span>Understand the feedback.</span><span>Take it into your day.</span></div>
       </section>
-      <div className="belief-strip"><span><Sprout size={21} /> Less memorizing. <strong>More making.</strong></span><span><PenLine size={19} /> Your own sentences</span><span><MessageCircle size={19} /> Conversations at your level</span><span><Heart size={19} /> Helpful, gentle feedback</span></div>
-      <SentenceLearning />
-      <section className="play-modes" id="practice">
-        <div className="section-heading"><div><span className="section-kicker">FIND YOUR KIND OF PRACTICE</span><h2>Small starts. Big “I said that!” energy.</h2></div><p>Pick a little adventure.<br />There’s no perfect place to begin.</p></div>
-        <div className="mode-grid">
-          <Link href="/write" className="play-mode writing-mode"><div className="mode-top"><span className="mode-icon"><PenLine size={27} /></span><span className="mode-tag">THINK IT. WRITE IT.</span><ArrowUpRight size={25} /></div><h3>A thought becomes<br />a sentence.</h3><p>Make something with the words you know. Get clear corrections, learn the why, and give it another go.</p><div className="mode-bottom"><span>Let’s write <ArrowRight size={19} /></span><span className="mode-detail">Your ideas, in a new language</span></div></Link>
-          <Link href="/speak" className="play-mode talking-mode"><div className="mode-top"><span className="mode-icon"><AudioLines size={28} /></span><span className="mode-tag">SAY IT. KEEP IT GOING.</span><ArrowUpRight size={25} /></div><h3>Start with hello.<br />See where it goes.</h3><p>Chat with your AI companion about your day, a big idea, or absolutely anything. Speak or type. You’ve got this.</p><div className="mode-bottom"><span>Let’s talk <ArrowRight size={19} /></span><span className="mode-detail">A friendly space to find your voice</span></div></Link>
-        </div>
+      <section className="landing-practice" id="practice" aria-labelledby="practice-title">
+        <div className="practice-intro"><h2 id="practice-title">Find your words.</h2><p>A quiet writing moment or a conversation that takes a turn.<br />There’s more than one way to find your voice.</p></div>
+        <article className="practice-sheet sheet-write"><div className="sheet-copy"><span className="sheet-name"><PenLine size={22} /> Writing practice</span><h3>Your words.<br />Your sentence.</h3><p>Write about something that matters to you. Get clear corrections, understand the grammar, and give it another go.</p><Link href="/write" className="landing-button">Let’s write <ArrowUpRight size={20} /></Link></div><div className="sheet-visual"><Image src="/illustrations/topic-ideas.webp" width={768} height={512} alt="A playful illustration of ideas waiting to be put into words" sizes="(max-width: 700px) 90vw, 45vw" /><div className="example-slip"><span>Your idea, in a new language.</span><p lang="de">Ich habe eine Idee.</p><span>I have an idea.</span></div></div></article>
+        <article className="practice-sheet sheet-talk"><div className="sheet-copy"><span className="sheet-name"><AudioLines size={23} /> Conversation practice</span><h3>Start with hello.<br />See where it goes.</h3><p>Talk with your AI companion about your day, your next trip, or whatever’s on your mind. Speak or type, at your level.</p><Link href="/speak" className="landing-button">Let’s talk <ArrowUpRight size={20} /></Link></div><div className="sheet-visual"><Image src="/illustrations/topic-travel.webp" width={768} height={512} alt="An illustrated travel scene full of opportunities for a conversation" sizes="(max-width: 700px) 90vw, 45vw" /><div className="example-slip"><span>A conversation can start anywhere.</span><p lang="de">Wohin möchtest du reisen?</p><span>Where would you like to travel?</span></div></div></article>
+        <div className="beginner-path"><div><h3>Starting from hello?</h3><p>Get to know everyday words before you make them your own.</p></div><Link href="/learn-words">Learn your first words <ArrowRight size={20} /></Link></div>
       </section>
-      <section className="play-method" id="how-it-works"><div className="method-heading"><span className="section-kicker">THE FLUEN WAY</span><h2>Try. Tweak. <span>Try again.</span></h2><p>You don’t need all the words. Just a place to start using them.</p></div><div className="play-steps">{[{n:"01",title:"Make it yours",text:"Choose your language, level, and a topic you actually want to talk about.",icon:PenLine},{n:"02",title:"Give it a go",text:"Write your own sentence or start a conversation. A little unsure is welcome here.",icon:MessageCircle},{n:"03",title:"Take it with you",text:"Learn from feedback, save useful words, and bring them into your next attempt.",icon:Sprout}].map(({n,title,text,icon:Icon})=><div className="play-step" key={n}><div><span>{n}</span><Icon size={24} /></div><h3>{title}</h3><p>{text}</p></div>)}</div></section>
-      <section className="play-cta"><span className="cta-spark" aria-hidden="true">✳</span><div><span className="section-kicker">FROM “I KNOW THIS” TO “I CAN SAY THIS”</span><h2>Your next little leap starts here.</h2><p>Bring the words you know. Make something that’s yours.</p></div><Link href="/write" className="button primary">Let’s give it a go <ArrowRight size={19} /></Link></section>
-    </main><Footer />
-  </>;
+      <section className="landing-close" aria-labelledby="close-title"><h2 id="close-title">You’ve got<br />something to say.</h2><div><p>Bring the words you know.<br />Let’s see what you can do with them.</p><Link href="/write" className="landing-button">Start practicing <ArrowUpRight size={20} /></Link></div><span className="close-wordmark" aria-hidden="true">fluen.</span></section>
+    </main>
+    <Footer />
+  </div>;
 }
